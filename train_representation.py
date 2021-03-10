@@ -6,7 +6,7 @@ from torchvision.datasets import MNIST
 from torchvision.transforms import Compose, RandomAffine, ToTensor
 from torch.utils.data import DataLoader
 
-from utils.data import PixelCorruption, AugmentedDataset
+from utils.data import MultiOmicsDataset
 from utils.evaluation import evaluate, split
 import training as training_module
 
@@ -32,6 +32,7 @@ parser.add_argument("--checkpoint-every", type=int, default=50, help="Frequency 
 parser.add_argument("--backup-every", type=int, default=5, help="Frequency of model backups (in epochs).")
 parser.add_argument("--evaluate-every", type=int, default=5, help="Frequency of model evaluation.")
 parser.add_argument("--epochs", type=int, default=1000, help="Total number of training epochs")
+
 
 args = parser.parse_args()
 
@@ -95,23 +96,12 @@ trainer.to(device)
 ###########
 # Dataset #
 ###########
-# Loading the MNIST dataset
-mnist_dir = os.path.join(data_dir, 'MNIST')
-train_set = MNIST(mnist_dir, download=True, train=True, transform=ToTensor())
-test_set = MNIST(mnist_dir, download=True, train=False, transform=ToTensor())
+dataset_suffix = '_train.npy'
+mv_train_set = MultiOmicsDataset(data_dir + 'view1' + data_suffix, data_dir + 'view2' + dataset_suffix, data_dir + 'y' + dataset_suffix )
 
-# Defining the augmentations
-t = Compose([
-	RandomAffine(degrees=15,
-				 translate=[0.1, 0.1],
-				 scale=[0.9, 1.1],
-				 shear=15),  # Small affine transformations
-	ToTensor(),              # Conversion to torch tensor
-	PixelCorruption(0.8)     # PixelCorruption with keep probability 80%
-])
+dataset_suffix = '_test.npy'
+mv_test_set = MultiOmicsDataset(data_dir + 'view1' + data_suffix, data_dir + 'view2' + dataset_suffix, data_dir + 'y' + dataset_suffix )
 
-# Creating the multi-view dataset using the augmentation class defined by t
-mv_train_set = AugmentedDataset(MNIST(mnist_dir, download=True), t)
 
 # Initialization of the data loader
 train_loader = DataLoader(mv_train_set, batch_size=batch_size, shuffle=True, num_workers=num_workers)
