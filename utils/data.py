@@ -6,24 +6,41 @@ from PIL import Image
 import numpy as np
 
 
-class MultiOmicsDataset:
-	def __init__(self, filename1, filename2, filenameLabels):
-		# load the three data matrices and make them datasets
+
+class SingleOmicsDataset:
+	def __init__(self, filename1, filenameLabels):
+		# load the two data matrices
 		self.d1 = torch.tensor(np.load(filename1))
-		self.d2 = torch.tensor(np.load(filename2))
 		self.y = torch.tensor(np.load(filenameLabels))
 
 		# store number of items and make sure size matches in all types
 		self.length = len(self.d1)
-		assert len(self.d2) == self.length
+
 		assert len(self.y) == self.length
+
+	def __getitem__(self, index):
+		# get the index-th element of the 2 matrices
+		return self.d1[index], self.y[index]
+
+	def __len__(self):
+		return self.length
+
+
+
+
+class MultiOmicsDataset(SingleOmicsDataset):
+	def __init__(self, filename1, filename2, filenameLabels):
+		# constructor of parent class takes care of first dataset & labels
+		super(MultiOmicsDataset, self).__init__(filename1, filenameLabels)
+
+		# load the 2nd data view
+		self.d2 = torch.tensor(np.load(filename2))
+		assert len(self.d2) == self.length
 
 	def __getitem__(self, index):
 		# get the index-th element of the 3 matrices
 		return self.d1[index], self.d2[index], self.y[index]
 
-	def __len__(self):
-		return self.length
 
 
 

@@ -6,20 +6,20 @@ from torchvision.datasets import MNIST
 from torchvision.transforms import Compose, RandomAffine, ToTensor
 from torch.utils.data import DataLoader
 
-from utils.data import MultiOmicsDataset
+from utils.data import MultiOmicsDataset, SingleOmicsDataset
 from utils.evaluation import evaluate, split
 import training as training_module
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("experiment_dir", type=str,
+parser.add_argument("--experiment-dir", type=str,
 					help="Full path to the experiment directory. Logs and checkpoints will be stored in this location")
 parser.add_argument("--config-file", type=str, default=None, help="Path to the .yaml training configuration file.")
 parser.add_argument("--data-dir", type=str, default='.', help="Root path for the datasets.")
 parser.add_argument("--no-logging", action="store_true", help="Disable tensorboard logging")
 parser.add_argument("--overwrite", action="store_true",
 					help="Force the over-writing of the previous experiment in the specified directory.")
-parser.add_argument("--device", type=str, default="cuda",
+parser.add_argument("--device", type=str, default="cuda:0",
 					help="Device on which the experiment is executed (as for tensor.device). Specify 'cpu' to "
 						 "force execution on CPU.")
 parser.add_argument("--num-workers", type=int, default=8,
@@ -92,15 +92,23 @@ if load_model_file:
 
 # Moving the models to the specified device
 trainer.to(device)
+#
+trainer.double()
 
 ###########
 # Dataset #
 ###########
 dataset_suffix = '_train.npy'
-mv_train_set = MultiOmicsDataset(data_dir + 'view1' + data_suffix, data_dir + 'view2' + dataset_suffix, data_dir + 'y' + dataset_suffix )
+train_set = SingleOmicsDataset(data_dir + 'view1' + dataset_suffix, data_dir + 'y' + dataset_suffix)
+dataset_suffix = '_test.npy'
+test_set = SingleOmicsDataset(data_dir + 'view1' + dataset_suffix, data_dir + 'y' + dataset_suffix)
+
+
+dataset_suffix = '_train.npy'
+mv_train_set = MultiOmicsDataset(data_dir + 'view1' + dataset_suffix, data_dir + 'view2' + dataset_suffix, data_dir + 'y' + dataset_suffix )
 
 dataset_suffix = '_test.npy'
-mv_test_set = MultiOmicsDataset(data_dir + 'view1' + data_suffix, data_dir + 'view2' + dataset_suffix, data_dir + 'y' + dataset_suffix )
+mv_test_set = MultiOmicsDataset(data_dir + 'view1' + dataset_suffix, data_dir + 'view2' + dataset_suffix, data_dir + 'y' + dataset_suffix )
 
 
 # Initialization of the data loader
@@ -119,7 +127,7 @@ for epoch in tqdm(range(epochs)):
 
 	if epoch % evaluate_every == 0:
 		# Compute train and test_accuracy of a logistic regression
-		train_accuracy, test_accuracy = evaluate(encoder=trainer.encoder, train_on=train_subset, test_on=test_set,
+		train_accuracy, test_accuracy = evaluate(encoder=trainer.encoder_v1, train_on=train_subset, test_on=test_set,
 												 device=device)
 		if not (writer is None):
 			writer.add_scalar(tag='evaluation/train_accuracy', scalar_value=train_accuracy, global_step=trainer.iterations)

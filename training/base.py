@@ -163,10 +163,10 @@ class MultiModalRepresentationTrainer(Trainer):
 
 		self.opt = init_optimizer(optimizer_name, [
 			{'params': self.encoder_v1.parameters(), 'lr': encoder_lr}])
-		self.opt.add_param_group({'params': self.encoder_v2.parameters(), 'lr': encoder_lr})	
+		self.opt.add_param_group({'params': self.encoder_v2.parameters(), 'lr': encoder_lr})
 
 	def _get_items_to_store(self):
-		items_to_store = super(RepresentationTrainer, self)._get_items_to_store()
+		items_to_store = super(MultiModalRepresentationTrainer, self)._get_items_to_store()
 
 		# store the encoder and optimizer parameters
 		items_to_store['encoder_v1'] = self.encoder_v1.state_dict()

@@ -23,7 +23,7 @@ class OmicsEncoder(nn.Module):
 			encode_layers.append(nn.Linear(in_d, out_d))
 
 		self.num_layers = len(encode_layers)
-		self.encode_layers = encode_layers
+		self.encode_layers = nn.ModuleList(encode_layers)
 
 	def forward(self, x):
 
