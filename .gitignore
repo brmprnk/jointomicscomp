@@ -1,2 +1,6 @@
+*/__pycache__/
+*.out
 *.npy
 artificial-data/*
+run_experiment.sh
+

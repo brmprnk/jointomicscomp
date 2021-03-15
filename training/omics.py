@@ -67,11 +67,14 @@ class OmicsMIBTrainer(MultiModalRepresentationTrainer):
 		beta = self.beta_scheduler(self.iterations)
 
 		# Logging the components
-		self._add_loss_item('loss/I_z1_z2', mi_estimation.item())
+		self._add_loss_item('loss/I_z1_z2_est', mi_estimation.item())
 		self._add_loss_item('loss/SKL_z1_z2', skl.item())
 		self._add_loss_item('loss/beta', beta)
+		self._add_loss_item('loss/I_z1_z2_loss', mi_gradient.item())
+		self._add_loss_item('loss/b* SKL_z1_z2', beta * skl.item())
 
 		# Computing the loss function
 		loss = - mi_gradient + beta * skl
+		self._add_loss_item('loss/total_L', loss.item())
 
 		return loss
