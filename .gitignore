@@ -1,0 +1,6 @@
+# .gitignore for Bram Pronk's personal CSE3000 Research Project Repository - Group 21
+
+# Don't track the content of these folders
+
+# Don't track these files
+.DS_Store
