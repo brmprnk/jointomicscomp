@@ -2,6 +2,7 @@
 
 # Don't track the content of these folders
 /.idea
+.ipynb_checkpoints/
 
 # Don't track these files
 .DS_Store
