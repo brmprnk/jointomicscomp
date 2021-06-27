@@ -1,5 +1,4 @@
 # CSE3000 Research Project - Bram Pronk - Group 21
-### Assessing the Capability of Multimodal Variational Auto-Encoders in Combining Information From Biological Layers in Cancer Cells.
 
 [![Python Version](https://img.shields.io/static/v1.svg?label=minimal_python_version&message=3.8.8&color=blue)](https://www.python.org/downloads)
 
