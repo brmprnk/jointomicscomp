@@ -1,13 +1,21 @@
-# CSE3000 Research Project - Bram Pronk - Group 21 | Product of Experts
-### Assessing How Variational Auto-Encoders Can Combine Information From Multiple Data Sources in Cancer Cells
+# CSE3000 Research Project - Bram Pronk Bachelor Thesis
 
-[![Python Version](https://img.shields.io/static/v1.svg?label=minimal_python_version&message=3.8.8&color=blue)](https://www.python.org/downloads)
+[![Python Version](https://img.shields.io/static/v1.svg?label=minimal_python_version&message=3.9&color=blue)](https://www.python.org/downloads)
+[![Conda Install](https://anaconda.org/conda-forge/terraform-provider-github/badges/installer/conda.svg)](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html)
+## Research Paper
+Github Repository that accompanies the research for my bachelor thesis: 
+http://resolver.tudelft.nl/uuid:4c23e8d7-0fe6-4dd8-9c38-e62a39c07a99
 
-## Description of the Product of Experts in this research
-Will be updated along with Research Paper Progress.
-Forked from https://github.com/kodaim1115/scMM
+#### Follow-up research is be done in this branch ```followup```.
+Original suggestions for follow up research included:
+- Implementing Mixture-of-Experts and Product-of-Experts in the same codebase
+- Switching from Vanilla-VAE models to Beta-VAE to possibly improve learning, and investigating the consequences in doing so
 
-## Getting Started
+## Installation
+Recommended installation uses a new Anaconda environment. To ease the process, this project includes an environment file.
+This can be plugged into Anaconda [following this short tutorial](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#creating-an-environment-from-an-environment-yml-file).
+
+## Branch Structure
 <!---
 
 This section should contain installation, testing, and running instructions for people who want to get started with the project. 
@@ -17,10 +25,14 @@ This section should contain installation, testing, and running instructions for 
 - You can specify that the user should have a certain operating system.
 
 --->
-TDB
- 
-## Branch Structure
-TBD
+
+
+This branch builds upon the code found in the ```poe``` branch.
+This code was originally adapted from the [Product-of-Experts MVAE](https://github.com/mhw32/multimodal-vae-public) as developed by Wu and Goodman.
+
+It has been expanded to include multiple optional arguments, that can be found by running the main file ``main.py`` with the `-h` option.
+
+
 
 ## Authors
 This is the personal repository of
@@ -38,8 +50,3 @@ Research Group 21 is guided by:
     
     - Marcel Reinders (Responsible Professor)
     - Stavros Makrodimitris, Tamim Abdelaal, Mohammed Charrout, Mostafa elTager (Supervisors)
-
-## License
-TBD.
-
-## Citations
