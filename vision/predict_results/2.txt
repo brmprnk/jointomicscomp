@@ -1,0 +1,10 @@
+# Using latent dim = 100, epochs = 100, lr = 0.0001, batch_size=256 for train and one batch for validation/prediction
+RNA from others at PoE 25-05-2021 17:12:45 ||| 0.08429156243801117
+GCN from others at PoE 25-05-2021 17:12:45 ||| 0.12812736630439758
+DNA from others at PoE 25-05-2021 17:12:45 ||| 0.08218880742788315
+
+# Using latent dim = 256, epochs = 200, lr = 0.0001, batch_size=256 for train and one batch for validation/prediction
+RNA from others at PoE 25-05-2021 17:12:45 ||| 0.0780748799443245
+GCN from others at PoE 25-05-2021 17:12:45 ||| 0.12466806918382645
+DNA from others at PoE 25-05-2021 17:12:45 ||| 0.07711717486381531
+
