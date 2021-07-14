@@ -6,7 +6,7 @@
 /experiments
 .ipynb_checkpoints/
 /data
-/vision/results
+/results
 
 # Don't track these files
 .DS_Store

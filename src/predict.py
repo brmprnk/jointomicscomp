@@ -3,8 +3,6 @@ import torch
 from sklearn.metrics import mean_squared_error
 from train import load_checkpoint
 import datasets
-import numpy as np
-import pandas as pd
 
 
 def predict_loss(recon_data, input_data):

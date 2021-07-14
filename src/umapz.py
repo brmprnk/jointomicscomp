@@ -1,6 +1,5 @@
 import torch
 
-import umap
 import umap.plot
 from train import load_checkpoint
 import datasets
