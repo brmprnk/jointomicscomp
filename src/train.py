@@ -122,12 +122,12 @@ class AverageMeter(object):
         self.epochs = 50
         self.values = []
         self.reconstruct_losses = {
-            "average" : [],
-            "rna_rna" : [],
-            "gcn_gcn" : [],
-            "dna_dna" : [],
-            "rna_gcn" : [],
-            "rna_dna" : [],
+            "average": [],
+            "rna_rna": [],
+            "gcn_gcn": [],
+            "dna_dna": [],
+            "rna_gcn": [],
+            "rna_dna": [],
             "gcn_rna": [],
             "gcn_dna": [],
             "dna_rna": [],
@@ -152,7 +152,6 @@ def save_checkpoint(state, lowest_loss, save_dir):
     @param state:       Python dictionary containing the model's state
     @param lowest_loss: Boolean check if the current checkpoint has had the best (lowest) loss so far
     @param save_dir:      String of the folder to save the model to
-    @param filename:    String of the model's output name
     @return: None
     """
     # Save checkpoint
@@ -160,7 +159,7 @@ def save_checkpoint(state, lowest_loss, save_dir):
 
     # If this is the best checkpoint (lowest loss) thus far, copy this model to a file named model_best
     if lowest_loss:
-        print("Best epoch thus far (lowest loss) --> Saving to model_best")
+        print("Final epoch --> Saving to model_best")
         torch.save(state, os.path.join(save_dir, 'best_model.pth.tar'))
 
 
@@ -175,6 +174,8 @@ def load_checkpoint(file_path, use_cuda=False):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
+    parser.add_argument('-mixture', action='store_true',
+                        help='Use Mixture-of-Experts instead of Product-of-Experts')
     parser.add_argument('-plot', action='store_true',
                         help='Create plots of the training and validation losses')
     parser.add_argument('--experiment', type=str, default="",
@@ -207,7 +208,9 @@ if __name__ == "__main__":
     now = datetime.now()
     dt_string = now.strftime("%d-%m-%Y %H:%M:%S")
 
-    save_dir = '../results/{} {}'.format(args.experiment, dt_string)
+    # Define saving directory based on root dir (which contains a README)
+    ROOT_DIR = os.path.dirname(os.path.abspath("README.md"))
+    save_dir = os.path.join(ROOT_DIR, 'results', '{} {}'.format(args.experiment, dt_string))
     os.makedirs(save_dir)
 
     # Fetch Datasets
@@ -222,7 +225,7 @@ if __name__ == "__main__":
     total_val_batches = len(val_loader)  # Should be 1
 
     # Setup and log model
-    model = MVAE(args.n_latents, use_cuda=args.cuda)
+    model = MVAE(args.mixture, args.n_latents, use_cuda=args.cuda)
 
     # Log Data shape, input arguments and model
     model_file = open("{}/Model {}.txt".format(save_dir, dt_string), "a")
@@ -244,18 +247,10 @@ if __name__ == "__main__":
         progress_bar = tqdm(total=len(train_loader))
         for batch_idx, (rna, gcn, dna) in enumerate(train_loader):
 
-            # if epoch < args.annealing_epochs:
-            #     # compute the KL annealing factor for the current mini-batch in the current epoch
-            #     annealing_factor = (float(batch_idx + (epoch - 1) * total_batches + 1) /
-            #                         float(args.annealing_epochs * total_batches))
-            # else:
-            #     # by default the KL annealing factor is unity
-            #     annealing_factor = 1.0
-
             # refresh the optimizer
             optimizer.zero_grad()
 
-            kld_weight = len(rna) / len(train_loader.dataset) # Account for the minibatch samples from the dataset
+            kld_weight = len(rna) / len(train_loader.dataset)  # Account for the minibatch samples from the dataset
 
             # compute reconstructions using all the modalities
             (joint_recon_rna, joint_recon_gcn, joint_recon_dna, joint_mu, joint_logvar) = model(rna, gcn, dna)
@@ -405,13 +400,14 @@ if __name__ == "__main__":
         train(epoch, train_loss_meter, train_recon_loss_meter, train_kld_loss_meter)
         latest_loss = test(epoch, val_loss_meter, val_recon_loss_meter, val_kld_loss_meter)
 
-        # save the best model and current model
-        save_checkpoint({
-            'state_dict': model.state_dict(),
-            'best_loss': latest_loss,
-            'latent_dim': args.n_latents,
-            'optimizer': optimizer.state_dict(),
-        }, True, save_dir)
+        # Save the last model
+        if epoch == args.epochs:
+            save_checkpoint({
+                'state_dict': model.state_dict(),
+                'best_loss': latest_loss,
+                'latent_dim': args.n_latents,
+                'optimizer': optimizer.state_dict(),
+            }, True, save_dir)
 
     # Save all reconstruction losses
     modal = ['rna', 'gcn', 'dna']
