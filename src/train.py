@@ -166,9 +166,10 @@ def save_checkpoint(state, lowest_loss, save_dir):
 def load_checkpoint(file_path, use_cuda=False):
     checkpoint = torch.load(file_path) if use_cuda else \
         torch.load(file_path, map_location=lambda storage, location: storage)
-    model = MVAE(checkpoint['latent_dim'])
+
+    model = MVAE(use_mixture=checkpoint['use_mixture'], latent_dim=checkpoint['latent_dim'])
     model.load_state_dict(checkpoint['state_dict'])
-    return model
+    return model, checkpoint
 
 
 if __name__ == "__main__":
@@ -178,6 +179,8 @@ if __name__ == "__main__":
                         help='Use Mixture-of-Experts instead of Product-of-Experts')
     parser.add_argument('-plot', action='store_true',
                         help='Create plots of the training and validation losses')
+    parser.add_argument('-cancer3', action='store_true',
+                        help='Indicate usage of only three cancer types for faster processing')
     parser.add_argument('--experiment', type=str, default="",
                         help='Name of the experiment being conducted for saving purposes')
     parser.add_argument('--n-latents', type=int, default=128,
@@ -188,8 +191,8 @@ if __name__ == "__main__":
                         help='number of epochs to train (default: 50)')
     parser.add_argument('--lr', type=float, default=1e-4, metavar='LR',
                         help='learning rate (default: 1e-4)')
-    parser.add_argument('--log-interval', type=int, default=10, metavar='N',
-                        help='how many batches to wait before logging training status')
+    parser.add_argument('--log-interval', type=int, default=5, metavar='N',
+                        help='how many batches to wait before logging training status (default: 5)')
     parser.add_argument('--cuda', action='store_true', default=False,
                         help='enables CUDA training')
     parser.add_argument('--seed', type=int, default=1,
@@ -214,7 +217,7 @@ if __name__ == "__main__":
     os.makedirs(save_dir)
 
     # Fetch Datasets
-    tcga_data = datasets.TCGAData(save_dir=save_dir)
+    tcga_data = datasets.TCGAData(cancer3types=args.cancer3, save_dir=save_dir)
     train_dataset = tcga_data.get_data_partition("train")
     val_dataset = tcga_data.get_data_partition("val")
 
@@ -225,7 +228,7 @@ if __name__ == "__main__":
     total_val_batches = len(val_loader)  # Should be 1
 
     # Setup and log model
-    model = MVAE(args.mixture, args.n_latents, use_cuda=args.cuda)
+    model = MVAE(use_mixture=args.mixture, latent_dim=args.n_latents, use_cuda=args.cuda)
 
     # Log Data shape, input arguments and model
     model_file = open("{}/Model {}.txt".format(save_dir, dt_string), "a")
@@ -318,17 +321,13 @@ if __name__ == "__main__":
             train_loss.backward()
             optimizer.step()
 
-            # if batch_idx % args.log_interval == 0:
-            #     print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-            #         epoch, batch_idx * len(rna), len(train_loader.dataset),
-            #         100. * batch_idx / len(train_loader), train_loss_meter.avg))
-
             progress_bar.update()
 
         progress_bar.close()
-        print('====> Epoch: {}\tLoss: {:.4f}'.format(epoch, train_loss_meter.avg))
-        print('====> Epoch: {}\tReconstruction Loss: {:.4f}'.format(epoch, train_recon_loss_meter.avg))
-        print('====> Epoch: {}\tKLD Loss: {:.4f}'.format(epoch, train_kld_loss_meter.avg))
+        if epoch % args.log_interval == 0:
+            print('====> Epoch: {}\tLoss: {:.4f}'.format(epoch, train_loss_meter.avg))
+            print('====> Epoch: {}\tReconstruction Loss: {:.4f}'.format(epoch, train_recon_loss_meter.avg))
+            print('====> Epoch: {}\tKLD Loss: {:.4f}'.format(epoch, train_kld_loss_meter.avg))
 
 
     def test(epoch, val_loss_meter, val_recon_loss_meter, val_kld_loss_meter):
@@ -382,10 +381,11 @@ if __name__ == "__main__":
 
             test_loss += joint_test_loss['loss']
 
-        print('====> Test Loss: {:.4f}'.format(test_loss))
-        print('====> Test Loss: {}\tLoss: {:.4f}'.format(epoch, val_loss_meter.avg))
-        print('====> Test Loss: {}\tReconstruction Loss: {:.4f}'.format(epoch, val_recon_loss_meter.avg))
-        print('====> Test Loss: {}\tKLD Loss: {:.4f}'.format(epoch, val_kld_loss_meter.avg))
+        if epoch % args.log_interval == 0:
+            print('====> Test Loss: {:.4f}'.format(test_loss))
+            print('====> Test Loss: {}\tLoss: {:.4f}'.format(epoch, val_loss_meter.avg))
+            print('====> Test Loss: {}\tReconstruction Loss: {:.4f}'.format(epoch, val_recon_loss_meter.avg))
+            print('====> Test Loss: {}\tKLD Loss: {:.4f}'.format(epoch, val_kld_loss_meter.avg))
         return val_loss_meter.avg
 
 
@@ -406,6 +406,10 @@ if __name__ == "__main__":
                 'state_dict': model.state_dict(),
                 'best_loss': latest_loss,
                 'latent_dim': args.n_latents,
+                'epochs': args.epochs,
+                'lr': args.lr,
+                'batch_size': args.batch_size,
+                'use_mixture': args.mixture,
                 'optimizer': optimizer.state_dict(),
             }, True, save_dir)
 
