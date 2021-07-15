@@ -3,6 +3,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import sys
+import os
 
 import numpy as np
 import pandas as pd
@@ -23,6 +24,9 @@ class TCGAData(object):
             save_dir     (string) : Where the indices taken from the datasets should be saved
             indices_path (string) : If set, use predefined indices for data split
         """
+        # Datafiles are fetched from data folder in project root
+        dirname = os.path.dirname(os.path.abspath(__file__))
+
         # Datasets are assumed to be pre-processed and have the same ordering of samples
         cancer3types = False
         if cancer3types:
@@ -79,18 +83,18 @@ class TCGAData(object):
 
         else:
             # RNA-seq
-            rna_file = "/Users/bram/Desktop/CSE3000/data/shuffle_cancertype/shuffle_clamped_3modal_RNA_3000MAD_cancertypeknown.csv"
-            self.rna_data = pd.read_csv(rna_file, usecols=range(1, 3001))
+            rna_file = os.path.join(dirname, '..', 'data', 'clamped_RNASeq_3000MAD.csv')
+            self.rna_data = pd.read_csv(rna_file, usecols=range(1, 3001), nrows=500)
             print("-----   RNA file read   -----")
 
             # Gene Copy Number
-            gcn_file = "/Users/bram/Desktop/CSE3000/data/shuffle_cancertype/shuffle_clamped_3modal_GCN_3000MAD_cancertypeknown.csv"
-            self.gcn_data = pd.read_csv(gcn_file, usecols=range(1, 3001))
+            gcn_file = os.path.join(dirname, '..', 'data', 'clamped_GCN_3000MAD.csv')
+            self.gcn_data = pd.read_csv(gcn_file, usecols=range(1, 3001), nrows=500)
             print("-----   GCN file read   -----")
 
             # DNA Methylation
-            dna_file = "/Users/bram/Desktop/CSE3000/data/shuffle_cancertype/shuffle_clamped_3modal_DNA_3000MAD_cancertypeknown.csv"
-            self.dna_data = pd.read_csv(dna_file, usecols=range(1, 3001))
+            dna_file = os.path.join(dirname, '..', 'data', 'clamped_DNAMe_3000MAD.csv')
+            self.dna_data = pd.read_csv(dna_file, usecols=range(1, 3001), nrows=500)
             print("-----   DNA file read   -----")
 
             # Split Datasets into a 70 training / 10 validation / 20 prediction split
