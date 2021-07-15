@@ -1,4 +1,4 @@
-# CSE3000 Research Project - Bram Pronk Bachelor Thesis
+# Bram Pronk Bachelor Thesis
 
 [![Python Version](https://img.shields.io/static/v1.svg?label=minimal_python_version&message=3.9&color=blue)](https://www.python.org/downloads)
 [![Conda Install](https://anaconda.org/conda-forge/terraform-provider-github/badges/installer/conda.svg)](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html)
