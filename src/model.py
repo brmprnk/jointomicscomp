@@ -8,7 +8,7 @@ from torch.autograd import Variable
 
 
 class MVAE(nn.Module):
-    def __init__(self, latent_dim=100, use_cuda=False):
+    def __init__(self, use_mixture, latent_dim=100, use_cuda=False):
         super(MVAE, self).__init__()
         # define q(z|x_i) for i = 1...2
         self.rna_encoder = Encoder(latent_dim)
@@ -22,6 +22,13 @@ class MVAE(nn.Module):
 
         # define q(z|x) = q(z|x_1)...q(z|x_6)
         self.experts = ProductOfExperts()
+        self.mixture = MixtureOfExperts()
+        self.use_mixture = use_mixture
+        if self.use_mixture:
+            print("Using Mixture-of-Experts Model")
+        else:
+            print("Using Product-of-Experts Model")
+
         self.latent_dim = latent_dim
         self.use_cuda = use_cuda
 
@@ -34,7 +41,11 @@ class MVAE(nn.Module):
             return mu
 
     def forward(self, rna=None, gcn=None, dna=None):
-        mu, logvar = self.get_params(rna=rna, gcn=gcn, dna=dna)
+
+        if self.use_mixture:
+            mu, logvar = self.get_mixture_params(rna=rna, gcn=gcn, dna=dna)
+        else:
+            mu, logvar = self.get_product_params(rna=rna, gcn=gcn, dna=dna)
 
         # re-parameterization trick to sample
         z = self.reparameterize(mu, logvar)
@@ -46,7 +57,7 @@ class MVAE(nn.Module):
 
         return rna_recon, gcn_recon, dna_recon, mu, logvar
 
-    def get_params(self, rna=None, gcn=None, dna=None):
+    def get_product_params(self, rna=None, gcn=None, dna=None):
         # define universal expert
         batch_size = get_batch_size(rna, gcn, dna)
         # initialize the universal prior expert
@@ -72,6 +83,34 @@ class MVAE(nn.Module):
 
         # product of experts to combine Gaussian's
         mu, logvar = self.experts(mu, logvar)
+
+        return mu, logvar
+
+    def get_mixture_params(self, rna=None, gcn=None, dna=None):
+
+        mu = []
+        logvar = []
+
+        if rna is not None:
+            rna_mu, rna_logvar = self.rna_encoder(rna)
+
+            mu.append(rna_mu.unsqueeze(0))
+            logvar.append(rna_logvar.unsqueeze(0))
+
+        if gcn is not None:
+            gcn_mu, gcn_logvar = self.gcn_encoder(gcn)
+
+            mu.append(gcn_mu.unsqueeze(0))
+            logvar.append(gcn_logvar.unsqueeze(0))
+
+        if dna is not None:
+            dna_mu, dna_logvar = self.dna_encoder(dna)
+
+            mu.append(dna_mu.unsqueeze(0))
+            logvar.append(dna_logvar.unsqueeze(0))
+
+        # mixture of experts to combine Gaussian's
+        mu, logvar = self.mixture(mu, logvar)
 
         return mu, logvar
 
@@ -184,6 +223,41 @@ class ProductOfExperts(nn.Module):
         pd_var = 1 / torch.sum(T, dim=0)
         pd_logvar = torch.log(pd_var + eps)
         return pd_mu, pd_logvar
+
+
+class MixtureOfExperts(nn.Module):
+    """Return parameters for mixture of independent experts.
+    See https://papers.nips.cc/paper/2019/file/0ae775a8cb3b499ad1fca944e6f5c836-Paper.pdf for equations.
+    https://en.wikipedia.org/wiki/Sum_of_normally_distributed_random_variables
+    Z = W + X + Y gives Z ~ N(mu_w + mu_x + mu_y, var_x^2 + var_x^2 + var_y^2)
+    """
+
+    @classmethod
+    def forward(cls, mu, logvar, eps=1e-8):
+        """
+        @param mu: list of M x D for M experts
+        @param logvar: list of M x D for M experts
+        @param eps: A small constant
+        @return:
+        """
+        # Combine Gaussians
+
+        # Add mu's
+        mu = torch.cat(mu, dim=0)
+        mx_mu = torch.sum(mu, dim=0) / 3  # For 3 VAE's
+
+        # Add variances squared
+        var_squared = []
+        for i in range(len(logvar)):
+            var = torch.exp(logvar[i]) + eps
+            var_squared.append(torch.square(var))
+
+        # Divide by 3 for mean, then take log variance
+        mx_var = torch.cat(var_squared, dim=0)
+        mx_var = torch.sum(mx_var, dim=0) / 3
+        mx_logvar = torch.log(mx_var + eps)
+
+        return mx_mu, mx_logvar
 
 
 def prior_expert(size, use_cuda=False):
