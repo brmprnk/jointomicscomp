@@ -10,7 +10,6 @@ from model import MVAE
 import datasets as datasets
 
 import numpy as np
-import matplotlib.pyplot as plt
 
 N_MODALITIES = 3
 
@@ -176,16 +175,16 @@ def load_checkpoint(file_path, use_cuda=False):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
+    parser.add_argument('-plot', action='store_true',
+                        help='Create plots of the training and validation losses')
     parser.add_argument('--experiment', type=str, default="",
                         help='Name of the experiment being conducted for saving purposes')
     parser.add_argument('--n-latents', type=int, default=128,
-                        help='size of the latent embedding (default: 250)')
+                        help='size of the latent embedding (default: 128)')
     parser.add_argument('--batch-size', type=int, default=256, metavar='N',
-                        help='input batch size for training (default: 50)')
-    parser.add_argument('--epochs', type=int, default=100, metavar='N',
-                        help='number of epochs to train (default: 100)')
-    parser.add_argument('--annealing-epochs', type=int, default=2, metavar='N',
-                        help='number of epochs to anneal KL for [default: 20]')
+                        help='input batch size for training (default: 256)')
+    parser.add_argument('--epochs', type=int, default=50, metavar='N',
+                        help='number of epochs to train (default: 50)')
     parser.add_argument('--lr', type=float, default=1e-4, metavar='LR',
                         help='learning rate (default: 1e-4)')
     parser.add_argument('--log-interval', type=int, default=10, metavar='N',
@@ -208,7 +207,7 @@ if __name__ == "__main__":
     now = datetime.now()
     dt_string = now.strftime("%d-%m-%Y %H:%M:%S")
 
-    save_dir = './results/PoE {} {}'.format(args.experiment, dt_string)
+    save_dir = '../results/{} {}'.format(args.experiment, dt_string)
     os.makedirs(save_dir)
 
     # Fetch Datasets
@@ -422,77 +421,10 @@ if __name__ == "__main__":
             np.save("{}/Recon array {}.npy".format(save_dir, key),
                     np.array(val_recon_loss_meter.reconstruct_losses[key]))
 
-    # Do some plotting
-    x_axis = [*range(1, args.epochs + 1)]
+    if args.plot:
+        # Only import here to save time importing matplotlib only when required
+        from util.plotting import LossPlotter
 
-    # Loss
-    fig1 = plt.figure(1)
-    ax1 = fig1.add_subplot(111)
-    plt.plot(x_axis, train_loss_meter.values[::total_batches], marker='.', color='tab:purple')
-    for x, y in zip(x_axis, train_loss_meter.values[::total_batches]):
-        if x == 1 or x % 25 == 0:
-            ax1.annotate('  ({}, {:.4f})'.format(x, y), xy=(x, y), textcoords='data', fontsize=9)
-    plt.title("Product of Experts: RNA-seq and GCN (gistic2)\nLatent space : {}, LR: {}".format(args.n_latents, args.lr))
-    plt.xlabel("Epochs")
-    plt.ylabel("Average Training Loss")
-    plt.savefig("{}/Loss {}.png".format(save_dir, dt_string), dpi=400)
-
-    # Reconstruction Loss
-    fig2 = plt.figure(2)
-    ax2 = fig2.add_subplot(111)
-    plt.plot(x_axis, train_recon_loss_meter.values[::total_batches], marker='.', color='tab:orange')
-    for x, y in zip(x_axis, train_recon_loss_meter.values[::total_batches]):
-        if x == 1 or x % 25 == 0:
-            ax2.annotate('  ({}, {:.4f})'.format(x, y), xy=(x, y), textcoords='data', fontsize=9)
-    plt.title("Product of Experts: RNA-seq and GCN (gistic2)\nLatent space : {}, LR: {}".format(args.n_latents, args.lr))
-    plt.xlabel("Epochs")
-    plt.ylabel("Average Training Reconstruction Loss")
-    plt.savefig("{}/Recon Loss {}.png".format(save_dir, dt_string), dpi=400)
-
-    # KLD Loss
-    fig3 = plt.figure(3)
-    ax3 = fig3.add_subplot(111)
-    plt.plot(x_axis, train_kld_loss_meter.values[::total_batches], marker='.', color='tab:red')
-    for x, y in zip(x_axis, train_kld_loss_meter.values[::total_batches]):
-        if x == 1 or x % 25 == 0:
-            ax3.annotate('  ({}, {:.4f})'.format(x, y), xy=(x, y), textcoords='data', fontsize=9)
-    plt.title("Product of Experts: RNA-seq and GCN (gistic2)\nLatent space : {}, LR: {}".format(args.n_latents, args.lr))
-    plt.xlabel("Epochs")
-    plt.ylabel("Average Training KLD Loss")
-    plt.savefig("{}/KLD Loss {}.png".format(save_dir, dt_string), dpi=400)
-
-    # Validation Loss
-    fig4 = plt.figure(4)
-    ax4 = fig4.add_subplot(111)
-    plt.plot(x_axis, val_loss_meter.values[::total_val_batches], marker='.', color='tab:purple')
-    for x, y in zip(x_axis, val_loss_meter.values[::total_val_batches]):
-        if x == 1 or x % 25 == 0:
-            ax4.annotate('  ({}, {:.4f})'.format(x, y), xy=(x, y), textcoords='data', fontsize=9)
-    plt.title("Product of Experts: RNA-seq and GCN (gistic2)\nLatent space : {}, LR: {}".format(args.n_latents, args.lr))
-    plt.xlabel("Epochs")
-    plt.ylabel("Average Validation Loss")
-    plt.savefig("{}/Validation Loss {}.png".format(save_dir, dt_string), dpi=400)
-
-    # Validation Reconstruction Loss
-    fig5 = plt.figure(5)
-    ax5 = fig5.add_subplot(111)
-    plt.plot(x_axis, val_recon_loss_meter.values[::total_val_batches], marker='.', color='tab:orange')
-    for x, y in zip(x_axis, val_recon_loss_meter.values[::total_val_batches]):
-        if x == 1 or x % 25 == 0:
-            ax5.annotate('  ({}, {:.4f})'.format(x, y), xy=(x, y), textcoords='data', fontsize=9)
-    plt.title("Product of Experts: RNA-seq and GCN (gistic2)\nLatent space : {}, LR: {}".format(args.n_latents, args.lr))
-    plt.xlabel("Epochs")
-    plt.ylabel("Average Validation Reconstruction Loss")
-    plt.savefig("{}/Validation Recon Loss {}.png".format(save_dir, dt_string), dpi=400)
-
-    # Validation KLD Loss
-    fig6 = plt.figure(6)
-    ax6 = fig6.add_subplot(111)
-    plt.plot(x_axis, val_kld_loss_meter.values[::total_val_batches], marker='.', color='tab:red')
-    for x, y in zip(x_axis, val_kld_loss_meter.values[::total_val_batches]):
-        if x == 1 or x % 25 == 0:
-            ax6.annotate('  ({}, {:.4f})'.format(x, y), xy=(x, y), textcoords='data', fontsize=9)
-    plt.title("Product of Experts: RNA-seq and GCN (gistic2)\nLatent space : {}, LR: {}".format(args.n_latents, args.lr))
-    plt.xlabel("Epochs")
-    plt.ylabel("Average Validation KLD Loss")
-    plt.savefig("{}/Validation KLD Loss {}.png".format(save_dir, dt_string), dpi=400)
+        plotter = LossPlotter(args, save_dir, dt_string)
+        plotter.plot_training_losses(train_loss_meter, train_recon_loss_meter, train_kld_loss_meter, total_batches)
+        plotter.plot_validation_loss(val_loss_meter, val_recon_loss_meter, val_kld_loss_meter, total_val_batches)
