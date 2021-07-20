@@ -423,7 +423,7 @@ if __name__ == "__main__":
 
     if args.plot:
         # Only import here to save time importing matplotlib only when required
-        from util.plotting import LossPlotter
+        from src.util.MVAE_plotting import LossPlotter
 
         plotter = LossPlotter(args, save_dir, dt_string)
         plotter.plot_training_losses(train_loss_meter, train_recon_loss_meter, train_kld_loss_meter, total_batches)

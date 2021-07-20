@@ -28,7 +28,7 @@ class TCGAData(object):
             indices_path (string) : If set, use predefined indices for data split
         """
         # Datafiles are fetched from data folder in project root
-        dirname = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data')
+        dirname = os.path.join(definitions.ROOT_DIR, 'data')
 
         if cancer3types:
             print("Using a predefined split of 3 cancer types")
