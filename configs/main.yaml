@@ -1,5 +1,5 @@
 GLOBAL_PARAMS:
-  name: "default_name"
+  name: "experiment"
   data_path: 'example'
 
 MVAE:

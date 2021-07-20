@@ -4,7 +4,6 @@ from __future__ import absolute_import
 
 import sys
 import os
-import definitions
 
 import numpy as np
 import pandas as pd
@@ -19,7 +18,7 @@ VALID_PARTITIONS = {'train': 0, 'val': 1}
 class TCGAData(object):
     """TCGA Landmarks dataset."""
 
-    def __init__(self, cancer3types=False, save_dir=None, indices_path=None):
+    def __init__(self, root_dir, cancer3types=False, save_dir=None, indices_path=None):
         """
         Datasets are assumed to be pre-processed and have the same ordering of samples
 
@@ -29,7 +28,7 @@ class TCGAData(object):
             indices_path (string) : If set, use predefined indices for data split
         """
         # Datafiles are fetched from data folder in project root
-        dirname = os.path.join(definitions.ROOT_DIR, 'data')
+        dirname = os.path.join(root_dir, 'data')
 
         if cancer3types:
             print("Using a predefined split of 3 cancer types")

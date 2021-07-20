@@ -13,11 +13,17 @@ Authors:
     Bram Pronk               I.B.Pronk@student.tudelft.nl
 """
 import sys
+import os
 
 import argparse
 import yaml
+from datetime import datetime
 
 from src.MVAE.train import run as mvae_model
+import src.util.logger as logger
+
+# This is the Project Root, important that run.py is inside this folder for accurate ROOT_DIR
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Argument Parser
 PARSER = argparse.ArgumentParser(prog='run.py', description="Generic runner for joint data integration models")
@@ -63,7 +69,18 @@ def main() -> None:
             print("Incorrect config.yaml file!")
             print(exc)
 
-    # No specific model set, run all models and end program
+    # Create directory to store all results in
+    now = datetime.now()
+    dt_string = now.strftime("%d-%m-%Y %H:%M:%S")
+    save_dir = os.path.join(ROOT_DIR, 'results', '{} {}'.format(config['GLOBAL_PARAMS']['name'], dt_string))
+    os.makedirs(save_dir)
+    config['GLOBAL_PARAMS']['save_dir'] = save_dir
+    config['GLOBAL_PARAMS']['ROOT_DIR'] = ROOT_DIR
+
+    # Setup save directory for output logging
+    logger.output_file = save_dir
+
+    # If no specific model set, run all models and end program
     if not args.mofa and not args.moe and not args.poe and not args.mvib and not args.cgae:
         run_mofa(config)
         run_mvae(config, mixture=True, product=True)
