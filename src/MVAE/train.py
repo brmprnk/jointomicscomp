@@ -6,9 +6,9 @@ import torch
 import torch.optim as optim
 import torch.nn.functional as F
 
-from definitions import ROOT_DIR
 from src.MVAE.model import MVAE
 import src.MVAE.datasets as datasets
+import src.util.logger as logger
 
 import numpy as np
 
@@ -183,16 +183,11 @@ def run(args) -> None:
     torch.manual_seed(args['random_seed'])
     np.random.seed(args['random_seed'])
 
-    # Current Time for output files
-    now = datetime.now()
-    dt_string = now.strftime("%d-%m-%Y %H:%M:%S")
-
-    # Define saving directory based on root dir
-    save_dir = os.path.join(ROOT_DIR, 'results', '{} {} {}'.format('MoE' if args['mixture'] else 'PoE', args['name'], dt_string))
+    save_dir = os.path.join(args['save_dir'], '{}'.format('MoE' if args['mixture'] else 'PoE'))
     os.makedirs(save_dir)
 
     # Fetch Datasets
-    tcga_data = datasets.TCGAData(cancer3types=args['cancer3'], save_dir=save_dir)
+    tcga_data = datasets.TCGAData(args['ROOT_DIR'], cancer3types=args['cancer3'], save_dir=save_dir)
     train_dataset = tcga_data.get_data_partition("train")
     val_dataset = tcga_data.get_data_partition("val")
 
@@ -206,8 +201,8 @@ def run(args) -> None:
     model = MVAE(use_mixture=args['mixture'], latent_dim=args['latent_dim'], use_cuda=args['cuda'])
 
     # Log Data shape, input arguments and model
-    model_file = open("{}/Model {}.txt".format(save_dir, dt_string), "a")
-    model_file.write("Running at {}\n".format(dt_string))
+    model_file = open("{}/MVAE {} Model.txt".format(save_dir, 'MoE' if args['mixture'] else 'PoE'), "a")
+    model_file.write("Running at {}\n".format(datetime.now().strftime("%d-%m-%Y %H:%M:%S")))
     model_file.write("Input shape : {}, 3000\n".format(len(train_loader.dataset)))
     model_file.write("Input args : {}\n".format(args))
     model_file.write("PoE Model : {}".format(model))
@@ -400,6 +395,6 @@ def run(args) -> None:
         # Only import here to save time importing matplotlib only when required
         from src.util.MVAE_plotting import LossPlotter
 
-        plotter = LossPlotter(args, save_dir, dt_string)
+        plotter = LossPlotter(args, save_dir)
         plotter.plot_training_losses(train_loss_meter, train_recon_loss_meter, train_kld_loss_meter, total_batches)
         plotter.plot_validation_loss(val_loss_meter, val_recon_loss_meter, val_kld_loss_meter, total_val_batches)
