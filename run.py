@@ -17,7 +17,7 @@ import sys
 import yaml
 import argparse
 
-from src.MVAE.train import run as run_MVAE
+from src.MVAE.train import run as mvae_model
 
 # Argument Parser
 PARSER = argparse.ArgumentParser(prog='run.py', description="Generic runner for joint data integration models")
@@ -26,9 +26,21 @@ PARSER.add_argument('--config', '-c',
                     metavar='FILE',
                     help="path to the config file",
                     default='configs/main.yaml')
+PARSER.add_argument('-mofa',
+                    action='store_true',
+                    help="Running Multi-Omics Factor Analysis V2 (MOFA+)")
+PARSER.add_argument('-moe',
+                    action='store_true',
+                    help="Running Mixture-of-Experts MVAE")
 PARSER.add_argument('-poe',
                     action='store_true',
-                    help="Running the Product-of-Experts MVAE")
+                    help="Running Product-of-Experts MVAE")
+PARSER.add_argument('-mvib',
+                    action='store_true',
+                    help="Running Multi-View Information Bottleneck")
+PARSER.add_argument('-cgae',
+                    action='store_true',
+                    help="Running CGAE Model")
 
 
 def main() -> None:
@@ -51,10 +63,56 @@ def main() -> None:
             print("Incorrect config.yaml file!")
             print(exc)
 
+    # No specific model set, run all models and end program
+    if not args.mofa and not args.moe and not args.poe and not args.mvib and not args.cgae:
+        run_mofa(config)
+        run_mvae(config, mixture=True, product=True)
+        run_mvib(config)
+        run_cgae(config)
+        return
+
+    # Run models individually / combined
+    if args.mofa:
+        run_mofa(config)
+
+    if args.moe:
+        run_mvae(config, mixture=True)
+
     if args.poe:
+        run_mvae(config, product=True)
+
+    if args.mvib:
+        run_mvib(config)
+
+    if args.cgae:
+        run_cgae(config)
+
+    return
+
+
+def run_mofa(config: dict) -> None:
+    print("MOFA has not yet been implemented")
+
+
+def run_mvae(config: dict, mixture=False, product=False) -> None:
+    if mixture is True:
+        print("Running Mixture-of-Experts MVAE Model")
+
+        config['MVAE']['mixture'] = True
+        mvae_model({**config['GLOBAL_PARAMS'], **config['MVAE']})
+    if product is True:
         print("Running Product-of-Experts MVAE Model")
-        print({**config['GLOBAL_PARAMS'], **config['MVAE']})
-        run_MVAE({**config['GLOBAL_PARAMS'], **config['MVAE']})
+
+        config['MVAE']['mixture'] = False
+        mvae_model({**config['GLOBAL_PARAMS'], **config['MVAE']})
+
+
+def run_mvib(config: dict) -> None:
+    print("Multi-view Information Bottleneck has not yet been implemented")
+
+
+def run_cgae(config: dict) -> None:
+    print("CGAE has not yet been implemented")
 
 
 if __name__ == '__main__':
