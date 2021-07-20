@@ -14,8 +14,8 @@ Authors:
 """
 import sys
 
-import yaml
 import argparse
+import yaml
 
 from src.MVAE.train import run as mvae_model
 
@@ -91,10 +91,24 @@ def main() -> None:
 
 
 def run_mofa(config: dict) -> None:
+    """
+    Setup and run MOFA+ module.
+
+    @param config: Dictionary containing input parameters
+    @return: None
+    """
     print("MOFA has not yet been implemented")
 
 
 def run_mvae(config: dict, mixture=False, product=False) -> None:
+    """
+    Setup and run MOFA+ module.
+
+    @param config: Dictionary containing input parameters
+    @param mixture: boolean flag that indicates whether the MVAE model is Mixture-of-Experts
+    @param product: boolean flag that indicates whether the MVAE model is Product-of-Experts
+    @return: None
+    """
     if mixture is True:
         print("Running Mixture-of-Experts MVAE Model")
 
@@ -108,10 +122,22 @@ def run_mvae(config: dict, mixture=False, product=False) -> None:
 
 
 def run_mvib(config: dict) -> None:
+    """
+    Setup and run MOFA+ module.
+
+    @param config: Dictionary containing input parameters
+    @return: None
+    """
     print("Multi-view Information Bottleneck has not yet been implemented")
 
 
 def run_cgae(config: dict) -> None:
+    """
+    Setup and run MOFA+ module.
+
+    @param config: Dictionary containing input parameters
+    @return: None
+    """
     print("CGAE has not yet been implemented")
 
 
