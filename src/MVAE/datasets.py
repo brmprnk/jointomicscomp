@@ -4,6 +4,7 @@ from __future__ import absolute_import
 
 import sys
 import os
+import definitions
 
 import numpy as np
 import pandas as pd
