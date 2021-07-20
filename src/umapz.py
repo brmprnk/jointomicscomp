@@ -14,47 +14,49 @@ class UMAP:
 
     def plot_umap(self):
         print("-----   Loading Trained Model   -----")
-        results_dir = "/Users/bram/bachelor-thesis/results/followup_alldata 15-07-2021 14:47:17"
+        results_dir = "/Users/bram/bachelor-thesis/results/3typenoclamp_norecon 16-07-2021 11:37:50"
         data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data')
+        experiment_title = os.path.basename(os.path.normpath(results_dir))
 
         model, checkpoint = load_checkpoint(os.path.join(results_dir, 'best_model.pth.tar'), use_cuda=False)
         model.eval()
 
         if self.cancer3types:
             print("Umap of 3 cancer type model")
+            dirname3types = os.path.join(data_dir, '3typesnoclamp')
             train_dataset = [
                 np.float32(
-                    pd.read_csv(os.path.join(data_dir, '3types', 'RNASeq_3types_training.csv'),
+                    pd.read_csv(os.path.join(dirname3types, 'RNASeq_3types_training.csv'),
                                 index_col=0).to_numpy()),
                 np.float32(
-                    pd.read_csv(os.path.join(data_dir, '3types', 'GCN_3types_training.csv'),
+                    pd.read_csv(os.path.join(dirname3types, 'GCN_3types_training.csv'),
                                 index_col=0).to_numpy()),
                 np.float32(
-                    pd.read_csv(os.path.join(data_dir, '3types', 'DNAMe_3types_training.csv'),
+                    pd.read_csv(os.path.join(dirname3types, 'DNAMe_3types_training.csv'),
                                 index_col=0).to_numpy())
             ]
 
             val_dataset = [
                 np.float32(
-                    pd.read_csv(os.path.join(data_dir, '3types', 'RNASeq_3types_validation.csv'),
+                    pd.read_csv(os.path.join(dirname3types, 'RNASeq_3types_validation.csv'),
                                 index_col=0).to_numpy()),
                 np.float32(
-                    pd.read_csv(os.path.join(data_dir, '3types', 'GCN_3types_validation.csv'),
+                    pd.read_csv(os.path.join(dirname3types, 'GCN_3types_validation.csv'),
                                 index_col=0).to_numpy()),
                 np.float32(
-                    pd.read_csv(os.path.join(data_dir, '3types', 'DNAMe_3types_validation.csv'),
+                    pd.read_csv(os.path.join(dirname3types, 'DNAMe_3types_validation.csv'),
                                 index_col=0).to_numpy())
             ]
 
             predict_dataset = [
                 np.float32(
-                    pd.read_csv(os.path.join(data_dir, '3types', 'RNASeq_3types_predict.csv'),
+                    pd.read_csv(os.path.join(dirname3types, 'RNASeq_3types_predict.csv'),
                                 index_col=0).to_numpy()),
                 np.float32(
-                    pd.read_csv(os.path.join(data_dir, '3types', 'GCN_3types_predict.csv'),
+                    pd.read_csv(os.path.join(dirname3types, 'GCN_3types_predict.csv'),
                                 index_col=0).to_numpy()),
                 np.float32(
-                    pd.read_csv(os.path.join(data_dir, '3types', 'DNAMe_3types_predict.csv'),
+                    pd.read_csv(os.path.join(dirname3types, 'DNAMe_3types_predict.csv'),
                                 index_col=0).to_numpy())
             ]
 
@@ -62,9 +64,9 @@ class UMAP:
             gcn_data = np.vstack((train_dataset[1], val_dataset[1], predict_dataset[1]))
             dna_data = np.vstack((train_dataset[2], val_dataset[2], predict_dataset[2]))
 
-            labels_train = np.load(os.path.join(data_dir, '3types', 'training_3types.npy'))
-            labels_val = np.load(os.path.join(data_dir, '3types', 'validation_3types.npy'))
-            labels_predict = np.load(os.path.join(data_dir, '3types', 'predict_3types.npy'))
+            labels_train = np.load(os.path.join(dirname3types, 'training_3types.npy'))
+            labels_val = np.load(os.path.join(dirname3types, 'validation_3types.npy'))
+            labels_predict = np.load(os.path.join(dirname3types, 'predict_3types.npy'))
             cancer_types_samples = np.concatenate((labels_train, labels_val, labels_predict))
 
             full_dataset = datasets.TCGADataset(rna_data, gcn_data, dna_data)
@@ -72,16 +74,17 @@ class UMAP:
             # 1 batch for all data
             data_loader = torch.utils.data.DataLoader(full_dataset, batch_size=len(full_dataset), shuffle=False)
 
-            title = "{} of Experts 3 Cancer Types (BRCA, KIRC, LUAD) Latent Space: \n" \
+            title = "Product of Experts 3 Cancer Types (BRCA, KIRC, LUAD) Latent Space: \n" \
                     "Epochs : {}, Batch size : {}, Latent space : {}, LR: {}"\
-                .format("Mixture" if model.use_mixture else "Product", checkpoint['epochs'], checkpoint['batch_size'], model.latent_dim, checkpoint['lr'])
+                .format(checkpoint['epochs'], checkpoint['batch_size'], model.latent_dim, checkpoint['lr'])
             save_dir = "/Users/bram/Desktop/followup_UMAP"
-            save_file = "{}/UMAP {} 3 Cancer Types E{} Dim{} LR{}.png"\
-                .format(save_dir, "Mixture" if model.use_mixture else "Product", checkpoint['epochs'], model.latent_dim, checkpoint['lr'])
+            save_file = "{}/UMAP {} E{} Dim{} LR{}.png"\
+                .format(save_dir, experiment_title, checkpoint['epochs'], model.latent_dim, checkpoint['lr'])
             background = "black"
             color_key_cmap = "Paired"
 
         else:
+            print("Umap of all cancer types model")
             tcga_data = datasets.TCGAData(indices_path=results_dir)
             cancer_types_samples = np.load(os.path.join(data_dir, 'shuffle_cancertype_labels.npy'))
 
@@ -92,10 +95,10 @@ class UMAP:
 
             title = "{} of Experts Full TCGA Data Latent Space: \n" \
                     "Epochs : {}, Batch size : {}, Latent space : {}, LR: {}"\
-                .format("Mixture" if model.use_mixture else "Product", checkpoint['epochs'], checkpoint['batch_size'], model.latent_dim, checkpoint['lr'])
+                .format("Product", checkpoint['epochs'], checkpoint['batch_size'], model.latent_dim, checkpoint['lr'])
             save_dir = "/Users/bram/Desktop/followup_UMAP"
-            save_file = "{}/UMAP {} All Data E{} Dim{} LR{}.png"\
-                .format(save_dir, "Mixture" if model.use_mixture else "Product", checkpoint['epochs'], model.latent_dim, checkpoint['lr'])
+            save_file = "{}/UMAP {} E{} Dim{} LR{}.png"\
+                .format(save_dir, experiment_title, checkpoint['epochs'], model.latent_dim, checkpoint['lr'])
             background = "white"
             color_key_cmap = "Spectral"
 
@@ -130,5 +133,5 @@ class UMAP:
 
 
 if __name__ == "__main__":
-    umap_plotter = UMAP(cancer3=False)
+    umap_plotter = UMAP(cancer3=True)
     umap_plotter.plot_umap()
