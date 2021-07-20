@@ -8,7 +8,7 @@ from torch.autograd import Variable
 
 
 class MVAE(nn.Module):
-    def __init__(self, use_mixture, latent_dim=100, use_cuda=False):
+    def __init__(self, use_mixture=False, latent_dim=100, use_cuda=False):
         super(MVAE, self).__init__()
         # define q(z|x_i) for i = 1...2
         self.rna_encoder = Encoder(latent_dim)

@@ -119,7 +119,7 @@ class AverageMeter(object):
         self.sum = 0
         self.count = 0
         self.name = name
-        self.epochs = 50
+        self.epochs = 100
         self.values = []
         self.reconstruct_losses = {
             "average": [],
@@ -167,9 +167,9 @@ def load_checkpoint(file_path, use_cuda=False):
     checkpoint = torch.load(file_path) if use_cuda else \
         torch.load(file_path, map_location=lambda storage, location: storage)
 
-    model = MVAE(use_mixture=checkpoint['use_mixture'], latent_dim=checkpoint['latent_dim'])
-    model.load_state_dict(checkpoint['state_dict'])
-    return model, checkpoint
+    trained_model = MVAE(use_mixture=checkpoint['use_mixture'], latent_dim=checkpoint['latent_dim'])
+    trained_model.load_state_dict(checkpoint['state_dict'])
+    return trained_model, checkpoint
 
 
 if __name__ == "__main__":
@@ -221,7 +221,7 @@ if __name__ == "__main__":
     train_dataset = tcga_data.get_data_partition("train")
     val_dataset = tcga_data.get_data_partition("val")
 
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=False)
     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=len(val_dataset), shuffle=False)  # (1 batch)
 
     total_batches = len(train_loader)
@@ -345,27 +345,27 @@ if __name__ == "__main__":
             #     # by default the KL annealing factor is unity
             #     annealing_factor = 1.0
 
-            # compute reconstructions using each of the individual modalities (for results)
-            (rna_recon_rna, rna_recon_gcn, rna_recon_dna, rna_mu, rna_logvar) = model(rna=rna)
-
-            (gcn_recon_rna, gcn_recon_gcn, gcn_recon_dna, gcn_mu, gcn_logvar) = model(gcn=gcn)
-
-            (dna_recon_rna, dna_recon_gcn, dna_recon_dna, dna_mu, dna_logvar) = model(dna=dna)
-
-            reconstruction_loss_function("rna", val_recon_loss_meter, rna_recon_rna, rna,
-                                         rna_recon_gcn, gcn,
-                                         rna_recon_dna, dna)
-
-            reconstruction_loss_function("gcn", val_recon_loss_meter, gcn_recon_rna, rna,
-                                         gcn_recon_gcn, gcn,
-                                         gcn_recon_dna, dna)
-
-            reconstruction_loss_function("dna", val_recon_loss_meter, dna_recon_rna, rna,
-                                         dna_recon_gcn, gcn,
-                                         dna_recon_dna, dna)
+            # # compute reconstructions using each of the individual modalities (for results)
+            # (rna_recon_rna, rna_recon_gcn, rna_recon_dna, rna_mu, rna_logvar) = model(rna=rna)
+            #
+            # (gcn_recon_rna, gcn_recon_gcn, gcn_recon_dna, gcn_mu, gcn_logvar) = model(gcn=gcn)
+            #
+            # (dna_recon_rna, dna_recon_gcn, dna_recon_dna, dna_mu, dna_logvar) = model(dna=dna)
+            #
+            # reconstruction_loss_function("rna", val_recon_loss_meter, rna_recon_rna, rna,
+            #                              rna_recon_gcn, gcn,
+            #                              rna_recon_dna, dna)
+            #
+            # reconstruction_loss_function("gcn", val_recon_loss_meter, gcn_recon_rna, rna,
+            #                              gcn_recon_gcn, gcn,
+            #                              gcn_recon_dna, dna)
+            #
+            # reconstruction_loss_function("dna", val_recon_loss_meter, dna_recon_rna, rna,
+            #                              dna_recon_gcn, gcn,
+            #                              dna_recon_dna, dna)
 
             # for ease, only compute the joint loss in validation
-            (joint_recon_rna, joint_recon_gcn, joint_recon_dna, joint_mu, joint_logvar) = model(rna, gcn)
+            (joint_recon_rna, joint_recon_gcn, joint_recon_dna, joint_mu, joint_logvar) = model(rna, gcn, dna)
 
             kld_weight = len(rna) / len(val_loader.dataset)  # Account for the minibatch samples from the dataset
 

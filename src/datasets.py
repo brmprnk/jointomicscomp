@@ -32,39 +32,40 @@ class TCGAData(object):
 
         if cancer3types:
             print("Using a predefined split of 3 cancer types")
+            dirname3types = os.path.join(dirname, '3typesnoclamp')
             train_dataset = [
                 np.float32(
-                    pd.read_csv(os.path.join(dirname, '3types', 'RNASeq_3types_training.csv'),
+                    pd.read_csv(os.path.join(dirname3types, 'RNASeq_3types_training.csv'),
                                 index_col=0).to_numpy()),
                 np.float32(
-                    pd.read_csv(os.path.join(dirname, '3types', 'GCN_3types_training.csv'),
+                    pd.read_csv(os.path.join(dirname3types, 'GCN_3types_training.csv'),
                                 index_col=0).to_numpy()),
                 np.float32(
-                    pd.read_csv(os.path.join(dirname, '3types', 'DNAMe_3types_training.csv'),
+                    pd.read_csv(os.path.join(dirname3types, 'DNAMe_3types_training.csv'),
                                 index_col=0).to_numpy())
             ]
 
             val_dataset = [
                 np.float32(
-                    pd.read_csv(os.path.join(dirname, '3types', 'RNASeq_3types_validation.csv'),
+                    pd.read_csv(os.path.join(dirname3types, 'RNASeq_3types_validation.csv'),
                                 index_col=0).to_numpy()),
                 np.float32(
-                    pd.read_csv(os.path.join(dirname, '3types', 'GCN_3types_validation.csv'),
+                    pd.read_csv(os.path.join(dirname3types, 'GCN_3types_validation.csv'),
                                 index_col=0).to_numpy()),
                 np.float32(
-                    pd.read_csv(os.path.join(dirname, '3types', 'DNAMe_3types_validation.csv'),
+                    pd.read_csv(os.path.join(dirname3types, 'DNAMe_3types_validation.csv'),
                                 index_col=0).to_numpy())
             ]
 
             predict_dataset = [
                 np.float32(
-                    pd.read_csv(os.path.join(dirname, '3types', 'RNASeq_3types_predict.csv'),
+                    pd.read_csv(os.path.join(dirname3types, 'RNASeq_3types_predict.csv'),
                                 index_col=0).to_numpy()),
                 np.float32(
-                    pd.read_csv(os.path.join(dirname, '3types', 'GCN_3types_predict.csv'),
+                    pd.read_csv(os.path.join(dirname3types, 'GCN_3types_predict.csv'),
                                 index_col=0).to_numpy()),
                 np.float32(
-                    pd.read_csv(os.path.join(dirname, '3types', 'DNAMe_3types_predict.csv'),
+                    pd.read_csv(os.path.join(dirname3types, 'DNAMe_3types_predict.csv'),
                                 index_col=0).to_numpy())
             ]
 
@@ -84,17 +85,17 @@ class TCGAData(object):
 
         else:
             # RNA-seq
-            rna_file = os.path.join(dirname, 'shuffle_clamped_RNASeq_3000MAD.csv')
+            rna_file = os.path.join(dirname, 'shuffle_RNASeq_3000MAD.csv')
             self.rna_data = pd.read_csv(rna_file, usecols=range(1, 3001))
             print("-----   RNA file read   -----")
 
             # Gene Copy Number
-            gcn_file = os.path.join(dirname, 'shuffle_clamped_GCN_3000MAD.csv')
+            gcn_file = os.path.join(dirname, 'shuffle_GCN_3000MAD.csv')
             self.gcn_data = pd.read_csv(gcn_file, usecols=range(1, 3001))
             print("-----   GCN file read   -----")
 
             # DNA Methylation
-            dna_file = os.path.join(dirname, 'shuffle_clamped_DNAMe_3000MAD.csv')
+            dna_file = os.path.join(dirname, 'shuffle_DNAMe_3000MAD.csv')
             self.dna_data = pd.read_csv(dna_file, usecols=range(1, 3001))
             print("-----   DNA file read   -----")
 
