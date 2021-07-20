@@ -15,7 +15,7 @@ class UMAP:
     def plot_umap(self):
         print("-----   Loading Trained Model   -----")
         results_dir = "/Users/bram/bachelor-thesis/results/3typenoclamp_norecon 16-07-2021 11:37:50"
-        data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data')
+        data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../..', 'data')
         experiment_title = os.path.basename(os.path.normpath(results_dir))
 
         model, checkpoint = load_checkpoint(os.path.join(results_dir, 'best_model.pth.tar'), use_cuda=False)

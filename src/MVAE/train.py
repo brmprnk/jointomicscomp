@@ -6,8 +6,9 @@ import torch
 import torch.optim as optim
 import torch.nn.functional as F
 
-from model import MVAE
-import datasets as datasets
+from definitions import ROOT_DIR
+from src.MVAE.model import MVAE
+import src.MVAE.datasets as datasets
 
 import numpy as np
 
@@ -172,63 +173,37 @@ def load_checkpoint(file_path, use_cuda=False):
     return trained_model, checkpoint
 
 
-if __name__ == "__main__":
-    import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-mixture', action='store_true',
-                        help='Use Mixture-of-Experts instead of Product-of-Experts')
-    parser.add_argument('-plot', action='store_true',
-                        help='Create plots of the training and validation losses')
-    parser.add_argument('-cancer3', action='store_true',
-                        help='Indicate usage of only three cancer types for faster processing')
-    parser.add_argument('--experiment', type=str, default="",
-                        help='Name of the experiment being conducted for saving purposes')
-    parser.add_argument('--n-latents', type=int, default=128,
-                        help='size of the latent embedding (default: 128)')
-    parser.add_argument('--batch-size', type=int, default=256, metavar='N',
-                        help='input batch size for training (default: 256)')
-    parser.add_argument('--epochs', type=int, default=50, metavar='N',
-                        help='number of epochs to train (default: 50)')
-    parser.add_argument('--lr', type=float, default=1e-4, metavar='LR',
-                        help='learning rate (default: 1e-4)')
-    parser.add_argument('--log-interval', type=int, default=5, metavar='N',
-                        help='how many batches to wait before logging training status (default: 5)')
-    parser.add_argument('--cuda', action='store_true', default=False,
-                        help='enables CUDA training')
-    parser.add_argument('--seed', type=int, default=1,
-                        help='random seed (default: 1)')
+def run(args) -> None:
 
-    args = parser.parse_args()
-    args.cuda = args.cuda and torch.cuda.is_available()
+    args['cuda'] = args['cuda'] and torch.cuda.is_available()
 
     # random seed
     # https://pytorch.org/docs/stable/notes/randomness.html
     torch.backends.cudnn.benchmark = True
-    torch.manual_seed(args.seed)
-    np.random.seed(args.seed)
+    torch.manual_seed(args['random_seed'])
+    np.random.seed(args['random_seed'])
 
     # Current Time for output files
     now = datetime.now()
     dt_string = now.strftime("%d-%m-%Y %H:%M:%S")
 
-    # Define saving directory based on root dir (which contains a README)
-    ROOT_DIR = os.path.dirname(os.path.abspath("README.md"))
-    save_dir = os.path.join(ROOT_DIR, 'results', '{} {}'.format(args.experiment, dt_string))
+    # Define saving directory based on root dir
+    save_dir = os.path.join(ROOT_DIR, 'results', '{} {} {}'.format('MoE' if args['mixture'] else 'PoE', args['name'], dt_string))
     os.makedirs(save_dir)
 
     # Fetch Datasets
-    tcga_data = datasets.TCGAData(cancer3types=args.cancer3, save_dir=save_dir)
+    tcga_data = datasets.TCGAData(cancer3types=args['cancer3'], save_dir=save_dir)
     train_dataset = tcga_data.get_data_partition("train")
     val_dataset = tcga_data.get_data_partition("val")
 
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=False)
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args['batch_size'], shuffle=False)
     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=len(val_dataset), shuffle=False)  # (1 batch)
 
     total_batches = len(train_loader)
     total_val_batches = len(val_loader)  # Should be 1
 
     # Setup and log model
-    model = MVAE(use_mixture=args.mixture, latent_dim=args.n_latents, use_cuda=args.cuda)
+    model = MVAE(use_mixture=args['mixture'], latent_dim=args['latent_dim'], use_cuda=args['cuda'])
 
     # Log Data shape, input arguments and model
     model_file = open("{}/Model {}.txt".format(save_dir, dt_string), "a")
@@ -239,9 +214,9 @@ if __name__ == "__main__":
     model_file.close()
 
     # Preparation for training
-    optimizer = optim.Adam(model.parameters(), lr=args.lr)
+    optimizer = optim.Adam(model.parameters(), lr=args['lr'])
 
-    if args.cuda:
+    if args['cuda']:
         model.cuda()
 
     def train(epoch, train_loss_meter, train_recon_loss_meter, train_kld_loss_meter):
@@ -324,7 +299,7 @@ if __name__ == "__main__":
             progress_bar.update()
 
         progress_bar.close()
-        if epoch % args.log_interval == 0:
+        if epoch % args['log_interval'] == 0:
             print('====> Epoch: {}\tLoss: {:.4f}'.format(epoch, train_loss_meter.avg))
             print('====> Epoch: {}\tReconstruction Loss: {:.4f}'.format(epoch, train_recon_loss_meter.avg))
             print('====> Epoch: {}\tKLD Loss: {:.4f}'.format(epoch, train_kld_loss_meter.avg))
@@ -381,7 +356,7 @@ if __name__ == "__main__":
 
             test_loss += joint_test_loss['loss']
 
-        if epoch % args.log_interval == 0:
+        if epoch % args['log_interval'] == 0:
             print('====> Test Loss: {:.4f}'.format(test_loss))
             print('====> Test Loss: {}\tLoss: {:.4f}'.format(epoch, val_loss_meter.avg))
             print('====> Test Loss: {}\tReconstruction Loss: {:.4f}'.format(epoch, val_recon_loss_meter.avg))
@@ -396,20 +371,20 @@ if __name__ == "__main__":
     val_loss_meter = AverageMeter("Validation Loss")
     val_recon_loss_meter = AverageMeter("Validation Reconstruction Loss")
     val_kld_loss_meter = AverageMeter("Validation KLD Loss")
-    for epoch in range(1, args.epochs + 1):
+    for epoch in range(1, args['epochs'] + 1):
         train(epoch, train_loss_meter, train_recon_loss_meter, train_kld_loss_meter)
         latest_loss = test(epoch, val_loss_meter, val_recon_loss_meter, val_kld_loss_meter)
 
         # Save the last model
-        if epoch == args.epochs:
+        if epoch == args['epochs']:
             save_checkpoint({
                 'state_dict': model.state_dict(),
                 'best_loss': latest_loss,
-                'latent_dim': args.n_latents,
-                'epochs': args.epochs,
-                'lr': args.lr,
-                'batch_size': args.batch_size,
-                'use_mixture': args.mixture,
+                'latent_dim': args['latent_dim'],
+                'epochs': args['epochs'],
+                'lr': args['lr'],
+                'batch_size': args['batch_size'],
+                'use_mixture': args['mixture'],
                 'optimizer': optimizer.state_dict(),
             }, True, save_dir)
 
@@ -421,9 +396,9 @@ if __name__ == "__main__":
             np.save("{}/Recon array {}.npy".format(save_dir, key),
                     np.array(val_recon_loss_meter.reconstruct_losses[key]))
 
-    if args.plot:
+    if args['plot']:
         # Only import here to save time importing matplotlib only when required
-        from util.plotting import LossPlotter
+        from src.util.MVAE_plotting import LossPlotter
 
         plotter = LossPlotter(args, save_dir, dt_string)
         plotter.plot_training_losses(train_loss_meter, train_recon_loss_meter, train_kld_loss_meter, total_batches)
