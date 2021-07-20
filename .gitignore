@@ -1,3 +1,19 @@
+# .gitignore for Joint omics comparison repository
+# Don't track the content of these folders
+/idea
+*__pycache__*
+/experiments
+.ipynb_checkpoints/
+/data
+/results
+
+# Don't track these files
+.DS_Store
+.idea
+*.pyc
+.Rhistory
+
+# Standard .gitignore template for Python projects
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
