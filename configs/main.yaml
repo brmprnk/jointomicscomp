@@ -1,6 +1,35 @@
 GLOBAL_PARAMS:
   name: "experiment"
-  data_path: 'example'
+  data_path1: 'example1'
+  data_path2: 'example2'
+  cuda: false
+  random_seed: 1
+
+MOFA+:
+  # Data options
+  mofa_data_path: ""           # MOFA requires different view of the input data
+  scale_groups: false          # if groups have significantly different ranges, it is good practice to scale each group to unit variance
+  scale_views: false           # if views have significantly different ranges, it is good practice to scale each view to unit variance
+
+  # Model options
+  factors: 10
+  likelihoods: None            # likelihoods per view (options are "gaussian","poisson","bernoulli").
+                               #     Default is None, and they are infered automatically
+  spikeslab_weights: false     # use spike-slab sparsity prior in the weights? (recommended TRUE)
+  ard_factors: false           # use ARD prior in the factors? (TRUE if using multiple groups)
+  ard_weights: true            # use ARD prior in the weights? (TRUE if using multiple views)
+  save_data: false             # boolean indicating whether to save the training data in the hdf5 file.
+                               #     this is useful for some downstream analysis in R, but it can take a lot of disk space.
+
+  # Training options
+  iterations: 100              # number of iterations
+  convergence_mode: "medium"   # (options are "fast", "medium", "slow"). For exploration, the fast mode is good enough.
+  startELBO: 1                 # initial iteration to compute the ELBO (the objective function used to assess convergence)
+  freqELBO: 1                  # frequency of computations of the ELBO (the objective function used to assess convergence)
+  dropR2: None                 # minimum variance explained criteria to drop factors while training.
+                               #     Default is None, inactive factors are not dropped during training
+  verbose: false               # Verbose mode (will print, not log)
+
 
 MVAE:
   # Flags
@@ -16,5 +45,3 @@ MVAE:
 
   # Other parameters
   log_interval: 5
-  cuda: false
-  random_seed: 1

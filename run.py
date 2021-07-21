@@ -19,6 +19,7 @@ import argparse
 import yaml
 from datetime import datetime
 
+from src.MOFA2.mofa import run as mofa2
 from src.MVAE.train import run as mvae_model
 import src.util.logger as logger
 
@@ -114,7 +115,8 @@ def run_mofa(config: dict) -> None:
     @param config: Dictionary containing input parameters
     @return: None
     """
-    print("MOFA has not yet been implemented")
+    mofa2({**config['GLOBAL_PARAMS'], **config['MOFA+']})
+
 
 
 def run_mvae(config: dict, mixture=False, product=False) -> None:
