@@ -15,7 +15,7 @@ INPUT_FILE_NAME = "80split_shuffle_MOFA_DATA.csv"
 OUTPUT_FILE_NAME = "80Split_Shuffledsamples_Trained_MOFA_{}Factors.hdf5".format(NUM_FACTORS)
 
 # # Assumes data is found in the current working directory's /data folder
-input_data_path = os.path.join(os.getcwd(), "data", INPUT_FILE_NAME)
+input_data_path = os.path.join(os.getcwd(), "../../data", INPUT_FILE_NAME)
 output_data_path = os.path.join(os.getcwd(), "trained_models", OUTPUT_FILE_NAME)
 
 ######################################################
