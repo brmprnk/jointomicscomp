@@ -8,6 +8,8 @@ reconstruction loss.
 """
 import os
 import pandas as pd
+import rpy2.robjects as robjects
+import rpy2.robjects.packages as rpackages
 from sklearn.metrics import mean_squared_error
 from tqdm import tqdm
 import numpy as np
@@ -33,6 +35,10 @@ def run(args: dict) -> None:
     train_mofa(args, output_file)
 
     # Do computations in R
+    downstream_mofa(save_dir, output_file)
+
+    # Calculate reconstruction loss
+    reconstruction_loss(args, save_dir)
 
 
 def train_mofa(args: dict, output_model: str) -> None:
@@ -143,23 +149,71 @@ def train_mofa(args: dict, output_model: str) -> None:
     ent.save(output_model, save_data=args['save_data'])
 
 
-def reconstruction_loss(args: dict) -> None:
+def downstream_mofa(save_dir: str, model_file: str) -> None:
+    """
+    Perform R based code here in Python.
+    Documentation: https://rpy2.github.io/doc/v2.9.x/html/introduction.html
+
+    @param save_dir:   path to directory where factors and weights should be saved
+    @param model_file: path to trained model
+
+    @return: None
+    """
+    # import R's "base" package
+    rpackages.importr('base')
+
+    # import R's "utils" package
+    utils = rpackages.importr('utils')
+
+    # select a mirror for R packages
+    utils.chooseCRANmirror(ind=1)  # select the first mirror in the list
+
+    # MOFA required R package names
+    package_names = ('ggplot2', 'MOFA2')
+
+    # R vector of strings
+    from rpy2.robjects.vectors import StrVector
+
+    # Selectively install what needs to be installed
+    names_to_install = [x for x in package_names if not rpackages.isinstalled(x)]
+    if len(names_to_install) > 0:
+        utils.install_packages(StrVector(names_to_install))
+
+    robjects.r('''
+            # create a function `f` that saves model factors and weights
+            save_z <- function(save_dir, model_path, verbose=FALSE) {
+                trained_model <- (model_path)
+
+                model <- load_model(trained_model, remove_inactive_factors = F)
+                
+                Z = get_expectations(model, "Z", as.data.frame = TRUE)
+                W = get_expectations(model, "W", as.data.frame = TRUE)
+                write.csv(Z, paste(save_dir, "Z.csv", sep="/"), row.names = FALSE)
+                write.csv(W, paste(save_dir, "W.csv", sep="/"), row.names = FALSE)
+            }
+            ''')
+
+    r_save_z = robjects.globalenv['save_z']
+
+    # Save model factors and weights (Z and W)
+    r_save_z(save_dir, model_file)
+
+
+def reconstruction_loss(args: dict, save_dir: str) -> None:
     """
     Calculating the reconstruction loss using the trained model and input data
 
     @param args:         Dictionary containing input parameters
+    @param save_dir:   path to directory where factors and weights should be saved
+
     @return: None
     """
 
-    result_output_path = "/Users/bram/rp-group-21-bpronk/results/80split_recon_loss.npy"
+    global W_omic1, W_omic2
 
-    print("Reading original data...")
+    logger.info("Reading original data...")
     omic_data1 = pd.read_csv(args['data_path1'], index_col=0)
-    omic_data2 = pd.read_csv(args['data_path1'], index_col=0)
-
-    trained_indices = np.load("/Users/bram/rp-group-21-bpronk/data/80split_shuffle_MOFA_DATA_indices.npy")
-    omic_data1 = omic_data1.iloc[trained_indices]
-    omic_data2 = omic_data2.iloc[trained_indices]
+    omic_data2 = pd.read_csv(args['data_path2'], index_col=0)
 
     logger.info("Omic data 1 shape {}".format(omic_data1.shape))
     logger.info("Omic data 2 shape {}".format(omic_data2.shape))
@@ -171,8 +225,9 @@ def reconstruction_loss(args: dict) -> None:
 
     # Y = WZ = 5000 * 9992 : Features on rows, Samples on columns
 
-    W = pd.read_csv("/Users/bram/rp-group-21-bpronk/data/80split_shuffle_W.csv")
-    Z = pd.read_csv("/Users/bram/rp-group-21-bpronk/data/80split_shuffle_Z.csv")
+    logger.info("Fetching MOFA+ Z and W")
+    W = pd.read_csv(os.path.join(save_dir, "W.csv"))
+    Z = pd.read_csv(os.path.join(save_dir, "Z.csv"))
 
     # Get Z matrix
     unique_factors = np.unique(Z['factor'].values)
@@ -185,63 +240,48 @@ def reconstruction_loss(args: dict) -> None:
     Z = np.matrix(z_matrix)
 
     # Get W matrix for each modality
-    W_RNA = W.loc[W['view'] == "RNA-seq"]
-    W_GCN = W.loc[W['view'] == "GENE CN"]
-    W_DNA = W.loc[W['view'] == "DNA"]
+    try:
+        W_omic1 = W.loc[W['view'] == "RNA-seq"]
+        W_omic2 = W.loc[W['view'] == "GENE CN"]
+    except (ValueError, Exception) as e:
+        logger.error(e)
+        logger.error("Probably setup the wrong view names in MOFA+ reconstruction loss.")
 
-    unique_features_rna = W_RNA['feature'].values[::10]
+    unique_features_rna = W_omic1['feature'].values[::10]
     matrix = []
     for i in tqdm(range(unique_features_rna.shape[0])):
-        matrix.append(W_RNA['value'].loc[W_RNA['feature'] == unique_features_rna[i]])
+        matrix.append(W_omic1['value'].loc[W_omic1['feature'] == unique_features_rna[i]])
 
-    W_RNA = np.matrix(matrix)
+    W_omic1 = np.matrix(matrix)
 
-    unique_features_gcn = W_GCN['feature'].values[::10]
+    unique_features_gcn = W_omic2['feature'].values[::10]
     matrix = []
     for i in tqdm(range(unique_features_gcn.shape[0])):
-        matrix.append(W_GCN['value'].loc[W_GCN['feature'] == unique_features_gcn[i]])
+        matrix.append(W_omic2['value'].loc[W_omic2['feature'] == unique_features_gcn[i]])
 
-    W_GCN = np.matrix(matrix)
+    W_omic2 = np.matrix(matrix)
 
-    unique_features_dna = W_DNA['feature'].values[::10]
-    matrix = []
-    for i in tqdm(range(unique_features_dna.shape[0])):
-        matrix.append(W_DNA['value'].loc[W_DNA['feature'] == unique_features_dna[i]])
-
-    W_DNA = np.matrix(matrix)
-
-    print(W_RNA.shape, Z.shape)
-    print(W_GCN.shape, Z.shape)
-    print(W_DNA.shape, Z.shape)
+    print(W_omic1.shape, Z.shape)
+    print(W_omic2.shape, Z.shape)
 
     # Now get original values back (Y = WZ)
-    Y_RNA = np.matmul(W_RNA, Z)
-    Y_GCN = np.matmul(W_GCN, Z)
-    Y_DNA = np.matmul(W_DNA, Z)
+    Y_omic1 = np.matmul(W_omic1, Z)
+    Y_omic2 = np.matmul(W_omic2, Z)
 
     # Get back in the form of original data
-    Y_RNA = Y_RNA.transpose()
-    Y_GCN = Y_GCN.transpose()
-    Y_DNA = Y_DNA.transpose()
+    Y_omic1 = Y_omic1.transpose()
+    Y_omic2 = Y_omic2.transpose()
 
-    print(Y_RNA)
-    print(Y_RNA.shape)
-    print(Y_GCN)
-    print(Y_GCN.shape)
-    print(Y_DNA)
-    print(Y_DNA.shape)
+    logger.info("Reconstructed data for omic 1 shape: {}".format(Y_omic1.shape))
+
+    logger.info("Reconstructed data for omic 2 shape: {}".format(Y_omic2.shape))
 
     # input, predict
-    rna_recon_loss = mean_squared_error(RNA_DATA.values, Y_RNA)
-    print("RNA Reconstruction loss = ", rna_recon_loss)
+    rna_recon_loss = mean_squared_error(omic_data1.values, Y_omic1)
 
     # input, predict
-    gcn_recon_loss = mean_squared_error(GCN_DATA.values, Y_GCN)
-    print("GCN Reconstruction loss = ", gcn_recon_loss)
+    gcn_recon_loss = mean_squared_error(omic_data2.values, Y_omic2)
 
-    # input, predict
-    dna_recon_loss = mean_squared_error(DNA_DATA.values, Y_GCN)
-    print("DNA Reconstruction loss = ", dna_recon_loss)
-
-    result = np.array([rna_recon_loss, gcn_recon_loss, dna_recon_loss])
-    np.save(result_output_path, result)
+    result = np.array([rna_recon_loss, gcn_recon_loss])
+    np.save(os.path.join(save_dir, "recon_loss.npy"), result)
+    logger.success("MOFA+ Reconstruction losses: {}".format(result))
