@@ -1,10 +1,9 @@
-import os
 import torch
 import torch.nn as nn
 import numpy as np
 from torch.optim import Optimizer
 
-from utils.modules import Encoder, OmicsEncoder
+from src.MVIB.utils.modules import Encoder, OmicsEncoder
 
 import torch.optim as optimizer_module
 

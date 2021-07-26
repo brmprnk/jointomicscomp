@@ -1,5 +1,5 @@
-from utils.modules import MIEstimator
-from training.base import RepresentationTrainer
+from src.MVIB.utils.modules import MIEstimator
+from src.MVIB.training.base import RepresentationTrainer
 
 
 ######################

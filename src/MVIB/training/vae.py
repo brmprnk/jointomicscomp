@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 from torch.distributions import Normal, Independent
 
-from utils.modules import Decoder
-from training.base import RepresentationTrainer
-from utils.schedulers import ExponentialScheduler
+from src.MVIB.utils.modules import Decoder
+from src.MVIB.training.base import RepresentationTrainer
+from src.MVIB.utils.schedulers import ExponentialScheduler
 
 
 ###############

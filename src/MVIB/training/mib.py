@@ -1,45 +1,19 @@
-from training.multiview_infomax import MVInfoMaxTrainer
-from training.base import MultiModalRepresentationTrainer
-from utils.schedulers import ExponentialScheduler
-from utils.modules import MIEstimator
+from src.MVIB.training.multiview_infomax import MVInfoMaxTrainer
+from src.MVIB.utils.schedulers import ExponentialScheduler
 
 
-
-####################
-# OmicsMIB Trainer #
-####################
-
-# the same as the MIBTrainer, but uses
-# two different encoders with different sizes and parameters
-
-class OmicsMIBTrainer(MultiModalRepresentationTrainer):
-	def __init__(self, miest_lr, beta_start_value=1e-3, beta_end_value=1,
+###############
+# MIB Trainer #
+###############
+class MIBTrainer(MVInfoMaxTrainer):
+	def __init__(self, beta_start_value=1e-3, beta_end_value=1,
 				 beta_n_iterations=100000, beta_start_iteration=50000, **params):
 		# The neural networks architectures and initialization procedure is analogous to Multi-View InfoMax
-		super(OmicsMIBTrainer, self).__init__(**params)
-
-		# Initialization of the mutual information estimation network
-		self.mi_estimator = MIEstimator(self.z_dim, self.z_dim)
-
-		# Adding the parameters of the estimator to the optimizer
-		self.opt.add_param_group(
-			{'params': self.mi_estimator.parameters(), 'lr': miest_lr}
-		)
-
+		super(MIBTrainer, self).__init__(**params)
 
 		# Definition of the scheduler to update the value of the regularization coefficient beta over time
 		self.beta_scheduler = ExponentialScheduler(start_value=beta_start_value, end_value=beta_end_value,
 												   n_iterations=beta_n_iterations, start_iteration=beta_start_iteration)
-
-
-	def _get_items_to_store(self):
-		items_to_store = super(OmicsMIBTrainer, self)._get_items_to_store()
-
-		# Add the mutual information estimator parameters to items_to_store
-		items_to_store['mi_estimator'] = self.mi_estimator.state_dict()
-		return items_to_store
-
-
 
 	def _compute_loss(self, data):
 		# Read the two views v1 and v2 and ignore the label y
@@ -67,14 +41,11 @@ class OmicsMIBTrainer(MultiModalRepresentationTrainer):
 		beta = self.beta_scheduler(self.iterations)
 
 		# Logging the components
-		self._add_loss_item('loss/I_z1_z2_est', mi_estimation.item())
+		self._add_loss_item('loss/I_z1_z2', mi_estimation.item())
 		self._add_loss_item('loss/SKL_z1_z2', skl.item())
 		self._add_loss_item('loss/beta', beta)
-		self._add_loss_item('loss/I_z1_z2_loss', mi_gradient.item())
-		self._add_loss_item('loss/b* SKL_z1_z2', beta * skl.item())
 
 		# Computing the loss function
 		loss = - mi_gradient + beta * skl
-		self._add_loss_item('loss/total_L', loss.item())
 
 		return loss

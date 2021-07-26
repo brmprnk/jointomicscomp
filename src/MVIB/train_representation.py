@@ -2,14 +2,11 @@ import os
 import yaml
 import argparse
 from tqdm import tqdm
-from torchvision.datasets import MNIST
-from torchvision.transforms import Compose, RandomAffine, ToTensor
 from torch.utils.data import DataLoader
 
-from utils.data import MultiOmicsDataset, SingleOmicsDataset
-from utils.evaluation import evaluate, split
-import training as training_module
-
+from src.MVIB.utils.data import MultiOmicsDataset, SingleOmicsDataset
+from src.MVIB.utils.evaluation import evaluate, split
+from src.MVIB import training as training_module
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--experiment-dir", type=str,
