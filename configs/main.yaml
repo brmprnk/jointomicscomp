@@ -1,7 +1,8 @@
 GLOBAL_PARAMS:
   name: "experiment"
-  data_path1: 'example1'
-  data_path2: 'example2'
+  data_path1: "/Users/bram/jointomicscomp/data/shuffle_RNASeq_5000MAD.csv"
+  data_path2: "/Users/bram/jointomicscomp/data/shuffle_DNAMe_5000MAD.csv"
+  num_features: 5000
   cuda: false
   random_seed: 1
 
@@ -12,6 +13,7 @@ MOFA+:
   scale_views: false           # if views have significantly different ranges, it is good practice to scale each view to unit variance
 
   # Model options
+  pre_trained: "path"          # Use a pre-trained model for downstream analysis
   factors: 10
   likelihoods: None            # likelihoods per view (options are "gaussian","poisson","bernoulli").
                                #     Default is None, and they are infered automatically
