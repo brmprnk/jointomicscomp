@@ -7,6 +7,8 @@ This file will therefore also run an R script, since the Z matrix needs to be fe
 reconstruction loss.
 """
 import os
+# R needs to be installed, and this path needs to be set to the R_Home folder, found by running R.home() in R console.
+os.environ['R_HOME'] = "/Library/Frameworks/R.framework/Resources"
 import pandas as pd
 import rpy2.robjects as robjects
 import rpy2.robjects.packages as rpackages
@@ -32,7 +34,10 @@ def run(args: dict) -> None:
     output_file = os.path.join(save_dir, "trained_MOFA_model.hdf5")
 
     # Run MOFA+
-    train_mofa(args, output_file)
+    if args['pre_trained'] == "":
+        train_mofa(args, output_file)
+    else:
+        output_file = args['pre_trained']
 
     # Do computations in R
     downstream_mofa(save_dir, output_file)
