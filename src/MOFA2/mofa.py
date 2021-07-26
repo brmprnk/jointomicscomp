@@ -1,151 +1,292 @@
-import pandas as pd
-import numpy as np
-import sys
-from mofapy2.run.entry_point import entry_point
+"""
+Main file for running Multi-omics Factor Analysis V2.
+
+Additional documentation found in https://biofam.github.io/MOFA2/tutorials.html
+Model can be trained in Python, but as of this moment downstream analysis can only be done in R.
+This file will therefore also run an R script, since the Z matrix needs to be fetched in order to calculate
+reconstruction loss.
+"""
 import os
-
-NUM_FACTORS = 10
-
-############## SETUP INPUT/OUTPUT PATHS ##############
-
-# input
-INPUT_FILE_NAME = "80split_shuffle_MOFA_DATA.csv"
-
-# output
-OUTPUT_FILE_NAME = "80Split_Shuffledsamples_Trained_MOFA_{}Factors.hdf5".format(NUM_FACTORS)
-
-# # Assumes data is found in the current working directory's /data folder
-input_data_path = os.path.join(os.getcwd(), "../../data", INPUT_FILE_NAME)
-output_data_path = os.path.join(os.getcwd(), "trained_models", OUTPUT_FILE_NAME)
-
-######################################################
+# R needs to be installed, and this path needs to be set to the R_Home folder, found by running R.home() in R console.
+os.environ['R_HOME'] = "/Library/Frameworks/R.framework/Resources"
+import pandas as pd
+import rpy2.robjects as robjects
+import rpy2.robjects.packages as rpackages
+from sklearn.metrics import mean_squared_error
+from tqdm import tqdm
+import numpy as np
+from mofapy2.run.entry_point import entry_point
+from src.util import logger
 
 
-###########################
-## Initialise MOFA model ##
-###########################
+def run(args: dict) -> None:
+    """
+    Setup before running MOFA+
+
+    @param args: Dictionary containing input parameters
+    @return: None
+    """
+    logger.info("Running MOFA+...")
+
+    # Setup output paths
+    save_dir = os.path.join(args['save_dir'], 'MOFA+')
+    os.makedirs(save_dir)
+    output_file = os.path.join(save_dir, "trained_MOFA_model.hdf5")
+
+    # Run MOFA+
+    if args['pre_trained'] == "":
+        train_mofa(args, output_file)
+    else:
+        output_file = args['pre_trained']
+
+    # Do computations in R
+    downstream_mofa(save_dir, output_file)
+
+    # Calculate reconstruction loss
+    reconstruction_loss(args, save_dir)
 
 
-## (1) initialise the entry point ##
-ent = entry_point()
+def train_mofa(args: dict, output_model: str) -> None:
+    """
+    Run Multi-omics Factor Analysis V2
+
+    @param args:         Dictionary containing input parameters
+    @param output_model: Name of trained model that can be saved in /results dir
+    @return: None
+    """
+    #########################
+    # Initialise MOFA model #
+    #########################
+
+    # (1) initialise the entry point ##
+    ent = entry_point()
+
+    # (2) Set data options ##
+    # - scale_groups: if groups have significantly different ranges, good practice to scale each group to unit variance
+    # - scale_views: if views have significantly different ranges, its good practice to scale each view to unit variance
+    ent.set_data_options(
+        scale_groups=args['scale_groups'],
+        scale_views=args['scale_views']
+    )
+
+    # samples_names nested list with length NGROUPS. Each entry g is a list with the sample names for the g-th group
+
+    # (3) Set data using a long data frame
+    logger.info("MOFA DATA : Reading ...")
+    ent.set_data_df(pd.read_csv(args['mofa_data_path']))
+    logger.success("MOFA DATA : Loading Successful!")
+
+    # (4) Set model options ##
+    # - factors: number of factors. Default is K=10
+    # - likelihoods: likelihoods per view (options are "gaussian","poisson","bernoulli").
+    # 		Default is None, and they are infered automatically
+    # - spikeslab_weights: use spike-slab sparsity prior in the weights? (recommended TRUE)
+    # - ard_factors: use ARD prior in the factors? (TRUE if using multiple groups)
+    # - ard_weights: use ARD prior in the weights? (TRUE if using multiple views)
+
+    # Simple (using default values)
+    ent.set_model_options()
+
+    # Advanced (using personalised values)
+    ent.set_model_options(
+        factors=args['factors'],
+        spikeslab_weights=args['spikeslab_weights'],
+        ard_factors=args['ard_factors'],
+        ard_weights=args['ard_weights']
+    )
+
+    # (5) Set training options ##
+    # - iter: number of iterations
+    # - convergence_mode: "fast", "medium", "slow".
+    #   For exploration, the fast mode is good enough.
+    # - startELBO: initial iteration to compute the ELBO (the objective function used to assess convergence)
+    # - freqELBO: frequency of computations of the ELBO (the objective function used to assess convergence)
+    # - dropR2: minimum variance explained criteria to drop factors while training.
+    # 		Default is None, inactive factors are not dropped during training
+    # - gpu_mode: use GPU mode? this needs cupy installed and a functional GPU, see https://cupy.chainer.org/
+    # - verbose: verbose mode?
+    # - seed: random seed
+
+    # Simple (using default values)
+    ent.set_train_options()
+
+    # Advanced (using personalised values)
+    ent.set_train_options(
+        iter=args['iterations'],
+        convergence_mode=args['convergence_mode'],
+        startELBO=args['startELBO'],
+        freqELBO=args['freqELBO'],
+        dropR2=args['dropR2'],
+        gpu_mode=args['cuda'],
+        verbose=args['verbose'],
+        seed=args['random_seed']
+    )
+
+    # (6, optional) Set stochastic inference options##
+    # Only recommended with very large sample size (>1e6) and when having access to GPUs
+    # - batch_size: float value indicating the batch size (as a fraction of the total data set: 0.10, 0.25 or 0.50)
+    # - learning_rate: learning rate (we recommend values from 0.25 to 0.75)
+    # - forgetting_rate: forgetting rate (we recommend values from 0.25 to 0.5)
+    # - start_stochastic: first iteration to apply stochastic inference (recommended > 5)
+
+    # Simple (using default values)
+    # ent.set_stochastic_options()
+
+    # Advanced (using personalised values)
+    # ent.set_stochastic_options(batch_size=0.5, learning_rate=0.75, forgetting_rate=0.5, start_stochastic=10)
+
+    # ent.set_stochastic_options(
+    #     batch_size = 0.1
+    # )
+
+    ##################################
+    # Build and train the MOFA model #
+    ##################################
+
+    # Build the model
+    ent.build()
+
+    # Run the model
+    ent.run()
+
+    # - save_data: logical indicating whether to save the training data in the hdf5 file.
+    # this is useful for some downstream analysis in R, but it can take a lot of disk space.
+    ent.save(output_model, save_data=args['save_data'])
 
 
-## (2) Set data options ##
-# - scale_groups: if groups have significantly different ranges, it is good practice to scale each group to unit variance
-# - scale_views: if views have significantly different ranges, it is good practice to scale each view to unit variance
-ent.set_data_options(
-	scale_groups = False, 
-	scale_views = False
-)
+def downstream_mofa(save_dir: str, model_file: str) -> None:
+    """
+    Perform R based code here in Python.
+    Documentation: https://rpy2.github.io/doc/v2.9.x/html/introduction.html
 
-# samples_names nested list with length NGROUPS. Each entry g is a list with the sample names for the g-th group
-# - if not provided, MOFA will fill it with default samples names
-# samples_names = (...)
+    @param save_dir:   path to directory where factors and weights should be saved
+    @param model_file: path to trained model
 
-# features_names nested list with length NVIEWS. Each entry m is a list with the features names for the m-th view
-# - if not provided, MOFA will fill it with default features names
-# features_names = (...)
+    @return: None
+    """
+    # import R's "base" package
+    rpackages.importr('base')
 
-# ent.set_data_matrix(data, 
-# 	views_names = views_names, 
-# 	groups_names = groups_names, 
-# 	samples_names = samples_names,   
-# 	features_names = features_names
-# )
+    # import R's "utils" package
+    utils = rpackages.importr('utils')
 
-# (3, option 2) Set data using a long data frame
-print("MOFA DATA : Reading ...")
-ent.set_data_df(pd.read_csv(input_data_path))
-print("MOFA DATA : Loading Successful!")
+    # select a mirror for R packages
+    utils.chooseCRANmirror(ind=1)  # select the first mirror in the list
 
-## (4) Set model options ##
-# - factors: number of factors. Default is K=10
-# - likelihods: likelihoods per view (options are "gaussian","poisson","bernoulli"). 
-# 		Default is None, and they are infered automatically
-# - spikeslab_weights: use spike-slab sparsity prior in the weights? (recommended TRUE)
-# - ard_factors: use ARD prior in the factors? (TRUE if using multiple groups)
-# - ard_weights: use ARD prior in the weights? (TRUE if using multiple views)
+    # MOFA required R package names
+    package_names = ('ggplot2', 'MOFA2')
 
-# Simple (using default values)
-ent.set_model_options()
+    # R vector of strings
+    from rpy2.robjects.vectors import StrVector
 
-# Advanced (using personalised values)
-ent.set_model_options(
-	factors = NUM_FACTORS, 
-	spikeslab_weights = False, 
-	ard_factors = False, 
-	ard_weights = True
-)
+    # Selectively install what needs to be installed
+    names_to_install = [x for x in package_names if not rpackages.isinstalled(x)]
+    if len(names_to_install) > 0:
+        utils.install_packages(StrVector(names_to_install))
 
+    robjects.r('''
+            # create a function `f` that saves model factors and weights
+            save_z <- function(save_dir, model_path, verbose=FALSE) {
+                trained_model <- (model_path)
 
-## (5) Set training options ##
-# - iter: number of iterations
-# - convergence_mode: "fast", "medium", "slow". 
-#		For exploration, the fast mode is good enough.
-# - startELBO: initial iteration to compute the ELBO (the objective function used to assess convergence)
-# - freqELBO: frequency of computations of the ELBO (the objective function used to assess convergence)
-# - dropR2: minimum variance explained criteria to drop factors while training.
-# 		Default is None, inactive factors are not dropped during training
-# - gpu_mode: use GPU mode? this needs cupy installed and a functional GPU, see https://cupy.chainer.org/
-# - verbose: verbose mode?
-# - seed: random seed
+                model <- load_model(trained_model, remove_inactive_factors = F)
+                
+                Z = get_expectations(model, "Z", as.data.frame = TRUE)
+                W = get_expectations(model, "W", as.data.frame = TRUE)
+                write.csv(Z, paste(save_dir, "Z.csv", sep="/"), row.names = FALSE)
+                write.csv(W, paste(save_dir, "W.csv", sep="/"), row.names = FALSE)
+            }
+            ''')
 
-# Simple (using default values)
-ent.set_train_options()
+    r_save_z = robjects.globalenv['save_z']
 
-# Advanced (using personalised values)
-ent.set_train_options(
-	iter = 100, 
-	convergence_mode = "medium", 
-	startELBO = 1, 
-	freqELBO = 1, 
-	dropR2 = None, 
-	gpu_mode = False, 
-	verbose = True, 
-	seed = 1
-)
+    # Save model factors and weights (Z and W)
+    r_save_z(save_dir, model_file)
 
 
-## (6, optional) Set stochastic inference options##
-# Only recommended with very large sample size (>1e6) and when having access to GPUs
-# - batch_size: float value indicating the batch size (as a fraction of the total data set: 0.10, 0.25 or 0.50)
-# - learning_rate: learning rate (we recommend values from 0.25 to 0.75)
-# - forgetting_rate: forgetting rate (we recommend values from 0.25 to 0.5)
-# - start_stochastic: first iteration to apply stochastic inference (recommended > 5)
+def reconstruction_loss(args: dict, save_dir: str) -> None:
+    """
+    Calculating the reconstruction loss using the trained model and input data
 
-# Simple (using default values)
-# ent.set_stochastic_options()
+    @param args:         Dictionary containing input parameters
+    @param save_dir:   path to directory where factors and weights should be saved
 
-# Advanced (using personalised values)
-# ent.set_stochastic_options(batch_size=0.5, learning_rate=0.75, forgetting_rate=0.5, start_stochastic=10)
+    @return: None
+    """
 
-# ent.set_stochastic_options(
-#     batch_size = 0.1
-# )
+    global W_omic1, W_omic2
 
-####################################
-## Build and train the MOFA model ##
-####################################
+    logger.info("Reading original data...")
+    omic_data1 = pd.read_csv(args['data_path1'], index_col=0)
+    omic_data2 = pd.read_csv(args['data_path2'], index_col=0)
 
-# Build the model 
-ent.build()
+    logger.info("Omic data 1 shape {}".format(omic_data1.shape))
+    logger.info("Omic data 2 shape {}".format(omic_data2.shape))
+    logger.success("Finished reading original data, now calculate reconstruction losses")
 
-# Run the model
-ent.run()
+    # Now get the results from MOFA
+    # W = 5000 x 10 : Factors on columns, Features on Rows
+    # Z = 10 * 9992 : Samples on columns, Factors on rows
 
-##################################################################
-## (Optional) do dimensionality reduction from the MOFA factors ##
-##################################################################
+    # Y = WZ = 5000 * 9992 : Features on rows, Samples on columns
 
-# ent.umap()
-# ent.tsne()
+    logger.info("Fetching MOFA+ Z and W")
+    W = pd.read_csv(os.path.join(save_dir, "W.csv"))
+    Z = pd.read_csv(os.path.join(save_dir, "Z.csv"))
 
-####################
-## Save the model ##
-####################
+    # Get Z matrix
+    unique_factors = np.unique(Z['factor'].values)
 
-# - save_data: logical indicating whether to save the training data in the hdf5 file.
-# this is useful for some downstream analysis in R, but it can take a lot of disk space.
-ent.save(output_data_path, save_data=True)
+    z_matrix = []
 
+    for factor in tqdm(range(len(unique_factors))):
+        z_matrix.append((Z['value'].loc[Z['factor'] == unique_factors[factor]]).values)
 
+    Z = np.matrix(z_matrix)
+
+    # Get W matrix for each modality
+    try:
+        W_omic1 = W.loc[W['view'] == "RNA-seq"]
+        W_omic2 = W.loc[W['view'] == "GENE CN"]
+    except (ValueError, Exception) as e:
+        logger.error(e)
+        logger.error("Probably setup the wrong view names in MOFA+ reconstruction loss.")
+
+    unique_features_rna = W_omic1['feature'].values[::10]
+    matrix = []
+    for i in tqdm(range(unique_features_rna.shape[0])):
+        matrix.append(W_omic1['value'].loc[W_omic1['feature'] == unique_features_rna[i]])
+
+    W_omic1 = np.matrix(matrix)
+
+    unique_features_gcn = W_omic2['feature'].values[::10]
+    matrix = []
+    for i in tqdm(range(unique_features_gcn.shape[0])):
+        matrix.append(W_omic2['value'].loc[W_omic2['feature'] == unique_features_gcn[i]])
+
+    W_omic2 = np.matrix(matrix)
+
+    print(W_omic1.shape, Z.shape)
+    print(W_omic2.shape, Z.shape)
+
+    # Now get original values back (Y = WZ)
+    Y_omic1 = np.matmul(W_omic1, Z)
+    Y_omic2 = np.matmul(W_omic2, Z)
+
+    # Get back in the form of original data
+    Y_omic1 = Y_omic1.transpose()
+    Y_omic2 = Y_omic2.transpose()
+
+    logger.info("Reconstructed data for omic 1 shape: {}".format(Y_omic1.shape))
+
+    logger.info("Reconstructed data for omic 2 shape: {}".format(Y_omic2.shape))
+
+    # input, predict
+    rna_recon_loss = mean_squared_error(omic_data1.values, Y_omic1)
+
+    # input, predict
+    gcn_recon_loss = mean_squared_error(omic_data2.values, Y_omic2)
+
+    result = np.array([rna_recon_loss, gcn_recon_loss])
+    np.save(os.path.join(save_dir, "recon_loss.npy"), result)
+    logger.success("MOFA+ Reconstruction losses: {}".format(result))

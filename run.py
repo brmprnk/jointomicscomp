@@ -19,7 +19,6 @@ import argparse
 import yaml
 from datetime import datetime
 
-from src.MVAE.train import run as mvae_model
 import src.util.logger as logger
 
 # This is the Project Root, important that run.py is inside this folder for accurate ROOT_DIR
@@ -32,6 +31,9 @@ PARSER.add_argument('--config', '-c',
                     metavar='FILE',
                     help="path to the config file",
                     default='configs/main.yaml')
+PARSER.add_argument('-mofadata',
+                    action='store_true',
+                    help="Preprocessing data for Multi-Omics Factor Analysis V2 (MOFA+)")
 PARSER.add_argument('-mofa',
                     action='store_true',
                     help="Running Multi-Omics Factor Analysis V2 (MOFA+)")
@@ -80,6 +82,12 @@ def main() -> None:
     # Setup save directory for output logging
     logger.output_file = save_dir
 
+    if args.mofadata:
+        from src.MOFA2.create_mofa_data import create_mofa_dataframe
+
+        create_mofa_dataframe({**config['GLOBAL_PARAMS']})
+        sys.exit()
+
     # If no specific model set, run all models and end program
     if not args.mofa and not args.moe and not args.poe and not args.mvib and not args.cgae:
         run_mofa(config)
@@ -114,7 +122,9 @@ def run_mofa(config: dict) -> None:
     @param config: Dictionary containing input parameters
     @return: None
     """
-    print("MOFA has not yet been implemented")
+    from src.MOFA2.mofa import run as mofa2
+
+    mofa2({**config['GLOBAL_PARAMS'], **config['MOFA+']})
 
 
 def run_mvae(config: dict, mixture=False, product=False) -> None:
@@ -126,6 +136,8 @@ def run_mvae(config: dict, mixture=False, product=False) -> None:
     @param product: boolean flag that indicates whether the MVAE model is Product-of-Experts
     @return: None
     """
+    from src.MVAE.train import run as mvae_model
+
     if mixture is True:
         print("Running Mixture-of-Experts MVAE Model")
 
