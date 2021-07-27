@@ -175,7 +175,9 @@ def run_mvib(config: dict) -> None:
     @param config: Dictionary containing input parameters
     @return: None
     """
-    print("Multi-view Information Bottleneck has not yet been implemented", config)
+    from src.MVIB.train_representation import run as mvib_model
+
+    mvib_model({**config['GLOBAL_PARAMS'], **config['MVIB']})
 
 
 def run_cgae(config: dict) -> None:
