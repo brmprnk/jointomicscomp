@@ -31,6 +31,9 @@ PARSER.add_argument('--config', '-c',
                     metavar='FILE',
                     help="path to the config file",
                     default='configs/main.yaml')
+PARSER.add_argument('-baseline',
+                    action='store_true',
+                    help="Run the baseline and its evaluation")
 PARSER.add_argument('-mofadata',
                     action='store_true',
                     help="Preprocessing data for Multi-Omics Factor Analysis V2 (MOFA+)")
@@ -82,6 +85,7 @@ def main() -> None:
     # Setup save directory for output logging
     logger.output_file = save_dir
 
+    # Check for utility arguments, run only these and exit program
     if args.mofadata:
         from src.MOFA2.create_mofa_data import create_mofa_dataframe
 
@@ -89,7 +93,8 @@ def main() -> None:
         sys.exit()
 
     # If no specific model set, run all models and end program
-    if not args.mofa and not args.moe and not args.poe and not args.mvib and not args.cgae:
+    if not args.baseline and not args.mofa and not args.moe and not args.poe and not args.mvib and not args.cgae:
+        run_baseline(config)
         run_mofa(config)
         run_mvae(config, mixture=True, product=True)
         run_mvib(config)
@@ -97,6 +102,9 @@ def main() -> None:
         return
 
     # Run models individually / combined
+    if args.baseline:
+        run_baseline(config)
+
     if args.mofa:
         run_mofa(config)
 
@@ -112,7 +120,17 @@ def main() -> None:
     if args.cgae:
         run_cgae(config)
 
-    return
+
+def run_baseline(config: dict) -> None:
+    """
+    Setup and run baseline
+
+    @param config: Dictionary containing input parameters
+    @return: None
+    """
+    import src.baseline.baseline as baseline
+
+    baseline.run_baseline({**config['GLOBAL_PARAMS'], **config['BASELINE']})
 
 
 def run_mofa(config: dict) -> None:
@@ -157,7 +175,7 @@ def run_mvib(config: dict) -> None:
     @param config: Dictionary containing input parameters
     @return: None
     """
-    print("Multi-view Information Bottleneck has not yet been implemented")
+    print("Multi-view Information Bottleneck has not yet been implemented", config)
 
 
 def run_cgae(config: dict) -> None:
@@ -167,7 +185,7 @@ def run_cgae(config: dict) -> None:
     @param config: Dictionary containing input parameters
     @return: None
     """
-    print("CGAE has not yet been implemented")
+    print("CGAE has not yet been implemented", config)
 
 
 if __name__ == '__main__':
