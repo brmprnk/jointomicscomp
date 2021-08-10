@@ -23,14 +23,12 @@ from tqdm import tqdm
 
 # input
 rna = "/Users/bram/Downloads/EB++AdjustPANCAN_IlluminaHiSeq_RNASeqV2.geneExp.xena.gz"
-gcn = "/Users/bram/Downloads/TCGA.PANCAN.sampleMap_Gistic2_CopyNumber_Gistic2_all_data_by_genes.gz"
 dna = "/Users/bram/Downloads/jhu-usc.edu_PANCAN_HumanMethylation450.betaValue_whitelisted.tsv.synapse_download_5096262.xena.gz"
 # output
-rna_out = "/Users/bram/Downloads/RNASeq_3000MAD_COMMON.csv"
-gcn_out = "/Users/bram/Downloads/GCN_3000MAD_COMMON.csv"
-dna_out = "/Users/bram/Downloads/DNAMe_3000MAD_COMMON.csv"
+rna_out = "/Users/bram/Downloads/RNASeq_5000MAD.csv"
+dna_out = "/Users/bram/Downloads/DNAMe_5000MAD.csv"
 
-NUM_MAD_FEATURES = 3000
+NUM_MAD_FEATURES = 5000
 # NOTE: For large data files, this code might have to run in steps (per dataset)
 
 ######################################################
@@ -56,29 +54,24 @@ skiprows = np.setdiff1d(np.arange(1, len(highest_mad_feature_indices) + 1), high
 
 RNA_DATA = pd.read_table(rna, index_col=0)
 print("Done reading RNA-seq")
-GCN_DATA = pd.read_table(gcn, index_col=0)
-print("Done reading Gene Copy Number")
 # Now DNA_DATA is better to work with
 DNA_DATA = pd.read_table(dna, index_col=0, skiprows=skiprows)
 print("Done reading DNA Methylation")
 
 # Replace NaN values with 0
 RNA_DATA = RNA_DATA.fillna(0)
-GCN_DATA = GCN_DATA.fillna(0)
 DNA_DATA = DNA_DATA.fillna(0)
 
 # Make sure datasets have the same ordering (samples in rows and features as columns)
 RNA_DATA = RNA_DATA.transpose()
-GCN_DATA = GCN_DATA.transpose()
 DNA_DATA = DNA_DATA.transpose()
 
 # Find common samples between datasets
-common_samples = np.intersect1d(DNA_DATA.index.values, np.intersect1d(RNA_DATA.index.values, GCN_DATA.index.values))
+common_samples = np.intersect1d(DNA_DATA.index.values, RNA_DATA.index.values)
 print("Nr of common samples", len(common_samples))
 
 # Only take the common samples
 RNA_DATA = RNA_DATA.loc[common_samples]
-GCN_DATA = GCN_DATA.loc[common_samples]
 DNA_DATA = DNA_DATA.loc[common_samples]
 
 # Determine most variably expressed genes and subset
@@ -91,12 +84,6 @@ RNA_DATA = RNA_DATA.loc[:, top_mad_genes_rna]
 
 print("RNA MAD Shape", RNA_DATA.shape)
 
-mad_genes_gcn = GCN_DATA.mad(axis=0).sort_values(ascending=False)
-top_mad_genes_gcn = mad_genes_gcn.iloc[0:NUM_MAD_FEATURES, ].index
-GCN_DATA = GCN_DATA.loc[:, top_mad_genes_gcn]
-
-print("GCN MAD Shape", GCN_DATA.shape)
-
 mad_genes_dna = DNA_DATA.mad(axis=0).sort_values(ascending=False)
 top_mad_genes_dna = mad_genes_dna.iloc[0:NUM_MAD_FEATURES, ].index
 DNA_DATA = DNA_DATA.loc[:, top_mad_genes_dna]
@@ -107,70 +94,56 @@ print("DNA MAD Shape", DNA_DATA.shape)
 # OR for MoE repository: Values should be normalized between 0.00000001 and 0.99999999
 # Comment out what suits your needs
 
-# Normal normalization (between -1 and 1)
-
-# Divide by either highest positive or negative value (abs)
-if abs(np.min(RNA_DATA.values)) <= 1 and abs(np.max(RNA_DATA.values)) <= 1:  # Already normalized
-    print("Skipping normalization of RNA-seq data :  Already Normalized.")
-else:
-    RNA_DATA = RNA_DATA / abs(np.max(RNA_DATA.values)) if (abs(np.max(RNA_DATA.values)) > abs(np.min(RNA_DATA.values))) else RNA_DATA / abs(np.min(RNA_DATA.values))
-
-if abs(np.min(GCN_DATA.values)) <= 1 and abs(np.max(GCN_DATA.values)) <= 1:  # Already normalized
-    print("Skipping normalization of Gene-level Copy Number data :  Already Normalized.")
-else:
-    GCN_DATA = GCN_DATA / abs(np.max(GCN_DATA.values)) if (abs(np.max(GCN_DATA.values)) > abs(np.min(GCN_DATA.values))) else GCN_DATA / abs(np.min(GCN_DATA.values))
-
-if abs(np.min(DNA_DATA.values)) <= 1 and abs(np.max(DNA_DATA.values)) <= 1:  # Already normalized
-    print("Skipping normalization of DNA Methylation data :  Already Normalized.")
-else:
-    DNA_DATA = DNA_DATA / abs(np.max(DNA_DATA.values)) if (abs(np.max(DNA_DATA.values)) > abs(np.min(DNA_DATA.values))) else DNA_DATA / abs(np.min(DNA_DATA.values))
-
-assert np.max(RNA_DATA.values) <= 1 and np.max(GCN_DATA.values) <= 1 and np.max(DNA_DATA.values) <= 1, "Not correctly normalized (value exceeds 1)"
-assert np.min(RNA_DATA.values) >= -1 and np.min(GCN_DATA.values) >= -1 and np.min(DNA_DATA.values) >= -1, "Not correctly normalized (value below -1)"
-
-# # Mixture of Experts repository positive normalization (between epsilon and 1 - epsilon)
-# EPSILON = 1e-8
+# # Normal normalization (between -1 and 1)
 #
-# if abs(np.min(RNA_DATA.values)) < 1 and abs(np.max(RNA_DATA.values)) < 1:  # Already normalized
+# # Divide by either highest positive or negative value (abs)
+# if abs(np.min(RNA_DATA.values)) <= 1 and abs(np.max(RNA_DATA.values)) <= 1:  # Already normalized
 #     print("Skipping normalization of RNA-seq data :  Already Normalized.")
 # else:
-#     RNA_DATA = RNA_DATA + abs(np.min(RNA_DATA.values))  # Transform to all positive values
-#     RNA_DATA = RNA_DATA / np.max(RNA_DATA.values)  # Normalize
-#     RNA_DATA = RNA_DATA.clip(EPSILON, 1 - EPSILON)  # Clamp to 1e-8 and (1 - 1e-8)
+#     RNA_DATA = RNA_DATA / abs(np.max(RNA_DATA.values)) if (abs(np.max(RNA_DATA.values)) > abs(np.min(RNA_DATA.values))) else RNA_DATA / abs(np.min(RNA_DATA.values))
 #
-# if abs(np.min(GCN_DATA.values)) < 1 and abs(np.max(GCN_DATA.values)) < 1:  # Already normalized
-#     print("Skipping normalization of Gene-level Copy Number data :  Already Normalized.")
-# else:
-#     GCN_DATA = GCN_DATA + abs(np.min(GCN_DATA.values))
-#     GCN_DATA = GCN_DATA / np.max(GCN_DATA.values)
-#     GCN_DATA = GCN_DATA.clip(EPSILON, 1 - EPSILON)
-#
-# if abs(np.min(DNA_DATA.values)) < 1 and abs(np.max(DNA_DATA.values)) < 1:  # Already normalized
+# if abs(np.min(DNA_DATA.values)) <= 1 and abs(np.max(DNA_DATA.values)) <= 1:  # Already normalized
 #     print("Skipping normalization of DNA Methylation data :  Already Normalized.")
 # else:
-#     DNA_DATA = DNA_DATA + abs(np.min(DNA_DATA.values))
-#     DNA_DATA = DNA_DATA / np.max(DNA_DATA.values)
-#     DNA_DATA = DNA_DATA.clip(EPSILON, 1 - EPSILON)
+#     DNA_DATA = DNA_DATA / abs(np.max(DNA_DATA.values)) if (abs(np.max(DNA_DATA.values)) > abs(np.min(DNA_DATA.values))) else DNA_DATA / abs(np.min(DNA_DATA.values))
 #
-#
-# assert np.max(RNA_DATA.values) < 1 and np.max(GCN_DATA.values) < 1 and np.max(DNA_DATA.values) < 1, "Not correctly normalized for MoE (value exceeds (1 - 1e-8))"
-# assert np.min(RNA_DATA.values) >= EPSILON and np.min(GCN_DATA.values) >= EPSILON and np.min(DNA_DATA.values) >= EPSILON, "Not correctly normalized for MoE (value below 1e-8)"
+# assert np.max(RNA_DATA.values) <= 1 and np.max(DNA_DATA.values) <= 1, "Not correctly normalized (value exceeds 1)"
+# assert np.min(RNA_DATA.values) >= -1 and np.min(DNA_DATA.values) >= -1, "Not correctly normalized (value below -1)"
+
+# Mixture of Experts repository positive normalization (between epsilon and 1 - epsilon)
+EPSILON = 1e-8
+
+if abs(np.min(RNA_DATA.values)) < 1 and abs(np.max(RNA_DATA.values)) < 1:  # Already normalized
+    print("Skipping normalization of RNA-seq data :  Already Normalized.")
+else:
+    RNA_DATA = RNA_DATA + abs(np.min(RNA_DATA.values))  # Transform to all positive values
+    RNA_DATA = RNA_DATA / np.max(RNA_DATA.values)  # Normalize
+    RNA_DATA = RNA_DATA.clip(EPSILON, 1 - EPSILON)  # Clamp to 1e-8 and (1 - 1e-8)
+
+if abs(np.min(DNA_DATA.values)) < 1 and abs(np.max(DNA_DATA.values)) < 1:  # Already normalized
+    print("Skipping normalization of DNA Methylation data :  Already Normalized.")
+else:
+    DNA_DATA = DNA_DATA + abs(np.min(DNA_DATA.values))
+    DNA_DATA = DNA_DATA / np.max(DNA_DATA.values)
+    DNA_DATA = DNA_DATA.clip(EPSILON, 1 - EPSILON)
+
+
+assert np.max(RNA_DATA.values) < 1 and np.max(DNA_DATA.values) < 1, "Not correctly normalized for MoE (value exceeds (1 - 1e-8))"
+assert np.min(RNA_DATA.values) >= EPSILON and np.min(DNA_DATA.values) >= EPSILON, "Not correctly normalized for MoE (value below 1e-8)"
 
 # Check if shapes are still equal and ready to be processed for MAD features (same number of samples)
-assert RNA_DATA.shape[0] == GCN_DATA.shape[0] == DNA_DATA.shape[0], "Data not of same shape after normalization (rows)"
+assert RNA_DATA.shape[0] == DNA_DATA.shape[0], "Data not of same shape after normalization (rows)"
 
 # Check if each dataset now has NUM_MAD_FEATURES columns
-assert RNA_DATA.shape[1] <= NUM_MAD_FEATURES and GCN_DATA.shape[1] <= NUM_MAD_FEATURES and \
-       DNA_DATA.shape[1] <= NUM_MAD_FEATURES, "Data not of same shape after normalization (columns)"
+assert RNA_DATA.shape[1] <= NUM_MAD_FEATURES and DNA_DATA.shape[1] <= NUM_MAD_FEATURES, \
+       "Data not of same shape after normalization (columns)"
 
 # Write most variable genes to .csv file
 print("Now writing preprocessed files to .csv format")
 RNA_DATA.to_csv(rna_out)
-GCN_DATA.to_csv(gcn_out)
 DNA_DATA.to_csv(dna_out)
 
 print(RNA_DATA)
-print(GCN_DATA)
 print(DNA_DATA)
 
 print("Done writing! Printing resulting datasets and exiting program.")

@@ -8,14 +8,13 @@ class LossPlotter(object):
     Results are saved in the experiments' save dir.
     """
 
-    def __init__(self, args, save_dir, dt_string):
+    def __init__(self, args, save_dir):
         print("Creating plots of the training and validation losses...")
         self.args = args
         self.x_axis = [*range(1, args.epochs + 1)]
 
         # For saving
         self.save_dir = save_dir
-        self.dt_string = dt_string
 
     def plot_training_losses(self, train_loss_meter, train_recon_loss_meter, train_kld_loss_meter, total_batches):
         # Loss
@@ -28,7 +27,7 @@ class LossPlotter(object):
         plt.title("Product of Experts: RNA-seq and GCN (gistic2)\nLatent space : {}, LR: {}".format(self.args.n_latents, self.args.lr))
         plt.xlabel("Epochs")
         plt.ylabel("Average Training Loss")
-        plt.savefig("{}/Loss {}.png".format(self.save_dir, self.dt_string), dpi=400)
+        plt.savefig("{}/Loss.png".format(self.save_dir), dpi=400)
 
         # Reconstruction Loss
         fig2 = plt.figure(2)
@@ -40,7 +39,7 @@ class LossPlotter(object):
         plt.title("Product of Experts: RNA-seq and GCN (gistic2)\nLatent space : {}, LR: {}".format(self.args.n_latents, self.args.lr))
         plt.xlabel("Epochs")
         plt.ylabel("Average Training Reconstruction Loss")
-        plt.savefig("{}/Recon Loss {}.png".format(self.save_dir, self.dt_string), dpi=400)
+        plt.savefig("{}/Recon Loss.png".format(self.save_dir), dpi=400)
 
         # KLD Loss
         fig3 = plt.figure(3)
@@ -52,7 +51,7 @@ class LossPlotter(object):
         plt.title("Product of Experts: RNA-seq and GCN (gistic2)\nLatent space : {}, LR: {}".format(self.args.n_latents, self.args.lr))
         plt.xlabel("Epochs")
         plt.ylabel("Average Training KLD Loss")
-        plt.savefig("{}/KLD Loss {}.png".format(self.save_dir, self.dt_string), dpi=400)
+        plt.savefig("{}/KLD Loss.png".format(self.save_dir), dpi=400)
 
     def plot_validation_loss(self, val_loss_meter, val_recon_loss_meter, val_kld_loss_meter, total_val_batches):
         # Validation Loss
@@ -65,7 +64,7 @@ class LossPlotter(object):
         plt.title("Product of Experts: RNA-seq and GCN (gistic2)\nLatent space : {}, LR: {}".format(self.args.n_latents, self.args.lr))
         plt.xlabel("Epochs")
         plt.ylabel("Average Validation Loss")
-        plt.savefig("{}/Validation Loss {}.png".format(self.save_dir, self.dt_string), dpi=400)
+        plt.savefig("{}/Validation Loss.png".format(self.save_dir), dpi=400)
 
         # Validation Reconstruction Loss
         fig5 = plt.figure(5)
@@ -77,7 +76,7 @@ class LossPlotter(object):
         plt.title("Product of Experts: RNA-seq and GCN (gistic2)\nLatent space : {}, LR: {}".format(self.args.n_latents, self.args.lr))
         plt.xlabel("Epochs")
         plt.ylabel("Average Validation Reconstruction Loss")
-        plt.savefig("{}/Validation Recon Loss {}.png".format(self.save_dir, self.dt_string), dpi=400)
+        plt.savefig("{}/Validation Recon Loss.png".format(self.save_dir), dpi=400)
 
         # Validation KLD Loss
         fig6 = plt.figure(6)
@@ -89,4 +88,4 @@ class LossPlotter(object):
         plt.title("Product of Experts: RNA-seq and GCN (gistic2)\nLatent space : {}, LR: {}".format(self.args.n_latents, self.args.lr))
         plt.xlabel("Epochs")
         plt.ylabel("Average Validation KLD Loss")
-        plt.savefig("{}/Validation KLD Loss {}.png".format(self.save_dir, self.dt_string), dpi=400)
+        plt.savefig("{}/Validation KLD Loss.png".format(self.save_dir), dpi=400)
