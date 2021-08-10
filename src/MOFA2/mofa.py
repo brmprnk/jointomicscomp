@@ -37,6 +37,7 @@ def run(args: dict) -> None:
     if args['pre_trained'] == "":
         train_mofa(args, output_file)
     else:
+        logger.info("Using previously trained model from : {}".format(args['pre_trained']))
         output_file = args['pre_trained']
 
     # Do computations in R
@@ -185,6 +186,8 @@ def downstream_mofa(save_dir: str, model_file: str) -> None:
         utils.install_packages(StrVector(names_to_install))
 
     robjects.r('''
+            library(ggplot2)
+            library(MOFA2)
             # create a function `f` that saves model factors and weights
             save_z <- function(save_dir, model_path, verbose=FALSE) {
                 trained_model <- (model_path)
