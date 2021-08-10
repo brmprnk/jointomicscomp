@@ -6,9 +6,7 @@ from torch.utils.data import Dataset, TensorDataset
 import torch.nn as nn
 import torch.optim as optim
 from tensorboardX import SummaryWriter
-import nets
-
-
+import src.nets
 
 
 class MultiOmicsDataset():
