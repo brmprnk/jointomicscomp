@@ -4,7 +4,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
-from nets import *
+from src.nets import *
 from model import train, extract
 from sklearn.model_selection import train_test_split
 
