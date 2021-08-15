@@ -52,6 +52,9 @@ PARSER.add_argument('-mvib',
 PARSER.add_argument('-cgae',
                     action='store_true',
                     help="Running CGAE Model")
+PARSER.add_argument('-omicade',
+                    action='store_true',
+                    help="Running Omicade4 : https://bioconductor.org/packages/release/bioc/html/omicade4.html")
 
 
 def main() -> None:
@@ -93,12 +96,14 @@ def main() -> None:
         sys.exit()
 
     # If no specific model set, run all models and end program
-    if not args.baseline and not args.mofa and not args.moe and not args.poe and not args.mvib and not args.cgae:
+    if not args.baseline and not args.mofa and not args.moe and not args.poe and not args.mvib and not args.cgae \
+            and not args.omicade:
         run_baseline(config)
         run_mofa(config)
         run_mvae(config, mixture=True, product=True)
         run_mvib(config)
         run_cgae(config)
+        run_omicade(config)
         return
 
     # Run models individually / combined
@@ -119,6 +124,9 @@ def main() -> None:
 
     if args.cgae:
         run_cgae(config)
+
+    if args.omicade:
+        run_omicade(config)
 
 
 def run_baseline(config: dict) -> None:
@@ -188,6 +196,19 @@ def run_cgae(config: dict) -> None:
     @return: None
     """
     print("CGAE has not yet been implemented", config)
+
+
+def run_omicade(config: dict) -> None:
+    """
+    Setup and run Omicade4
+    https://bioconductor.org/packages/release/bioc/html/omicade4.html
+
+    @param config: Dictionary containing input parameters
+    @return: None
+    """
+    from src.omicade4.main import run_omicade
+
+    run_omicade({**config['GLOBAL_PARAMS'], **config['OMICADE']})
 
 
 if __name__ == '__main__':

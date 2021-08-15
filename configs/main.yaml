@@ -68,3 +68,6 @@ MVIB:
 
   # Other parameters
   log_interval: 5
+
+OMICADE:
+  data_path: ""
