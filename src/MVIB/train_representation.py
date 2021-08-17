@@ -10,10 +10,9 @@ from src.MVIB import training as training_module
 
 def run(args: dict) -> None:
 
-	parser = argparse.ArgumentParser()
-	parser.add_argument("--experiment-dir", type=str,
-						help="Full path to the experiment directory. Logs and checkpoints will be stored in this location")
-	parser.add_argument("--config-file", type=str, default=None, help="Path to the .yaml training configuration file.")
+	save_dir = os.path.join(args['save_dir'], '{}'.format('MVIB'))
+	os.makedirs(save_dir)
+
 	parser.add_argument("--data-dir", type=str, default='.', help="Root path for the datasets.")
 	parser.add_argument("--no-logging", action="store_true", help="Disable tensorboard logging")
 	parser.add_argument("--overwrite", action="store_true",
@@ -33,14 +32,13 @@ def run(args: dict) -> None:
 	parser.add_argument("--epochs", type=int, default=1000, help="Total number of training epochs")
 
 
-	args = parser.parse_args()
 
 	logging = not args.no_logging
-	experiment_dir = args.experiment_dir
+	save_dir = args.save_dir
 	data_dir = args.data_dir
 	config_file = args.config_file
 	overwrite = args.overwrite
-	device = args.device
+	device = args['cuda']
 	num_workers = args.num_workers
 	batch_size = args.batch_size
 	load_model_file = args.load_model_file
@@ -50,8 +48,8 @@ def run(args: dict) -> None:
 	epochs = args.epochs
 
 	# Check if the experiment directory already contains a model
-	pretrained = os.path.isfile(os.path.join(experiment_dir, 'model.pt')) \
-				 and os.path.isfile(os.path.join(experiment_dir, 'config.yml'))
+	pretrained = os.path.isfile(os.path.join(save_dir, 'model.pt')) \
+				 and os.path.isfile(os.path.join(save_dir, 'config.yml'))
 
 
 	if pretrained and not (config_file is None) and not overwrite:
@@ -63,14 +61,14 @@ def run(args: dict) -> None:
 
 
 	if resume_training:
-		load_model_file = os.path.join(experiment_dir, 'model.pt')
-		config_file = os.path.join(experiment_dir, 'config.yml')
+		load_model_file = os.path.join(save_dir, 'model.pt')
+		config_file = os.path.join(save_dir, 'config.yml')
 
 	if logging:
 		from torch.utils.tensorboard import SummaryWriter
-		writer = SummaryWriter(log_dir=experiment_dir)
+		writer = SummaryWriter(log_dir=save_dir)
 	else:
-		os.makedirs(experiment_dir, exist_ok=True)
+		os.makedirs(save_dir, exist_ok=True)
 		writer = None
 
 	# Load the configuration file
@@ -78,7 +76,7 @@ def run(args: dict) -> None:
 		config = yaml.safe_load(file)
 
 	# Copy it to the experiment folder
-	with open(os.path.join(experiment_dir, 'config.yml'), 'w') as file:
+	with open(os.path.join(save_dir, 'config.yml'), 'w') as file:
 		yaml.dump(config, file)
 
 	# Instantiating the trainer according to the specified configuration
@@ -137,12 +135,12 @@ def run(args: dict) -> None:
 
 		if epoch % checkpoint_every == 0:
 			tqdm.write('Storing model checkpoint')
-			while os.path.isfile(os.path.join(experiment_dir, 'checkpoint_%d.pt' % checkpoint_count)):
+			while os.path.isfile(os.path.join(save_dir, 'checkpoint_%d.pt' % checkpoint_count)):
 				checkpoint_count += 1
 
-			trainer.save(os.path.join(experiment_dir, 'checkpoint_%d.pt' % checkpoint_count))
+			trainer.save(os.path.join(save_dir, 'checkpoint_%d.pt' % checkpoint_count))
 			checkpoint_count += 1
 
 		if epoch % backup_every == 0:
 			tqdm.write('Updating the model backup')
-			trainer.save(os.path.join(experiment_dir, 'model.pt'))
+			trainer.save(os.path.join(save_dir, 'model.pt'))
