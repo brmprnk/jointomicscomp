@@ -38,52 +38,61 @@ def create_mofa_dataframe(args: dict) -> None:
 
     # Use read_table instead if using .xena file
     logger.info("Reading in data from all modalities...")
-    omic_data1 = pd.read_csv(args['data_path1'], index_col=0)
-    omic_data2 = pd.read_csv(args['data_path2'], index_col=0)
-    logger.success("Finished reading in data")
+    omic_data1 = np.load(args['data_path1'])
+    omic_data2 = np.load(args['data_path2'])
+    sample_names = np.load(args['sample_names'])
+    cancer_type_index = np.load(args['cancer_type_index'])
+    cancertypes = np.load(args['cancertypes'])
 
-    assert len(omic_data1.index.values) == len(omic_data2.index.values), "Modalities do not have the same number of samples, exiting program."
+    logger.success("Finished reading in data : shape {}".format(omic_data1.shape))
 
+    assert len(omic_data1) == len(omic_data2), "Modalities do not have the same number of samples, exiting program."
+
+    print(omic_data1)
+    print(sample_names)
+    print(cancer_type_index)
+    print(cancertypes)
     # Create lists for each column in the final dataset
     SAMPLE_DATA = []
     FEATURE_DATA = []
     VALUE_DATA = []
-    VIEW_DATA = np.full((args['num_features'] * omic_data1.shape[0], ), "RNA-seq").tolist()  # We will have 5000 features for each sample in this view
+    VIEW_DATA = np.full((args['num_features'] * omic_data1.shape[0], ), "GE").tolist()  # We will have 5000 features for each sample in this view
 
     # For each sample, add an entry for each feature to the columns of the output Dataframe
     # Index represents sample name
-    for index, row in tqdm(omic_data1.iterrows(), total=omic_data1.shape[0], unit='samples '):
-
-        # Sample row
-        sample = omic_data1.loc[index]
+    index = 0
+    for sample in tqdm(omic_data1, total=omic_data1.shape[0], unit='samples '):
 
         # Add Sample Name to SAMPLE_DATA
-        sample_list = [index] * args['num_features']
+        sample_list = [sample_names[index]] * args['num_features']
         SAMPLE_DATA.extend(sample_list)
 
         # Add all features to FEATURE_DATA
-        FEATURE_DATA.extend(sample.index.values.tolist())
+        # feature_list = [cancertypes[cancer_type_index[index]]] * args['num_features']
+        FEATURE_DATA.extend(np.arange(5000))
 
         # Add all values to VALUE_DATA
-        VALUE_DATA.extend(sample.values.tolist())
+        VALUE_DATA.extend(sample)
+        index += 1
 
     # Add View Name to VIEW_DATA
-    VIEW_DATA.extend(np.full((args['num_features'] * omic_data2.shape[0], ), "DNA").tolist())
+    VIEW_DATA.extend(np.full((args['num_features'] * omic_data2.shape[0], ), "ME").tolist())
 
     # For each sample, add an entry for each feature to the columns of the output Dataframe
-    for index, row in tqdm(omic_data2.iterrows(), total=omic_data1.shape[0], unit='samples '):
-
-        sample = omic_data2.loc[index]
+    index = 0
+    for sample in tqdm(omic_data2, total=omic_data2.shape[0], unit='samples '):
 
         # Add Sample Name to SAMPLE_DATA
-        sample_list = [index] * args['num_features']
+        sample_list = [sample_names[index]] * args['num_features']
         SAMPLE_DATA.extend(sample_list)
 
         # Add all features to FEATURE_DATA
-        FEATURE_DATA.extend(sample.index.values.tolist())
+        # feature_list = [cancertypes[cancer_type_index[index]]] * args['num_features']
+        FEATURE_DATA.extend(np.arange(5000))
 
         # Add all values to VALUE_DATA
-        VALUE_DATA.extend(sample.values.tolist())
+        VALUE_DATA.extend(sample)
+        index += 1
 
     logger.info("Creating pandas DataFrame of the data...")
 
@@ -97,5 +106,5 @@ def create_mofa_dataframe(args: dict) -> None:
 
     logger.success("Dataframe created. Final MOFA DATA Shape : {}".format(mofa_data_frame.shape))
     logger.info("Writing MOFA+ data to : {}".format(output_data_path))
-    mofa_data_frame.to_csv(os.path.join(output_data_path, 'mofa_rnaseq_dname_5000MAD.csv'), index=False)
+    mofa_data_frame.to_csv(os.path.join(output_data_path, 'mofa_GE_ME_5000MAD.csv'), index=False)
     logger.success("Done writing. Exiting Program.")
