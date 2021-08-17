@@ -19,7 +19,6 @@ import argparse
 import yaml
 from datetime import datetime
 
-from src.MVAE.train import run as mvae_model
 import src.util.logger as logger
 
 # This is the Project Root, important that run.py is inside this folder for accurate ROOT_DIR
@@ -32,6 +31,12 @@ PARSER.add_argument('--config', '-c',
                     metavar='FILE',
                     help="path to the config file",
                     default='configs/main.yaml')
+PARSER.add_argument('-baseline',
+                    action='store_true',
+                    help="Run the baseline and its evaluation")
+PARSER.add_argument('-mofadata',
+                    action='store_true',
+                    help="Preprocessing data for Multi-Omics Factor Analysis V2 (MOFA+)")
 PARSER.add_argument('-mofa',
                     action='store_true',
                     help="Running Multi-Omics Factor Analysis V2 (MOFA+)")
@@ -47,6 +52,9 @@ PARSER.add_argument('-mvib',
 PARSER.add_argument('-cgae',
                     action='store_true',
                     help="Running CGAE Model")
+PARSER.add_argument('-omicade',
+                    action='store_true',
+                    help="Running Omicade4 : https://bioconductor.org/packages/release/bioc/html/omicade4.html")
 
 
 def main() -> None:
@@ -80,15 +88,28 @@ def main() -> None:
     # Setup save directory for output logging
     logger.output_file = save_dir
 
+    # Check for utility arguments, run only these and exit program
+    if args.mofadata:
+        from src.MOFA2.create_mofa_data import create_mofa_dataframe
+
+        create_mofa_dataframe({**config['GLOBAL_PARAMS']})
+        sys.exit()
+
     # If no specific model set, run all models and end program
-    if not args.mofa and not args.moe and not args.poe and not args.mvib and not args.cgae:
+    if not args.baseline and not args.mofa and not args.moe and not args.poe and not args.mvib and not args.cgae \
+            and not args.omicade:
+        run_baseline(config)
         run_mofa(config)
         run_mvae(config, mixture=True, product=True)
         run_mvib(config)
         run_cgae(config)
+        run_omicade(config)
         return
 
     # Run models individually / combined
+    if args.baseline:
+        run_baseline(config)
+
     if args.mofa:
         run_mofa(config)
 
@@ -104,7 +125,20 @@ def main() -> None:
     if args.cgae:
         run_cgae(config)
 
-    return
+    if args.omicade:
+        run_omicade(config)
+
+
+def run_baseline(config: dict) -> None:
+    """
+    Setup and run baseline
+
+    @param config: Dictionary containing input parameters
+    @return: None
+    """
+    import src.baseline.baseline as baseline
+
+    baseline.run_baseline({**config['GLOBAL_PARAMS'], **config['BASELINE']})
 
 
 def run_mofa(config: dict) -> None:
@@ -114,7 +148,9 @@ def run_mofa(config: dict) -> None:
     @param config: Dictionary containing input parameters
     @return: None
     """
-    print("MOFA has not yet been implemented")
+    from src.MOFA2.mofa import run as mofa2
+
+    mofa2({**config['GLOBAL_PARAMS'], **config['MOFA+']})
 
 
 def run_mvae(config: dict, mixture=False, product=False) -> None:
@@ -126,6 +162,8 @@ def run_mvae(config: dict, mixture=False, product=False) -> None:
     @param product: boolean flag that indicates whether the MVAE model is Product-of-Experts
     @return: None
     """
+    from src.MVAE.train import run as mvae_model
+
     if mixture is True:
         print("Running Mixture-of-Experts MVAE Model")
 
@@ -145,7 +183,9 @@ def run_mvib(config: dict) -> None:
     @param config: Dictionary containing input parameters
     @return: None
     """
-    print("Multi-view Information Bottleneck has not yet been implemented")
+    from src.MVIB.train_representation import run as mvib_model
+
+    mvib_model({**config['GLOBAL_PARAMS'], **config['MVIB']})
 
 
 def run_cgae(config: dict) -> None:
@@ -155,7 +195,20 @@ def run_cgae(config: dict) -> None:
     @param config: Dictionary containing input parameters
     @return: None
     """
-    print("CGAE has not yet been implemented")
+    print("CGAE has not yet been implemented", config)
+
+
+def run_omicade(config: dict) -> None:
+    """
+    Setup and run Omicade4
+    https://bioconductor.org/packages/release/bioc/html/omicade4.html
+
+    @param config: Dictionary containing input parameters
+    @return: None
+    """
+    from src.omicade4.main import run_omicade
+
+    run_omicade({**config['GLOBAL_PARAMS'], **config['OMICADE']})
 
 
 if __name__ == '__main__':
