@@ -10,12 +10,12 @@ GLOBAL_PARAMS:
   random_seed: 1
 
 BASELINE:
-  XtrainFile:
-  YtrainFile:
-  XvalidFile:
-  YvalidFile:
-  XtestFile:
-  YtestFile:
+  x_train_file: "/Users/bram/jointomicscomp/data/uniform_split_train_GE.npy"
+  y_train_file: "/Users/bram/jointomicscomp/data/uniform_split_train_ME.npy"
+  x_valid_file: "/Users/bram/jointomicscomp/data/uniform_split_valid_GE.npy"
+  y_valid_file: "/Users/bram/jointomicscomp/data/uniform_split_valid_ME.npy"
+  x_test_file: "/Users/bram/jointomicscomp/data/uniform_split_test_GE.npy"
+  y_test_file: "/Users/bram/jointomicscomp/data/uniform_split_test_ME.npy"
   task: 'impute'               # whether to `impute` one datasource from the other, `classify` (cell type), or `rank` (stage prediction)
   resultsFile: './res.pkl'
   baseline: false
