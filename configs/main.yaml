@@ -1,7 +1,10 @@
 GLOBAL_PARAMS:
   name: "experiment"
-  data_path1: "/Users/bram/jointomicscomp/data/shuffle_RNASeq_5000MAD.csv"
-  data_path2: "/Users/bram/jointomicscomp/data/shuffle_DNAMe_5000MAD.csv"
+  data_path1: "/Users/bram/jointomicscomp/data/GE.npy"
+  data_path2: "/Users/bram/jointomicscomp/data/ME.npy"
+  sample_names: "/Users/bram/jointomicscomp/data/sampleNames.npy"
+  cancer_type_index: "/Users/bram/jointomicscomp/data/cancerType.npy"
+  cancertypes: "/Users/bram/jointomicscomp/data/cancerTypes.npy"
   num_features: 5000
   cuda: false
   random_seed: 1
@@ -19,13 +22,13 @@ BASELINE:
 
 MOFA+:
   # Data options
-  mofa_data_path: "/Users/bram/jointomicscomp/data/mofa_rnaseq_dname_5000MAD.csv"           # MOFA requires different view of the input data
+  mofa_data_path: "/Users/bram/jointomicscomp/data/mofa_GE_ME_5000MAD.csv"           # MOFA requires different view of the input data
   scale_groups: false          # if groups have significantly different ranges, it is good practice to scale each group to unit variance
   scale_views: false           # if views have significantly different ranges, it is good practice to scale each view to unit variance
 
   # Model options
-  pre_trained: "/Users/bram/jointomicscomp/results/experiment 27-07-2021 09:48:43/MOFA+/trained_MOFA_model.hdf5"           # Use a pre-trained model for downstream analysis
-  factors: 10
+  pre_trained: "/Users/bram/jointomicscomp/results/trained_MOFA_128_nofeatures/MOFA+/trained_MOFA_model.hdf5"              # Use a pre-trained model for downstream analysis
+  factors: 128
   likelihoods: None            # likelihoods per view (options are "gaussian","poisson","bernoulli").
                                #     Default is None, and they are infered automatically
   spikeslab_weights: false     # use spike-slab sparsity prior in the weights? (recommended TRUE)
