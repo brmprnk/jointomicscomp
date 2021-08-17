@@ -7,6 +7,7 @@ This file will therefore also run an R script, since the Z matrix needs to be fe
 reconstruction loss.
 """
 import os
+import sys
 # R needs to be installed, and this path needs to be set to the R_Home folder, found by running R.home() in R console.
 os.environ['R_HOME'] = "/Library/Frameworks/R.framework/Resources"
 import pandas as pd
@@ -17,6 +18,7 @@ from tqdm import tqdm
 import numpy as np
 from mofapy2.run.entry_point import entry_point
 from src.util import logger
+
 
 
 def run(args: dict) -> None:
@@ -220,8 +222,8 @@ def reconstruction_loss(args: dict, save_dir: str) -> None:
     global W_omic1, W_omic2
 
     logger.info("Reading original data...")
-    omic_data1 = pd.read_csv(args['data_path1'], index_col=0)
-    omic_data2 = pd.read_csv(args['data_path2'], index_col=0)
+    omic_data1 = np.load(args['data_path1'])
+    omic_data2 = np.load(args['data_path2'])
 
     logger.info("Omic data 1 shape {}".format(omic_data1.shape))
     logger.info("Omic data 2 shape {}".format(omic_data2.shape))
@@ -237,8 +239,14 @@ def reconstruction_loss(args: dict, save_dir: str) -> None:
     W = pd.read_csv(os.path.join(save_dir, "W.csv"))
     Z = pd.read_csv(os.path.join(save_dir, "Z.csv"))
 
+    print("W = ", W)
+
+    print("Z = ", Z)
+
     # Get Z matrix
     unique_factors = np.unique(Z['factor'].values)
+
+    print("Unique factors = ", unique_factors)
 
     z_matrix = []
 
@@ -247,25 +255,34 @@ def reconstruction_loss(args: dict, save_dir: str) -> None:
 
     Z = np.matrix(z_matrix)
 
+    print("Z", Z)
+    print(Z.shape)
+
     # Get W matrix for each modality
     try:
-        W_omic1 = W.loc[W['view'] == "RNA-seq"]
-        W_omic2 = W.loc[W['view'] == "GENE CN"]
+        W_omic1 = W.loc[W['view'] == "GE"]
+        W_omic2 = W.loc[W['view'] == "ME"]
     except (ValueError, Exception) as e:
         logger.error(e)
         logger.error("Probably setup the wrong view names in MOFA+ reconstruction loss.")
 
-    unique_features_rna = W_omic1['feature'].values[::10]
+    print(W_omic1)
+    print("Feature, ", W_omic1['feature'])
+    print("FEature values , ",  W_omic1['feature'].values)
+    unique_features = W_omic1['feature'].values[:args['num_features']]
+    print("len unique features", len(unique_features))
+    np.set_printoptions(threshold=sys.maxsize)
+
     matrix = []
-    for i in tqdm(range(unique_features_rna.shape[0])):
-        matrix.append(W_omic1['value'].loc[W_omic1['feature'] == unique_features_rna[i]])
+    for i in tqdm(range(unique_features.shape[0])):
+        matrix.append(W_omic1['value'].loc[W_omic1['feature'] == unique_features[i]])
 
     W_omic1 = np.matrix(matrix)
 
-    unique_features_gcn = W_omic2['feature'].values[::10]
+    unique_features = W_omic2['feature'].values[:args['num_features']]
     matrix = []
-    for i in tqdm(range(unique_features_gcn.shape[0])):
-        matrix.append(W_omic2['value'].loc[W_omic2['feature'] == unique_features_gcn[i]])
+    for i in tqdm(range(unique_features.shape[0])):
+        matrix.append(W_omic2['value'].loc[W_omic2['feature'] == unique_features[i]])
 
     W_omic2 = np.matrix(matrix)
 
@@ -285,11 +302,30 @@ def reconstruction_loss(args: dict, save_dir: str) -> None:
     logger.info("Reconstructed data for omic 2 shape: {}".format(Y_omic2.shape))
 
     # input, predict
-    rna_recon_loss = mean_squared_error(omic_data1.values, Y_omic1)
+    ge_recon_loss = mean_squared_error(omic_data1, Y_omic1)
 
     # input, predict
-    gcn_recon_loss = mean_squared_error(omic_data2.values, Y_omic2)
+    me_recon_loss = mean_squared_error(omic_data2, Y_omic2)
 
-    result = np.array([rna_recon_loss, gcn_recon_loss])
+    result = np.array([ge_recon_loss, me_recon_loss])
+
+    logger.info("Reconstruction loss GE = {}".format(ge_recon_loss))
+    logger.info("Reconstruction loss ME = {}".format(me_recon_loss))
+
     np.save(os.path.join(save_dir, "recon_loss.npy"), result)
-    logger.success("MOFA+ Reconstruction losses: {}".format(result))
+
+    logger.info("Now do imputations : Yi^T * Wj for all i = 1, 2 and j = 1, 2")
+
+    Y_ge_W_me = np.matmul(omic_data1, W_omic2)
+    Y_me_W_ge = np.matmul(omic_data2, W_omic1)
+
+    print(Y_me_W_ge.shape)
+
+    impute_Y_ge_W_me = mean_squared_error(Y_ge_W_me, np.transpose(Z))
+    impute_Y_me_W_ge = mean_squared_error(Y_me_W_ge, np.transpose(Z))
+
+    logger.info("Impute Y_GE and W_ME = {}".format(impute_Y_ge_W_me))
+    logger.info("Impute Y_ME and W_GE = {}".format(impute_Y_me_W_ge))
+
+    np.save(os.path.join(save_dir, "impute_loss.npy"), result)
+    logger.success("Saved results. Exiting program.")
