@@ -12,7 +12,7 @@ import src.util.logger as logger
 
 import numpy as np
 
-N_MODALITIES = 3
+N_MODALITIES = 2
 
 
 def elbo_loss(recon_image, image, recon_gray, gray, mu, logvar, annealing_factor=1.):
@@ -50,7 +50,7 @@ def binary_cross_entropy_with_logits(input, target):
             + torch.log(1 + torch.exp(-torch.abs(input))))
 
 
-def loss_function(recon_rna, rna, recon_gcn, gcn, recon_dna, dna, mu, log_var, kld_weight) -> dict:
+def loss_function(recon_ge, GE, recon_me, ME, mu, log_var, kld_weight) -> dict:
     """
     Computes the VAE loss function.
     KL(N(\mu, \sigma), N(0, 1)) = \log \frac{1}{\sigma} + \frac{\sigma^2 + \mu^2}{2} - \frac{1}{2}
@@ -59,19 +59,15 @@ def loss_function(recon_rna, rna, recon_gcn, gcn, recon_dna, dna, mu, log_var, k
     """
     # Reconstruction loss
     recons_loss = 0
-    if recon_rna is not None and rna is not None:
-        recons_loss += F.mse_loss(recon_rna, rna)
-    if recon_gcn is not None and gcn is not None:
-        recons_loss += F.mse_loss(recon_gcn, gcn)
-    if recon_dna is not None and dna is not None:
-        recons_loss += F.mse_loss(recon_dna, dna)
+    if recon_ge is not None and GE is not None:
+        recons_loss += F.mse_loss(recon_ge, GE)
+    if recon_me is not None and ME is not None:
+        recons_loss += F.mse_loss(recon_me, ME)
 
     recons_loss /= float(N_MODALITIES)  # Account for number of modalities
-    # print("recons_loss", recons_loss)
 
     # KLD Loss
     kld_loss = torch.mean(-0.5 * torch.sum(1 + log_var - mu ** 2 - log_var.exp(), dim=1), dim=0)
-    # print("kld loss", kld_loss)
 
     # Loss
     loss = recons_loss + kld_weight * kld_loss
@@ -86,28 +82,20 @@ def reconstruction_loss_function(key, loss_meter, recon_rna, rna, recon_gcn, gcn
     :return:
     """
     if key == "rna":
-        rna_recon_rna = F.mse_loss(recon_rna, rna)
-        rna_recon_gcn = F.mse_loss(recon_gcn, gcn)
+        ge_recon_ge = F.mse_loss(recon_rna, rna)
+        ge_recon_me = F.mse_loss(recon_gcn, gcn)
         rna_recon_dna = F.mse_loss(recon_dna, dna)
-        loss_meter.modality_loss(rna_recon_rna.detach().numpy(), "rna_rna")
-        loss_meter.modality_loss(rna_recon_gcn.detach().numpy(), "rna_gcn")
+        loss_meter.modality_loss(ge_recon_ge.detach().numpy(), "rna_rna")
+        loss_meter.modality_loss(ge_recon_me.detach().numpy(), "rna_gcn")
         loss_meter.modality_loss(rna_recon_dna.detach().numpy(), "rna_dna")
 
     if key == "gcn":
-        gcn_recon_gcn = F.mse_loss(recon_gcn, gcn)
-        gcn_recon_rna = F.mse_loss(recon_rna, rna)
+        me_recon_me = F.mse_loss(recon_gcn, gcn)
+        me_recon_ge = F.mse_loss(recon_rna, rna)
         gcn_recon_dna = F.mse_loss(recon_dna, dna)
-        loss_meter.modality_loss(gcn_recon_gcn.detach().numpy(), "gcn_gcn")
-        loss_meter.modality_loss(gcn_recon_rna.detach().numpy(), "gcn_rna")
+        loss_meter.modality_loss(me_recon_me.detach().numpy(), "gcn_gcn")
+        loss_meter.modality_loss(me_recon_ge.detach().numpy(), "gcn_rna")
         loss_meter.modality_loss(gcn_recon_dna.detach().numpy(), "gcn_dna")
-
-    if key == "dna":
-        dna_recon_dna = F.mse_loss(recon_dna, dna)
-        dna_recon_rna = F.mse_loss(recon_rna, rna)
-        dna_recon_gcn = F.mse_loss(recon_gcn, gcn)
-        loss_meter.modality_loss(dna_recon_dna.detach().numpy(), "dna_dna")
-        loss_meter.modality_loss(dna_recon_rna.detach().numpy(), "dna_rna")
-        loss_meter.modality_loss(dna_recon_gcn.detach().numpy(), "dna_gcn")
 
     return
 
@@ -124,15 +112,10 @@ class AverageMeter(object):
         self.values = []
         self.reconstruct_losses = {
             "average": [],
-            "rna_rna": [],
-            "gcn_gcn": [],
-            "dna_dna": [],
-            "rna_gcn": [],
-            "rna_dna": [],
-            "gcn_rna": [],
-            "gcn_dna": [],
-            "dna_rna": [],
-            "dna_gcn": [],
+            "ge_ge": [],
+            "me_me": [],
+            "ge_me": [],
+            "me_ge": [],
         }
 
     def update(self, val, n=1):
@@ -187,7 +170,8 @@ def run(args) -> None:
     os.makedirs(save_dir)
 
     # Fetch Datasets
-    tcga_data = datasets.TCGAData(args['ROOT_DIR'], cancer3types=args['cancer3'], save_dir=save_dir)
+
+    tcga_data = datasets.TCGAData(args, save_dir=save_dir)
     train_dataset = tcga_data.get_data_partition("train")
     val_dataset = tcga_data.get_data_partition("val")
 
@@ -203,7 +187,7 @@ def run(args) -> None:
     # Log Data shape, input arguments and model
     model_file = open("{}/MVAE {} Model.txt".format(save_dir, 'MoE' if args['mixture'] else 'PoE'), "a")
     model_file.write("Running at {}\n".format(datetime.now().strftime("%d-%m-%Y %H:%M:%S")))
-    model_file.write("Input shape : {}, 3000\n".format(len(train_loader.dataset)))
+    model_file.write("Input shape : {}, 5000\n".format(len(train_loader.dataset)))
     model_file.write("Input args : {}\n".format(args))
     model_file.write("PoE Model : {}".format(model))
     model_file.close()
@@ -218,52 +202,42 @@ def run(args) -> None:
         model.train()
 
         progress_bar = tqdm(total=len(train_loader))
-        for batch_idx, (rna, gcn, dna) in enumerate(train_loader):
+        for batch_idx, (GE, ME) in enumerate(train_loader):
 
             # refresh the optimizer
             optimizer.zero_grad()
 
-            kld_weight = len(rna) / len(train_loader.dataset)  # Account for the minibatch samples from the dataset
+            kld_weight = len(GE) / len(train_loader.dataset)  # Account for the minibatch samples from the dataset
 
             # compute reconstructions using all the modalities
-            (joint_recon_rna, joint_recon_gcn, joint_recon_dna, joint_mu, joint_logvar) = model(rna, gcn, dna)
+            (joint_recon_rna, joint_recon_gcn, joint_mu, joint_logvar) = model(GE, ME)
 
             # compute reconstructions using each of the individual modalities
-            (rna_recon_rna, rna_recon_gcn, rna_recon_dna, rna_mu, rna_logvar) = model(rna=rna)
+            (ge_recon_ge, ge_recon_me, ge_mu, ge_logvar) = model(ge=GE)
 
-            (gcn_recon_rna, gcn_recon_gcn, gcn_recon_dna, gcn_mu, gcn_logvar) = model(gcn=gcn)
-
-            (dna_recon_rna, dna_recon_gcn, dna_recon_dna, dna_mu, dna_logvar) = model(dna=dna)
+            (me_recon_ge, me_recon_me, me_mu, me_logvar) = model(me=ME)
 
             # Compute joint train loss
-            joint_train_loss = loss_function(joint_recon_rna, rna,
-                                             joint_recon_gcn, gcn,
-                                             joint_recon_dna, dna,
+            joint_train_loss = loss_function(joint_recon_rna, GE,
+                                             joint_recon_gcn, ME,
                                              joint_mu, joint_logvar, kld_weight)
 
             # compute loss with single modal inputs
-            rna_train_loss = loss_function(rna_recon_rna, rna,
-                                           rna_recon_gcn, gcn,
-                                           rna_recon_dna, dna,
-                                           rna_mu, rna_logvar, kld_weight)
+            ge_train_loss = loss_function(ge_recon_ge, GE,
+                                          ge_recon_me, ME,
+                                          ge_mu, ge_logvar, kld_weight)
 
-            gcn_train_loss = loss_function(gcn_recon_rna, rna,
-                                           gcn_recon_gcn, gcn,
-                                           gcn_recon_dna, dna,
-                                           gcn_mu, gcn_logvar, kld_weight)
+            me_train_loss = loss_function(me_recon_ge, GE,
+                                          me_recon_me, ME,
+                                          me_mu, me_logvar, kld_weight)
 
-            dna_train_loss = loss_function(dna_recon_rna, rna,
-                                           dna_recon_gcn, gcn,
-                                           dna_recon_dna, dna,
-                                           dna_mu, dna_logvar, kld_weight)
+            train_loss = joint_train_loss['loss'] + ge_train_loss['loss'] + me_train_loss['loss']
+            train_recon_loss = joint_train_loss['Reconstruction_Loss'] + ge_train_loss['Reconstruction_Loss'] + me_train_loss['Reconstruction_Loss']
+            train_kld_loss = joint_train_loss['KLD'] + ge_train_loss['KLD'] + me_train_loss['KLD']
 
-            train_loss = joint_train_loss['loss'] + rna_train_loss['loss'] + gcn_train_loss['loss'] + dna_train_loss['loss']
-            train_recon_loss = joint_train_loss['Reconstruction_Loss'] + rna_train_loss['Reconstruction_Loss'] + gcn_train_loss['Reconstruction_Loss'] + dna_train_loss['Reconstruction_Loss']
-            train_kld_loss = joint_train_loss['KLD'] + rna_train_loss['KLD'] + gcn_train_loss['KLD'] + dna_train_loss['KLD']
-
-            train_loss_meter.update(train_loss, len(rna))
-            train_recon_loss_meter.update(train_recon_loss, len(rna))
-            train_kld_loss_meter.update(train_kld_loss, len(rna))
+            train_loss_meter.update(train_loss, len(GE))
+            train_recon_loss_meter.update(train_recon_loss, len(GE))
+            train_kld_loss_meter.update(train_kld_loss, len(GE))
 
             # ELBO
             # # compute joint loss
@@ -273,17 +247,17 @@ def run(args) -> None:
             #                              annealing_factor=annealing_factor)
             #
             # # compute loss with single modal inputs
-            # rna_train_loss = elbo_loss(rna_recon_rna, rna,
-            #                              rna_recon_gcn, gcn,
+            # ge_train_loss = elbo_loss(ge_recon_ge, rna,
+            #                              ge_recon_me, gcn,
             #                              rna_mu, rna_logvar,
             #                              annealing_factor=annealing_factor)
             #
-            # gcn_train_loss = elbo_loss(gcn_recon_rna, rna,
-            #                             gcn_recon_gcn, gcn,
+            # me_train_loss = elbo_loss(me_recon_ge, rna,
+            #                             me_recon_me, gcn,
             #                             gcn_mu, gcn_logvar,
             #                             annealing_factor=annealing_factor)
             #
-            # train_loss = joint_train_loss + rna_train_loss + gcn_train_loss
+            # train_loss = joint_train_loss + ge_train_loss + me_train_loss
             #
             # train_loss_meter.update(train_loss.item(), len(rna))
 
@@ -304,7 +278,7 @@ def run(args) -> None:
         model.eval()
         test_loss = 0
 
-        for batch_idx, (rna, gcn, dna) in enumerate(val_loader):
+        for batch_idx, (GE, ME) in enumerate(val_loader):
 
             #
             # if epoch < args.annealing_epochs:
@@ -316,18 +290,18 @@ def run(args) -> None:
             #     annealing_factor = 1.0
 
             # # compute reconstructions using each of the individual modalities (for results)
-            # (rna_recon_rna, rna_recon_gcn, rna_recon_dna, rna_mu, rna_logvar) = model(rna=rna)
+            # (ge_recon_ge, ge_recon_me, rna_recon_dna, rna_mu, rna_logvar) = model(rna=rna)
             #
-            # (gcn_recon_rna, gcn_recon_gcn, gcn_recon_dna, gcn_mu, gcn_logvar) = model(gcn=gcn)
+            # (me_recon_ge, me_recon_me, gcn_recon_dna, gcn_mu, gcn_logvar) = model(gcn=gcn)
             #
             # (dna_recon_rna, dna_recon_gcn, dna_recon_dna, dna_mu, dna_logvar) = model(dna=dna)
             #
-            # reconstruction_loss_function("rna", val_recon_loss_meter, rna_recon_rna, rna,
-            #                              rna_recon_gcn, gcn,
+            # reconstruction_loss_function("rna", val_recon_loss_meter, ge_recon_ge, rna,
+            #                              ge_recon_me, gcn,
             #                              rna_recon_dna, dna)
             #
-            # reconstruction_loss_function("gcn", val_recon_loss_meter, gcn_recon_rna, rna,
-            #                              gcn_recon_gcn, gcn,
+            # reconstruction_loss_function("gcn", val_recon_loss_meter, me_recon_ge, rna,
+            #                              me_recon_me, gcn,
             #                              gcn_recon_dna, dna)
             #
             # reconstruction_loss_function("dna", val_recon_loss_meter, dna_recon_rna, rna,
@@ -335,19 +309,18 @@ def run(args) -> None:
             #                              dna_recon_dna, dna)
 
             # for ease, only compute the joint loss in validation
-            (joint_recon_rna, joint_recon_gcn, joint_recon_dna, joint_mu, joint_logvar) = model(rna, gcn, dna)
+            (joint_recon_ge, joint_recon_me, joint_mu, joint_logvar) = model(GE, ME)
 
-            kld_weight = len(rna) / len(val_loader.dataset)  # Account for the minibatch samples from the dataset
+            kld_weight = len(GE) / len(val_loader.dataset)  # Account for the minibatch samples from the dataset
 
             # Compute joint loss
-            joint_test_loss = loss_function(joint_recon_rna, rna,
-                                            joint_recon_gcn, gcn,
-                                            joint_recon_dna, dna,
+            joint_test_loss = loss_function(joint_recon_ge, GE,
+                                            joint_recon_me, ME,
                                             joint_mu, joint_logvar, kld_weight)
 
-            val_loss_meter.update(joint_test_loss['loss'], len(rna))
-            val_recon_loss_meter.update(joint_test_loss['Reconstruction_Loss'], len(rna))
-            val_kld_loss_meter.update(joint_test_loss['KLD'], len(rna))
+            val_loss_meter.update(joint_test_loss['loss'], len(GE))
+            val_recon_loss_meter.update(joint_test_loss['Reconstruction_Loss'], len(GE))
+            val_kld_loss_meter.update(joint_test_loss['KLD'], len(GE))
 
             test_loss += joint_test_loss['loss']
 
@@ -384,7 +357,7 @@ def run(args) -> None:
             }, True, save_dir)
 
     # Save all reconstruction losses
-    modal = ['rna', 'gcn', 'dna']
+    modal = ['ge', 'me']
     for modal1 in modal:
         for modal2 in modal:
             key = "{}_{}".format(modal1, modal2)

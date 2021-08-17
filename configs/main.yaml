@@ -50,13 +50,12 @@ MOFA+:
 MVAE:
   # Flags
   mixture: false  # Flag that indicates if the MVAE uses Mixture-of-Experts instead of Product-of-Experts
-  plot: false     # Flag for plotting training and validation losses (loss, recon loss and KL loss)
-  cancer3: false  # Flag for using smaller dataset with only 3 cancer types
+  plot: True     # Flag for plotting training and validation losses (loss, recon loss and KL loss)
 
   # Hyperparameters
   latent_dim: 128
   batch_size: 256
-  epochs: 1
+  epochs: 40
   lr: 0.0001
 
   # Other parameters
