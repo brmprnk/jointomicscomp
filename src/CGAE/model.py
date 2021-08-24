@@ -134,7 +134,7 @@ def train(device, net, num_epochs, train_loader, train_loader_eval, valid_loader
 
 
 
-def extract(device, net, model_file, names_file, loader, save_file=None, multimodal=False):
+def extract(device, net, model_file, names_file, loader, save_dir, multimodal=False):
 	# Load pretrained model
 	epoch_num = load_checkpoint(net, filename=model_file)
 
@@ -156,8 +156,8 @@ def extract(device, net, model_file, names_file, loader, save_file=None, multimo
 				z2 = z2.cpu().numpy().squeeze()
 
 				# Save file
-				with open(save_file, 'wb') as f:
-					pickle.dump([z1, z2], f)
+				np.save("z1.npy", z1)
+				np.save("z2.npy", z2)
 
 
 def load_checkpoint(net, filename='model_last.pth.tar'):

@@ -8,6 +8,7 @@ GLOBAL_PARAMS:
   num_features: 5000
   cuda: false
   random_seed: 1
+  validation_fraction: 0.1
 
 BASELINE:
   x_train_file: "/Users/bram/jointomicscomp/data/uniform_split_train_GE.npy"
@@ -71,6 +72,26 @@ MVIB:
 
   # Other parameters
   log_interval: 5
+
+CGAE:
+  epochs: 40
+  batch_size: 256
+  enc1_lr: 0.0001
+  dec1_lr: 0.0001
+  enc2_lr: 0.0001
+  dec2_lr: 0.0001
+  loss_function: 'bce'
+  use_batch_norm: True
+  dropout_probability: 0.0
+  optimizer: 'Adam'
+  enc1_output_scale: 1.
+  enc2_output_scale: 1.
+  enc1_last_activation: 'relu'
+  enc2_last_activation: 'relu'
+  beta_start_value: 1
+  zconstraintCoef: 1
+  crossPenaltyCoef: 1
+
 
 OMICADE:
   data_path: ""
