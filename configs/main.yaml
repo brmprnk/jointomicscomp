@@ -6,7 +6,7 @@ GLOBAL_PARAMS:
   cancer_type_index: "/Users/bram/jointomicscomp/data/cancerType.npy"
   cancertypes: "/Users/bram/jointomicscomp/data/cancerTypes.npy"
   num_features: 5000
-  cuda: false
+  cuda: true
   random_seed: 1
 
 BASELINE:
