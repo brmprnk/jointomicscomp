@@ -314,18 +314,29 @@ def reconstruction_loss(args: dict, save_dir: str) -> None:
 
     np.save(os.path.join(save_dir, "recon_loss.npy"), result)
 
-    logger.info("Now do imputations : Yi^T * Wj for all i = 1, 2 and j = 1, 2")
+    logger.info("Now do imputations using pseudoinverse of W")
 
-    Y_ge_W_me = np.matmul(omic_data1, W_omic2)
-    Y_me_W_ge = np.matmul(omic_data2, W_omic1)
+    # Imputation from Y1 to Y2
+    W_pseudo1 = np.linalg.pinv(W_omic1)  # Shape (factors, features)
 
-    print(Y_me_W_ge.shape)
+    Y1 = omic_data1.transpose()
+    Z_frompseudo1 = np.matmul(W_pseudo1, Y1)
 
-    impute_Y_ge_W_me = mean_squared_error(Y_ge_W_me, np.transpose(Z))
-    impute_Y_me_W_ge = mean_squared_error(Y_me_W_ge, np.transpose(Z))
+    # Now to impute Y2 from new Z
+    Y2_impute = np.matmul(W_omic2, Z_frompseudo1)
 
-    logger.info("Impute Y_GE and W_ME = {}".format(impute_Y_ge_W_me))
-    logger.info("Impute Y_ME and W_GE = {}".format(impute_Y_me_W_ge))
+    # Imputation from Y1 to Y2
+    W_pseudo2 = np.linalg.pinv(W_omic2)  # Shape (factors, features)
 
-    np.save(os.path.join(save_dir, "impute_loss.npy"), result)
-    logger.success("Saved results. Exiting program.")
+    Y2 = omic_data2.transpose()
+    Z_frompseudo2 = np.matmul(W_pseudo2, Y2)
+
+    # Now to impute Y1 from new Z
+    Y1_impute = np.matmul(W_omic1, Z_frompseudo2)
+
+    # Imputation loss is
+    imputeY1_loss = mean_squared_error(Y1_impute, omic_data1.transpose())
+    imputeY2_loss = mean_squared_error(Y2_impute, omic_data2.transpose())
+
+    logger.info("Imputation loss GE from ME = {}".format(imputeY1_loss))
+    logger.info("Imputation loss ME from GE = {}".format(imputeY2_loss))
