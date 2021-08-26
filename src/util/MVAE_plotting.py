@@ -11,7 +11,7 @@ class LossPlotter(object):
     def __init__(self, args, save_dir):
         print("Creating plots of the training and validation losses...")
         self.args = args
-        self.x_axis = [*range(1, args.epochs + 1)]
+        self.x_axis = [*range(1, args['epochs'] + 1)]
 
         # For saving
         self.save_dir = save_dir
@@ -24,7 +24,7 @@ class LossPlotter(object):
         for x, y in zip(self.x_axis, train_loss_meter.values[::total_batches]):
             if x == 1 or x % 25 == 0:
                 ax1.annotate('  ({}, {:.4f})'.format(x, y), xy=(x, y), textcoords='data', fontsize=9)
-        plt.title("Product of Experts: RNA-seq and GCN (gistic2)\nLatent space : {}, LR: {}".format(self.args.n_latents, self.args.lr))
+        plt.title("Product of Experts: GE and ME\nLatent space : {}, LR: {}".format(self.args['latent_dim'], self.args['lr']))
         plt.xlabel("Epochs")
         plt.ylabel("Average Training Loss")
         plt.savefig("{}/Loss.png".format(self.save_dir), dpi=400)
@@ -36,7 +36,7 @@ class LossPlotter(object):
         for x, y in zip(self.x_axis, train_recon_loss_meter.values[::total_batches]):
             if x == 1 or x % 25 == 0:
                 ax2.annotate('  ({}, {:.4f})'.format(x, y), xy=(x, y), textcoords='data', fontsize=9)
-        plt.title("Product of Experts: RNA-seq and GCN (gistic2)\nLatent space : {}, LR: {}".format(self.args.n_latents, self.args.lr))
+        plt.title("Product of Experts: GE and ME\nLatent space : {}, LR: {}".format(self.args['latent_dim'], self.args['lr']))
         plt.xlabel("Epochs")
         plt.ylabel("Average Training Reconstruction Loss")
         plt.savefig("{}/Recon Loss.png".format(self.save_dir), dpi=400)
@@ -48,7 +48,7 @@ class LossPlotter(object):
         for x, y in zip(self.x_axis, train_kld_loss_meter.values[::total_batches]):
             if x == 1 or x % 25 == 0:
                 ax3.annotate('  ({}, {:.4f})'.format(x, y), xy=(x, y), textcoords='data', fontsize=9)
-        plt.title("Product of Experts: RNA-seq and GCN (gistic2)\nLatent space : {}, LR: {}".format(self.args.n_latents, self.args.lr))
+        plt.title("Product of Experts: GE and ME\nLatent space : {}, LR: {}".format(self.args['latent_dim'], self.args['lr']))
         plt.xlabel("Epochs")
         plt.ylabel("Average Training KLD Loss")
         plt.savefig("{}/KLD Loss.png".format(self.save_dir), dpi=400)
@@ -61,7 +61,7 @@ class LossPlotter(object):
         for x, y in zip(self.x_axis, val_loss_meter.values[::total_val_batches]):
             if x == 1 or x % 25 == 0:
                 ax4.annotate('  ({}, {:.4f})'.format(x, y), xy=(x, y), textcoords='data', fontsize=9)
-        plt.title("Product of Experts: RNA-seq and GCN (gistic2)\nLatent space : {}, LR: {}".format(self.args.n_latents, self.args.lr))
+        plt.title("Product of Experts: GE and ME\nLatent space : {}, LR: {}".format(self.args['latent_dim'], self.args['lr']))
         plt.xlabel("Epochs")
         plt.ylabel("Average Validation Loss")
         plt.savefig("{}/Validation Loss.png".format(self.save_dir), dpi=400)
@@ -73,7 +73,7 @@ class LossPlotter(object):
         for x, y in zip(self.x_axis, val_recon_loss_meter.values[::total_val_batches]):
             if x == 1 or x % 25 == 0:
                 ax5.annotate('  ({}, {:.4f})'.format(x, y), xy=(x, y), textcoords='data', fontsize=9)
-        plt.title("Product of Experts: RNA-seq and GCN (gistic2)\nLatent space : {}, LR: {}".format(self.args.n_latents, self.args.lr))
+        plt.title("Product of Experts: GE and ME\nLatent space : {}, LR: {}".format(self.args['latent_dim'], self.args['lr']))
         plt.xlabel("Epochs")
         plt.ylabel("Average Validation Reconstruction Loss")
         plt.savefig("{}/Validation Recon Loss.png".format(self.save_dir), dpi=400)
@@ -85,7 +85,7 @@ class LossPlotter(object):
         for x, y in zip(self.x_axis, val_kld_loss_meter.values[::total_val_batches]):
             if x == 1 or x % 25 == 0:
                 ax6.annotate('  ({}, {:.4f})'.format(x, y), xy=(x, y), textcoords='data', fontsize=9)
-        plt.title("Product of Experts: RNA-seq and GCN (gistic2)\nLatent space : {}, LR: {}".format(self.args.n_latents, self.args.lr))
+        plt.title("Product of Experts: GE and ME\nLatent space : {}, LR: {}".format(self.args['latent_dim'], self.args['lr']))
         plt.xlabel("Epochs")
         plt.ylabel("Average Validation KLD Loss")
         plt.savefig("{}/Validation KLD Loss.png".format(self.save_dir), dpi=400)
