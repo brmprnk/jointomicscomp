@@ -6,16 +6,16 @@ GLOBAL_PARAMS:
   cancer_type_index: "/Users/bram/jointomicscomp/data/cancerType.npy"
   cancertypes: "/Users/bram/jointomicscomp/data/cancerTypes.npy"
   num_features: 5000
-  cuda: false
+  cuda: true
   random_seed: 1
 
 BASELINE:
-  XtrainFile:
-  YtrainFile:
-  XvalidFile:
-  YvalidFile:
-  XtestFile:
-  YtestFile:
+  x_train_file: "/Users/bram/jointomicscomp/data/uniform_split_train_GE.npy"
+  y_train_file: "/Users/bram/jointomicscomp/data/uniform_split_train_ME.npy"
+  x_valid_file: "/Users/bram/jointomicscomp/data/uniform_split_valid_GE.npy"
+  y_valid_file: "/Users/bram/jointomicscomp/data/uniform_split_valid_ME.npy"
+  x_test_file: "/Users/bram/jointomicscomp/data/uniform_split_test_GE.npy"
+  y_test_file: "/Users/bram/jointomicscomp/data/uniform_split_test_ME.npy"
   task: 'impute'               # whether to `impute` one datasource from the other, `classify` (cell type), or `rank` (stage prediction)
   resultsFile: './res.pkl'
   baseline: false
@@ -52,7 +52,8 @@ MVAE:
   mixture: false  # Flag that indicates if the MVAE uses Mixture-of-Experts instead of Product-of-Experts
   plot: True     # Flag for plotting training and validation losses (loss, recon loss and KL loss)
 
-  # Hyperparameters
+  # Model options
+  pre_trained: "/Users/bram/jointomicscomp/results/moe_poe_new_data/MoE/best_model.pth.tar"
   latent_dim: 128
   batch_size: 256
   epochs: 40

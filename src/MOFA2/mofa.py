@@ -316,6 +316,8 @@ def reconstruction_loss(args: dict, save_dir: str) -> None:
 
     logger.info("Now do imputations : Yi^T * Wj for all i = 1, 2 and j = 1, 2")
 
+
+    print(omic_data1.shape, W_omic2.shape)
     Y_ge_W_me = np.matmul(omic_data1, W_omic2)
     Y_me_W_ge = np.matmul(omic_data2, W_omic1)
 

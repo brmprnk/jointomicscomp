@@ -8,14 +8,9 @@ from mord import OrdinalRidge
 from src.baseline.evaluate import *
 
 
-def impute(Xtrain, Ytrain, Xvalid, Yvalid, Xtest, Ytest, alphas, criterion='mse'):
-    # returns imputed values as well as evaluation of the imputation based on mse and rsquared
+def impute(x_train, y_train, x_valid, y_valid, x_test, y_test, alphas, criterion='mse'):
 
-    if criterion == 'mse':
-        ind = 0
-    else:
-        assert criterion == 'rsquared'
-        ind = 1
+    # returns imputed values as well as evaluation of the imputation based on mse and rsquared
 
     validationPerformance = np.zeros(alphas.shape[0])
     models = []
@@ -23,25 +18,25 @@ def impute(Xtrain, Ytrain, Xvalid, Yvalid, Xtest, Ytest, alphas, criterion='mse'
         model = Ridge(alpha=a, fit_intercept=True, normalize=False, random_state=1)
 
         # train
-        model.fit(Xtrain, Ytrain)
+        model.fit(x_train, y_train)
 
         # save so that we don't have to re-train
         models.append(model)
 
         # evaluate using user-specified criterion
-        validationPerformance[i] = evaluate_imputation(Yvalid, model.predict(Xvalid))[ind]
+        validationPerformance[i] = evaluate_imputation(y_valid, model.predict(x_valid), criterion)
 
     if criterion == 'mse':
         bestModel = models[np.argmin(validationPerformance)]
     else:
         bestModel = models[np.argmax(validationPerformance)]
 
-    predictions = bestModel.predict(Xtest)
+    predictions = bestModel.predict(x_test)
 
-    return predictions, evaluate_imputation(Ytest, predictions)
+    return predictions, evaluate_imputation(y_test, predictions, 'mse'), evaluate_imputation(y_test, predictions, 'rsquared')
 
 
-def ordinalRegression(Xtrain, Ytrain, Xvalid, Yvalid, Xtest, Ytest, alphas, criterion='mcc'):
+def ordinal_regression(x_train, y_train, x_valid, y_valid, x_test, y_test, alphas, criterion='mcc'):
     # returns the predicted stage, as well as accuracy measures
 
     if criterion == 'acc':
@@ -62,22 +57,22 @@ def ordinalRegression(Xtrain, Ytrain, Xvalid, Yvalid, Xtest, Ytest, alphas, crit
         model = OrdinalRidge(alpha=a, fit_intercept=True, normalize=False, random_state=1)
 
         # train
-        model.fit(Xtrain, Ytrain)
+        model.fit(x_train, y_train)
 
         # save so that we don't have to re-train
         models.append(model)
 
         # evaluate using user-specified criterion
-        validationPerformance[i] = evaluate_classification(Yvalid, model.predict(Xvalid))[ind]
+        validationPerformance[i] = evaluate_classification(y_valid, model.predict(x_valid))[ind]
 
     bestModel = models[np.argmax(validationPerformance)]
 
-    predictions = bestModel.predict(Xtest).astype(int)
+    predictions = bestModel.predict(x_test).astype(int)
 
-    return predictions, evaluate_classification(Ytest, predictions)
+    return predictions, evaluate_classification(y_test, predictions)
 
 
-def classification(Xtrain, Ytrain, Xvalid, Yvalid, Xtest, Ytest, alphas, criterion='mcc'):
+def classification(x_train, y_train, x_valid, y_valid, x_test, y_test, alphas, criterion='mcc'):
     # returns the predicted stage, as well as accuracy measures
 
     if criterion == 'acc':
@@ -98,19 +93,19 @@ def classification(Xtrain, Ytrain, Xvalid, Yvalid, Xtest, Ytest, alphas, criteri
         model = LinearSVC(penalty='l2', loss='hinge', C=a, multi_class='ovr', fit_intercept=True, random_state=1)
 
         # train
-        model.fit(Xtrain, Ytrain)
+        model.fit(x_train, y_train)
 
         # save so that we don't have to re-train
         models.append(model)
 
         # evaluate using user-specified criterion
-        validationPerformance[i] = evaluate_classification(Yvalid, model.predict(Xvalid))[ind]
+        validationPerformance[i] = evaluate_classification(y_valid, model.predict(x_valid))[ind]
 
     bestModel = models[np.argmax(validationPerformance)]
 
-    predictions = bestModel.predict(Xtest).astype(int)
+    predictions = bestModel.predict(x_test).astype(int)
 
-    return predictions, evaluate_classification(Ytest, predictions)
+    return predictions, evaluate_classification(y_test, predictions)
 
 
 def run_baseline(args: dict) -> None:
@@ -119,65 +114,70 @@ def run_baseline(args: dict) -> None:
     @param args: Dictionary containing input parameters
     @return:
     """
+    save_dir = os.path.join(args['save_dir'], '{}'.format('baseline'))
+    os.makedirs(save_dir)
+
     alphas = np.array([1e-4, 1e-3, 1e-2, 1e-1, 0.5, 1.0, 2.0, 5.0, 10., 20.])
     Cs = 1. / alphas
 
+    print(args['task'])
+
     # load features (raw GE/ME/etc or VAE embeddings) from K data sources, N tumors, F features
     # a pickle file with a list of length K, each element containing a N x F npy array
-    with open(args['XtrainFile'], 'rb') as f:
-        XtrainList = pickle.load(f)
+    with open(args['x_train_file'], 'rb') as f:
+        x_trainlist = np.float32(np.load(f, allow_pickle=True))
 
-    with open(args['XvalidFile'], 'rb') as f:
-        XvalidList = pickle.load(f)
+    with open(args['x_valid_file'], 'rb') as f:
+        x_validlist = np.float32(np.load(f, allow_pickle=True))
 
-    with open(args['XtestFile'], 'rb') as f:
-        XtestList = pickle.load(f)
+    with open(args['x_test_file'], 'rb') as f:
+        x_testlist = np.float32(np.load(f, allow_pickle=True))
 
     if args['task'] == 'classify':
         # a pickle file with the class label npy array with shape (N,)
-        with open(args['YtrainFile'], 'rb') as f:
-            Ytrain = pickle.load(f)
+        with open(args['y_train_file'], 'rb') as f:
+            y_train = np.load(f, allow_pickle=True)
 
-        with open(args['XvalidFile'], 'rb') as f:
-            Yvalid = pickle.load(f)
+        with open(args['y_valid_file'], 'rb') as f:
+            y_valid = np.load(f, allow_pickle=True)
 
-        with open(args['XtestFile'], 'rb') as f:
-            Ytest = pickle.load(f)
+        with open(args['y_test_file'], 'rb') as f:
+            y_test = np.load(f, allow_pickle=True)
 
-        Nclasses = np.unique(Ytrain).shape[0]
+        Nclasses = np.unique(y_train).shape[0]
 
         # MOFA, MoE, PoE, MVIB learn a common z --> X will be just an array N x F
         # CGAE has  a separate z for each modality --> so evaluate K times
         # baseline has the raw data and requires pca --> in both of these cases there will be a list of length K, with N x F matrices as elements
 
-        if type(XtrainList) == list:
+        if type(x_trainlist) == list:
             if args['baseline']:
                 pcTrainList = []
                 pcValidList = []
                 pcTestList = []
 
-                for i in range(XtrainList):
+                for i in range(x_trainlist):
                     pca = PCA(n_components=50, whiten=False, svd_solver='full')
-                    pca.fit(XtrainList[i])
+                    pca.fit(x_trainlist[i])
 
-                    pcTrainList.append(pca.transform(XtrainList[i]))
-                    pcValidList.append(pca.transform(XvalidList[i]))
-                    pcTestList.append(pca.transform(XtestList[i]))
+                    pcTrainList.append(pca.transform(x_trainlist[i]))
+                    pcValidList.append(pca.transform(x_validlist[i]))
+                    pcTestList.append(pca.transform(x_testlist[i]))
 
-                Xtrain = np.hstack(pcTrainList)
-                Xvalid = np.hstack(pcValidList)
-                Xtest = np.hstack(pcTestList)
+                x_train = np.hstack(pcTrainList)
+                x_valid = np.hstack(pcValidList)
+                x_test = np.hstack(pcTestList)
 
-                assert Xtrain.shape[0] == Xtest.shape[0]
-                assert Xtrain.shape[1] == 50 * len(XtrainList)
+                assert x_train.shape[0] == x_test.shape[0]
+                assert x_train.shape[1] == 50 * len(x_trainlist)
 
-                _, acc, pr, rc, f1, mcc, confMat = classification(XtrainList, Ytrain, XvalidList, Yvalid, XtestList,
-                                                                  Ytest, Cs, 'mcc')
+                _, acc, pr, rc, f1, mcc, confMat = classification(x_trainlist, y_train, x_validlist, y_valid, x_testlist,
+                                                                  y_test, Cs, 'mcc')
 
             else:
-                K = len(XtrainList)
-                assert len(XvalidList) == K
-                assert len(XtestList) == K
+                K = len(x_trainlist)
+                assert len(x_validlist) == K
+                assert len(x_testlist) == K
 
                 acc = np.zeros(K)
                 pr = np.zeros(K)
@@ -187,13 +187,13 @@ def run_baseline(args: dict) -> None:
                 confMat = np.zeros(K, Nclasses, Nclasses)
 
                 for i in range(K):
-                    _, acc[i], pr[i], rc[i], f1[i], mcc[i], confMat[i] = classification(XtrainList, Ytrain, XvalidList,
-                                                                                        Yvalid, XtestList, Ytest, Cs,
+                    _, acc[i], pr[i], rc[i], f1[i], mcc[i], confMat[i] = classification(x_trainlist, y_train, x_validlist,
+                                                                                        y_valid, x_testlist, y_test, Cs,
                                                                                         'mcc')
 
 
         else:
-            _, acc, pr, rc, f1, mcc, confMat = classification(XtrainList, Ytrain, XvalidList, Yvalid, XtestList, Ytest,
+            _, acc, pr, rc, f1, mcc, confMat = classification(x_trainlist, y_train, x_validlist, y_valid, x_testlist, y_test,
                                                               Cs, 'mcc')
 
         performance = {'acc': acc, 'precision': pr, 'recall': rc, 'f1': f1, 'mcc': mcc, 'confMat': confMat}
@@ -203,49 +203,49 @@ def run_baseline(args: dict) -> None:
         # this should be the same as classification
 
         # a pickle file with the class label npy array with shape (N,)
-        with open(args['YtrainFile'], 'rb') as f:
-            Ytrain = pickle.load(f)
+        with open(args['y_train_file'], 'rb') as f:
+            y_train = np.load(f, allow_pickle=True)
 
-        with open(args['XvalidFile'], 'rb') as f:
-            Yvalid = pickle.load(f)
+        with open(args['y_valid_file'], 'rb') as f:
+            y_valid = np.load(f, allow_pickle=True)
 
-        with open(args['XtestFile'], 'rb') as f:
-            Ytest = pickle.load(f)
+        with open(args['y_test_file'], 'rb') as f:
+            y_test = np.load(f, allow_pickle=True)
 
-        Nclasses = np.unique(Ytrain).shape[0]
+        Nclasses = np.unique(y_train).shape[0]
 
         # MOFA, MoE, PoE, MVIB learn a common z --> X will be just an array N x F
         # CGAE has  a separate z for each modality --> so evaluate K times
         # baseline has the raw data and requires pca --> in both of these cases there will be a list of length K, with N x F matrices as elements
 
-        if type(XtrainList) == list:
+        if type(x_trainlist) == list:
             if args['baseline']:
                 pcTrainList = []
                 pcValidList = []
                 pcTestList = []
 
-                for i in range(XtrainList):
+                for i in range(x_trainlist):
                     pca = PCA(n_components=50, whiten=False, svd_solver='full')
-                    pca.fit(XtrainList[i])
+                    pca.fit(x_trainlist[i])
 
-                    pcTrainList.append(pca.transform(XtrainList[i]))
-                    pcValidList.append(pca.transform(XvalidList[i]))
-                    pcTestList.append(pca.transform(XtestList[i]))
+                    pcTrainList.append(pca.transform(x_trainlist[i]))
+                    pcValidList.append(pca.transform(x_validlist[i]))
+                    pcTestList.append(pca.transform(x_testlist[i]))
 
-                Xtrain = np.hstack(pcTrainList)
-                Xvalid = np.hstack(pcValidList)
-                Xtest = np.hstack(pcTestList)
+                x_train = np.hstack(pcTrainList)
+                x_valid = np.hstack(pcValidList)
+                x_test = np.hstack(pcTestList)
 
-                assert Xtrain.shape[0] == Xtest.shape[0]
-                assert Xtrain.shape[1] == 50 * len(XtrainList)
+                assert x_train.shape[0] == x_test.shape[0]
+                assert x_train.shape[1] == 50 * len(x_trainlist)
 
-                _, acc, pr, rc, f1, mcc, confMat = ordinalRegression(XtrainList, Ytrain, XvalidList, Yvalid, XtestList,
-                                                                     Ytest, Cs, 'mcc')
+                _, acc, pr, rc, f1, mcc, confMat = ordinal_regression(x_trainlist, y_train, x_validlist, y_valid, x_testlist,
+                                                                     y_test, Cs, 'mcc')
 
             else:
-                K = len(XtrainList)
-                assert len(XvalidList) == K
-                assert len(XtestList) == K
+                K = len(x_trainlist)
+                assert len(x_validlist) == K
+                assert len(x_testlist) == K
 
                 acc = np.zeros(K)
                 pr = np.zeros(K)
@@ -255,14 +255,14 @@ def run_baseline(args: dict) -> None:
                 confMat = np.zeros(K, Nclasses, Nclasses)
 
                 for i in range(K):
-                    _, acc[i], pr[i], rc[i], f1[i], mcc[i], confMat[i] = ordinalRegression(XtrainList, Ytrain,
-                                                                                           XvalidList, Yvalid,
-                                                                                           XtestList, Ytest, Cs, 'mcc')
+                    _, acc[i], pr[i], rc[i], f1[i], mcc[i], confMat[i] = ordinal_regression(x_trainlist, y_train,
+                                                                                           x_validlist, y_valid,
+                                                                                           x_testlist, y_test, Cs, 'mcc')
 
 
         else:
-            _, acc, pr, rc, f1, mcc, confMat = ordinalRegression(XtrainList, Ytrain, XvalidList, Yvalid, XtestList,
-                                                                 Ytest, Cs, 'mcc')
+            _, acc, pr, rc, f1, mcc, confMat = ordinal_regression(x_trainlist, y_train, x_validlist, y_valid, x_testlist,
+                                                                 y_test, Cs, 'mcc')
 
         performance = {'acc': acc, 'precision': pr, 'recall': rc, 'f1': f1, 'mcc': mcc, 'confMat': confMat}
 
@@ -270,27 +270,37 @@ def run_baseline(args: dict) -> None:
         assert args['task'] == 'impute'
         # other methods should generate the imputations by themselves
         # # TODO: not sure what will happen with MVIB here (ignore it?)
-        assert args['baseline']
 
-        K = len(XtrainList)
-        assert len(XvalidList) == K
-        assert len(XtestList) == K
+        # a pickle file with the class label npy array with shape (N,)
+        with open(args['y_train_file'], 'rb') as f:
+            y_train = np.float32(np.load(f, allow_pickle=True))
+
+        with open(args['y_valid_file'], 'rb') as f:
+            y_valid = np.float32(np.load(f, allow_pickle=True))
+
+        with open(args['y_test_file'], 'rb') as f:
+            y_test = np.float32(np.load(f, allow_pickle=True))
+
+        print(x_trainlist.shape)
+        print(x_validlist.shape)
+        print(x_testlist.shape)
+
+        NR_MODALITIES = 2
 
         # mse[i,j]: performance of using modality i to predict modality j
-        mse = np.zeros((K, K), float)
-        rsquared = np.eye(K)
+        mse = np.zeros((NR_MODALITIES, NR_MODALITIES), float)
+        rsquared = np.eye(NR_MODALITIES)
 
-        for i in range(K):
-            for j in range(K):
-                # loop over all pairs of data sources
+        # From x to y
+        _, mse[0, 1], rsquared[0, 1] = impute(x_trainlist, y_train, x_validlist, y_valid, x_testlist, y_test, alphas, 'mse')
 
-                if i != j:
-                    _, (mse[i, j], rsquared[i, j]) = impute(XtrainList[i], XtrainList[j], XvalidList[i], XvalidList[j],
-                                                            XtestList[i], XtestList[j], alphas, 'mse')
+        # From y to x
+        _, mse[1, 0], rsquared[1, 0] = impute(y_train, x_trainlist, y_valid, x_validlist, y_test, x_testlist, alphas, 'mse')
 
         performance = {'mse': mse, 'rsquared': rsquared}
 
-    save_dir = os.path.join(args['save_dir'], '{}'.format(args['task']))
-    os.makedirs(save_dir)
+        print(performance)
+        print(type(performance))
+
     with open(os.path.join(save_dir, args['name']), 'wb') as f:
         pickle.dump(performance, f)

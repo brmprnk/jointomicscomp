@@ -46,6 +46,9 @@ PARSER.add_argument('-moe',
 PARSER.add_argument('-poe',
                     action='store_true',
                     help="Running Product-of-Experts MVAE")
+PARSER.add_argument('-mvae-impute',
+                    action='store_true',
+                    help="Calls the prediction module of the MVAE")
 PARSER.add_argument('-mvib',
                     action='store_true',
                     help="Running Multi-View Information Bottleneck")
@@ -97,7 +100,7 @@ def main() -> None:
 
     # If no specific model set, run all models and end program
     if not args.baseline and not args.mofa and not args.moe and not args.poe and not args.mvib and not args.cgae \
-            and not args.omicade:
+            and not args.omicade and not args.mvae_impute:
         run_baseline(config)
         run_mofa(config)
         run_mvae(config, mixture=True, product=True)
@@ -127,6 +130,11 @@ def main() -> None:
 
     if args.omicade:
         run_omicade(config)
+
+    # Run special function
+    if args.mvae_impute:
+        mvae_impute(config)
+
 
 
 def run_baseline(config: dict) -> None:
@@ -209,6 +217,11 @@ def run_omicade(config: dict) -> None:
     from src.omicade4.main import run_omicade
 
     run_omicade({**config['GLOBAL_PARAMS'], **config['OMICADE']})
+
+def mvae_impute(config: dict):
+    from src.MVAE.predict import predict
+
+    predict({**config['GLOBAL_PARAMS'], **config['MVAE']})
 
 
 if __name__ == '__main__':
