@@ -26,7 +26,7 @@ def run(args: dict) -> None:
     dataTrain2, dataValidation2 = train_test_split(ME, test_size=args['validation_fraction'], shuffle=True,
                                                    random_state=args['random_seed'])
 
-    encoder_layers = [25 ph6]
+    encoder_layers = [256]
     decoder_layers = [256]
 
     # Initialize network model
