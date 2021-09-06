@@ -1,6 +1,10 @@
 GLOBAL_PARAMS:
-  name: "experiment"
-  task: 1
+  name: "task2experiment"
+  task: 2
+  ctype: "STAD"
+  ctype_sample_names: "/home/bram/jointomicscomp/data/STAD/STAD_sampleNames.npy"
+  stagetypes: "/home/bram/jointomicscomp/data/stageTypes.npy"
+  stage_type_index: "/home/bram/jointomicscomp/data/STAD/STAD_stageType.npy"
   data_path1: "/home/bram/jointomicscomp/data/GE.npy"
   data_path2: "/home/bram/jointomicscomp/data/ME.npy"
   sample_names: "/home/bram/jointomicscomp/data/sampleNames.npy"
@@ -10,14 +14,18 @@ GLOBAL_PARAMS:
   cuda: true
   random_seed: 1
   validation_fraction: 0.1
+  x_train_file: "/home/bram/jointomicscomp/data/STAD/rest_GE_train.npy"
+  y_train_file: "/home/bram/jointomicscomp/data/STAD/rest_ME_train.npy"
+  x_valid_file: "/home/bram/jointomicscomp/data/STAD/rest_GE_valid.npy"
+  y_valid_file: "/home/bram/jointomicscomp/data/STAD/rest_ME_valid.npy"
+  x_ctype_train_file: "/home/bram/jointomicscomp/data/STAD/STAD_GE_train.npy"
+  y_ctype_train_file: "/home/bram/jointomicscomp/data/STAD/STAD_ME_train.npy"
+  x_ctype_valid_file: "/home/bram/jointomicscomp/data/STAD/STAD_GE_valid.npy"
+  y_ctype_valid_file: "/home/bram/jointomicscomp/data/STAD/STAD_ME_valid.npy"
+  x_ctype_test_file: "/home/bram/jointomicscomp/data/STAD/STAD_GE_test.npy"
+  y_ctype_test_file: "/home/bram/jointomicscomp/data/STAD/STAD_ME_test.npy"
 
 BASELINE:
-  x_train_file: "/home/bram/jointomicscomp/data/uniform_split_train_GE.npy"
-  y_train_file: "/home/bram/jointomicscomp/data/uniform_split_train_ME.npy"
-  x_valid_file: "/home/bram/jointomicscomp/data/uniform_split_valid_GE.npy"
-  y_valid_file: "/home/bram/jointomicscomp/data/uniform_split_valid_ME.npy"
-  x_test_file: "/home/bram/jointomicscomp/data/uniform_split_test_GE.npy"
-  y_test_file: "/home/bram/jointomicscomp/data/uniform_split_test_ME.npy"
   task: 'impute'               # whether to `impute` one datasource from the other, `classify` (cell type), or `rank` (stage prediction)
   resultsFile: './res.pkl'
   baseline: false
@@ -55,14 +63,14 @@ MVAE:
   plot: True     # Flag for plotting training and validation losses (loss, recon loss and KL loss)
 
   # Model optionsmain.yaml
-  pre_trained: ""
+  pre_trained: "/Users/bram/jointomicscomp/results/moe_poe_new_data/MoE/best_model.pth.tar"
   latent_dim: 128
   batch_size: 256
-  epochs: 5
+  epochs: 40
   lr: 0.0001
 
   # Other parameters
-  log_interval: 1
+  log_interval: 5
 
 MVIB:
   # Hyperparameters
@@ -75,7 +83,7 @@ MVIB:
   log_interval: 5
 
 CGAE:
-  epochs: 5
+  epochs: 40
   batch_size: 256
   enc1_lr: 0.0001
   dec1_lr: 0.0001
