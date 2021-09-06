@@ -203,7 +203,9 @@ def run_cgae(config: dict) -> None:
     @param config: Dictionary containing input parameters
     @return: None
     """
-    print("CGAE has not yet been implemented", config)
+    from src.CGAE.main import run as cgae_model
+
+    cgae_model({**config['GLOBAL_PARAMS'], **config['CGAE']})
 
 
 def run_omicade(config: dict) -> None:
