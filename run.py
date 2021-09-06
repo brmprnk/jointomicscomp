@@ -221,7 +221,7 @@ def run_omicade(config: dict) -> None:
     run_omicade({**config['GLOBAL_PARAMS'], **config['OMICADE']})
 
 def mvae_impute(config: dict):
-    from src.MVAE.predict import predict
+    from src.MVAE.impute import predict
 
     predict({**config['GLOBAL_PARAMS'], **config['MVAE']})
 

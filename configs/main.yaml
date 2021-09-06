@@ -55,14 +55,14 @@ MVAE:
   plot: True     # Flag for plotting training and validation losses (loss, recon loss and KL loss)
 
   # Model optionsmain.yaml
-  pre_trained: "/Users/bram/jointomicscomp/results/moe_poe_new_data/MoE/best_model.pth.tar"
+  pre_trained: ""
   latent_dim: 128
   batch_size: 256
-  epochs: 40
+  epochs: 5
   lr: 0.0001
 
   # Other parameters
-  log_interval: 5
+  log_interval: 1
 
 MVIB:
   # Hyperparameters
