@@ -1,5 +1,6 @@
 GLOBAL_PARAMS:
   name: "experiment"
+  task: 1
   data_path1: "/home/bram/jointomicscomp/data/GE.npy"
   data_path2: "/home/bram/jointomicscomp/data/ME.npy"
   sample_names: "/home/bram/jointomicscomp/data/sampleNames.npy"
@@ -53,7 +54,7 @@ MVAE:
   mixture: false  # Flag that indicates if the MVAE uses Mixture-of-Experts instead of Product-of-Experts
   plot: True     # Flag for plotting training and validation losses (loss, recon loss and KL loss)
 
-  # Model options
+  # Model optionsmain.yaml
   pre_trained: "/Users/bram/jointomicscomp/results/moe_poe_new_data/MoE/best_model.pth.tar"
   latent_dim: 128
   batch_size: 256
@@ -74,7 +75,7 @@ MVIB:
   log_interval: 5
 
 CGAE:
-  epochs: 40
+  epochs: 5
   batch_size: 256
   enc1_lr: 0.0001
   dec1_lr: 0.0001

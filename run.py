@@ -203,7 +203,7 @@ def run_cgae(config: dict) -> None:
     @param config: Dictionary containing input parameters
     @return: None
     """
-    from src.CGAE.main_joint import run as cgae_model
+    from src.CGAE.main import run as cgae_model
 
     cgae_model({**config['GLOBAL_PARAMS'], **config['CGAE']})
 

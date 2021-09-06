@@ -7,6 +7,8 @@ import torch.nn as nn
 import torch.optim as optim
 from tensorboardX import SummaryWriter
 import src.nets
+from sklearn.metrics import mean_squared_error
+
 
 
 class MultiOmicsDataset():
@@ -133,10 +135,10 @@ def train(device, net, num_epochs, train_loader, train_loader_eval, valid_loader
 	print("[*] Finish training.")
 
 
-
-def extract(device, net, model_file, names_file, loader, save_dir, multimodal=False):
-	# Load pretrained model
-	epoch_num = load_checkpoint(net, filename=model_file)
+def impute(net, model_file, loader, save_dir, multimodal=False):
+	checkpoint = torch.load(model_file)
+	net.load_state_dict(checkpoint['state_dict'])
+	net.opt.load_state_dict(checkpoint['optimizer'])
 
 	# Extract embeddings
 	net.eval()
@@ -144,20 +146,25 @@ def extract(device, net, model_file, names_file, loader, save_dir, multimodal=Fa
 	with torch.no_grad():  # set all 'requires_grad' to False
 		for data in loader:
 			if not multimodal:
-				x = data[0]
 				raise NotImplementedError
-				#metrics = net.evaluate(x)
+
 			else:
-				x1 = data[0][0]
-				x2 = data[1][0]
+				ge_test = data[0][0]
+				me_test = data[1][0]
 
-				z1, z2 = net.encode(x1, x2)
-				z1 = z1.cpu().numpy().squeeze()
-				z2 = z2.cpu().numpy().squeeze()
+				# Encode test set in same encoder
+				z1, z2 = net.encode(ge_test, me_test)
 
-				# Save file
-				np.save("z1.npy", z1)
-				np.save("z2.npy", z2)
+				# Now decode data in different decoder
+				ge_from_me = net.decoder(z2)
+				me_from_ge = net.decoder2(z1)
+
+				imputation_loss_ge = mean_squared_error(ge_test, ge_from_me)
+				imputation_loss_me = mean_squared_error(me_test, me_from_ge)
+
+				print("Imputation Loss for Gene Expression: ", imputation_loss_ge)
+				print("Imputation Loss for Methylation: ", imputation_loss_me)
+
 
 
 def load_checkpoint(net, filename='model_last.pth.tar'):
