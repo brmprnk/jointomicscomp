@@ -7,6 +7,9 @@ import torch.nn as nn
 import torch.optim as optim
 from tensorboardX import SummaryWriter
 import src.nets
+from sklearn.metrics import mean_squared_error
+from src.util import logger
+
 
 
 class MultiOmicsDataset():
@@ -133,10 +136,10 @@ def train(device, net, num_epochs, train_loader, train_loader_eval, valid_loader
 	print("[*] Finish training.")
 
 
-
-def extract(device, net, model_file, names_file, loader, save_file=None, multimodal=False):
-	# Load pretrained model
-	epoch_num = load_checkpoint(net, filename=model_file)
+def impute(net, model_file, loader, save_dir, multimodal=False):
+	checkpoint = torch.load(model_file)
+	net.load_state_dict(checkpoint['state_dict'])
+	net.opt.load_state_dict(checkpoint['optimizer'])
 
 	# Extract embeddings
 	net.eval()
@@ -144,20 +147,50 @@ def extract(device, net, model_file, names_file, loader, save_file=None, multimo
 	with torch.no_grad():  # set all 'requires_grad' to False
 		for data in loader:
 			if not multimodal:
-				x = data[0]
 				raise NotImplementedError
-				#metrics = net.evaluate(x)
-			else:
-				x1 = data[0][0]
-				x2 = data[1][0]
 
-				z1, z2 = net.encode(x1, x2)
+			else:
+				ge_test = data[0][0]
+				me_test = data[1][0]
+
+				# Encode test set in same encoder
+				z1, z2 = net.encode(ge_test, me_test)
+
+				# Now decode data in different decoder
+				ge_from_me = net.decoder(z2)
+				me_from_ge = net.decoder2(z1)
+
+				imputation_loss_ge = mean_squared_error(ge_test, ge_from_me)
+				imputation_loss_me = mean_squared_error(me_test, me_from_ge)
+
+				logger.success("Imputation Loss for Gene Expression: ".format(imputation_loss_ge))
+				logger.success("Imputation Loss for Methylation: ".format(imputation_loss_me))
+
+
+def extract(net, model_file, loader, save_dir, multimodal=False):
+	checkpoint = torch.load(model_file)
+	net.load_state_dict(checkpoint['state_dict'])
+	net.opt.load_state_dict(checkpoint['optimizer'])
+
+	# Extract embeddings
+	net.eval()
+
+	with torch.no_grad():  # set all 'requires_grad' to False
+		for data in loader:
+			if not multimodal:
+				raise NotImplementedError
+
+			else:
+				ge_test = data[0][0]
+				me_test = data[1][0]
+
+				# Encode test set in same encoder
+				z1, z2 = net.encode(ge_test, me_test)
 				z1 = z1.cpu().numpy().squeeze()
 				z2 = z2.cpu().numpy().squeeze()
 
-				# Save file
-				with open(save_file, 'wb') as f:
-					pickle.dump([z1, z2], f)
+				np.save("{}/task2_z1.npy".format(save_dir), z1)
+				np.save("{}/task2_z2.npy".format(save_dir), z2)
 
 
 def load_checkpoint(net, filename='model_last.pth.tar'):
