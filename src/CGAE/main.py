@@ -54,21 +54,31 @@ def run(args: dict) -> None:
             cancerTypevalid = cancerTypetrainValid[validInd]
 
     if args['task'] == 2:
+        logger.success("Running Task 2: {} classification.".format(args['ctype']))
         # NOTE
         # For testing purposes, this code uses predefined splits, later this should be done everytime the model is run
-        GEtrain = np.load(args['x_train_file'])
-        MEtrain = np.load(args['y_train_file'])
-        GEvalid = np.load(args['x_valid_file'])
-        MEvalid = np.load(args['y_valid_file'])
-        GEtest = np.load(args['x_test_file'])
-        MEtest = np.load(args['y_test_file'])
+        GEtrainctype = np.load(args['x_ctype_train_file'])
+        GEtrainrest = np.load(args['x_train_file'])
+        GEtrain = np.vstack((GEtrainctype, GEtrainrest))
+
+        GEvalidctype = np.load(args['x_ctype_valid_file'])
+        GEvalidrest = np.load(args['x_valid_file'])
+        GEvalid = np.vstack((GEvalidctype, GEvalidrest))
+
+        MEtrainctype = np.load(args['y_ctype_train_file'])
+        MEtrainrest = np.load(args['y_train_file'])
+        MEtrain = np.vstack((MEtrainctype, MEtrainrest))
+
+        MEvalidctype = np.load(args['y_ctype_valid_file'])
+        MEvalidrest = np.load(args['y_valid_file'])
+        MEvalid = np.vstack((MEvalidctype, MEvalidrest))
 
     # Number of features
-    input_dim1 = GE.shape[1]
-    input_dim2 = ME.shape[1]
+    input_dim1 = args['num_features']
+    input_dim2 = args['num_features']
 
-    encoder_layers = [256]
-    decoder_layers = [256]
+    encoder_layers = [args['latent_dim']]
+    decoder_layers = [args['latent_dim']]
 
     # Initialize network model
     net = MultiOmicVAE(input_dim1, input_dim2, encoder_layers, decoder_layers, args['loss_function'], args['loss_function'],
@@ -80,9 +90,10 @@ def run(args: dict) -> None:
     net = net.double()
 
     logger.success("Initialized MultiOmicVAE model.")
-    print(net)
+    logger.info(str(net))
     logger.info("Number of model parameters: ")
-    print(sum(p.numel() for p in net.parameters() if p.requires_grad))
+    num_params = sum(p.numel() for p in net.parameters() if p.requires_grad)
+    logger.info("{}".format(num_params))
 
     # Create directories for checkpoint, sample and logs files
     ckpt_dir = save_dir + '/checkpoint'
@@ -91,7 +102,7 @@ def run(args: dict) -> None:
     logs_dir = save_dir + '/logs'
 
     # Data loading
-    print("[*] Loading training and validation data...")
+    logger.info("Loading training and validation data into MultiOmicVAE...")
 
     dataTrain1 = torch.tensor(GEtrain, device=device)
     dataTrain2 = torch.tensor(MEtrain, device=device)
@@ -122,7 +133,7 @@ def run(args: dict) -> None:
 
     # Imputation
     if args['task'] == 1:
-        print("Imputation: Extracting Z1 and Z2 using test set")
+        logger.info("Imputation: Extracting Z1 and Z2 using test set")
 
         dataExtract1 = GEtest
         dataExtract2 = MEtest
@@ -140,9 +151,10 @@ def run(args: dict) -> None:
 
     # Cancer stage prediction
     if args['task'] == 2:
+        logger.info("Cancer Type Classification: Extracting Z1 and Z2 using {} set".format(args['ctype']))
         # Test sets are stratified data from cancer type into stages
-        dataExtract1 = GEtest
-        dataExtract2 = MEtest
+        dataExtract1 = np.vstack((GEtrainctype, GEvalidctype, np.load(args['x_ctype_test_file'])))
+        dataExtract2 = np.vstack((MEtrainctype, MEvalidctype, np.load(args['y_ctype_test_file'])))
 
         dataExtract1 = torch.tensor(dataExtract1, device=device)
         dataExtract2 = torch.tensor(dataExtract2, device=device)
@@ -153,26 +165,5 @@ def run(args: dict) -> None:
                                     drop_last=False)
 
         # Extract Z from all data from the chosen cancer type
-        z1, z2 = extract(net=net, model_file=os.path.join(ckpt_dir, "model_epoch{}.pth.tar".format(args['epochs'])), loader=extract_loader, save_dir=save_dir, multimodal=True)
-
-        accuracies = []
-        alphas = np.array([1e-4, 1e-3, 1e-2, 1e-1, 0.5, 1.0, 2.0, 5.0, 10., 20.])
-        for i, a in enumerate(alphas):
-            model = OrdinalRidge(alpha=a, fit_intercept=True, normalize=False, random_state=1)
-
-            # Train
-            model.fit(latent_train, y_train)
-
-            y_pred = model.predict(latent_test)
-
-            n = len(y_pred)
-            correct = 0
-
-            for t, p in zip(y_test, y_pred):
-                if t == p:
-                    correct += 1
-
-            accuracy = (correct / n) * 100
-            accuracies.append(round(accuracy, 2))
-
-        print("Accuracies: ", accuracies)
+        # Do predictions separately
+        extract(net=net, model_file=os.path.join(ckpt_dir, "model_last.pth.tar".format(args['epochs'])), loader=extract_loader, save_dir=save_dir, multimodal=True)

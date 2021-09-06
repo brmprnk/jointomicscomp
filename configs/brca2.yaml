@@ -85,6 +85,7 @@ MVIB:
 CGAE:
   epochs: 40
   batch_size: 256
+  latent_dim: 128
   enc1_lr: 0.0001
   dec1_lr: 0.0001
   enc2_lr: 0.0001

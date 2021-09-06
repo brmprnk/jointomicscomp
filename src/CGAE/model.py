@@ -8,6 +8,7 @@ import torch.optim as optim
 from tensorboardX import SummaryWriter
 import src.nets
 from sklearn.metrics import mean_squared_error
+from src.util import logger
 
 
 
@@ -162,8 +163,8 @@ def impute(net, model_file, loader, save_dir, multimodal=False):
 				imputation_loss_ge = mean_squared_error(ge_test, ge_from_me)
 				imputation_loss_me = mean_squared_error(me_test, me_from_ge)
 
-				print("Imputation Loss for Gene Expression: ", imputation_loss_ge)
-				print("Imputation Loss for Methylation: ", imputation_loss_me)
+				logger.success("Imputation Loss for Gene Expression: ".format(imputation_loss_ge))
+				logger.success("Imputation Loss for Methylation: ".format(imputation_loss_me))
 
 
 def extract(net, model_file, loader, save_dir, multimodal=False):
@@ -190,8 +191,6 @@ def extract(net, model_file, loader, save_dir, multimodal=False):
 
 				np.save("{}/task2_z1.npy".format(save_dir), z1)
 				np.save("{}/task2_z2.npy".format(save_dir), z2)
-
-				return z1, z2
 
 
 def load_checkpoint(net, filename='model_last.pth.tar'):
