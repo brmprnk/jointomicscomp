@@ -306,13 +306,33 @@ def run(args) -> None:
                 'optimizer': optimizer.state_dict(),
             }, True, save_dir)
 
-    # Save all reconstruction losses
-    modal = ['ge', 'me']
-    for modal1 in modal:
-        for modal2 in modal:
-            key = "{}_{}".format(modal1, modal2)
-            np.save("{}/Recon array {}.npy".format(save_dir, key),
-                    np.array(val_recon_loss_meter.reconstruct_losses[key]))
+    print(model)
+
+    if args['task'] == 2:
+        print(model)
+        logger.success("Extract z1 and z2 for classification of {}".format(args['ctype']))
+        # Test sets are stratified data from cancer type into stages
+        GEtrainctype = np.load(args['x_ctype_train_file'])
+        GEvalidctype = np.load(args['x_ctype_valid_file'])
+        MEtrainctype = np.load(args['y_ctype_train_file'])
+        MEvalidctype = np.load(args['y_ctype_valid_file'])
+
+        dataExtract1 = np.float32(np.vstack((GEtrainctype, GEvalidctype, np.load(args['x_ctype_test_file']))))
+        dataExtract2 = np.float32(np.vstack((MEtrainctype, MEvalidctype, np.load(args['y_ctype_test_file']))))
+
+        datasetExtract = datasets.TCGADataset(dataExtract1, dataExtract2)
+
+        extract_loader = torch.utils.data.DataLoader(datasetExtract, batch_size=dataExtract1.shape[0], shuffle=False)
+
+        for batch_idx, (GE, ME) in enumerate(extract_loader):
+            z = model.extract(GE, ME)
+            z = z.detach().numpy()
+
+            np.save("{}/task2_z.npy".format(save_dir), z)
+
+        # Extract Z from all data from the chosen cancer type
+        # Do predictions separately
+
 
     if args['plot']:
         # Only import here to save time importing matplotlib only when required

@@ -6,6 +6,7 @@ import sys
 import numpy as np
 from torch.utils.data.dataset import Dataset
 from sklearn.model_selection import StratifiedShuffleSplit
+from src.util import logger
 
 TRAINING_DATA_SPLIT = 0.7
 VALIDATION_DATA_SPLIT = 0.1
@@ -24,7 +25,6 @@ class TCGAData(object):
             save_dir     (string) : Where the indices taken from the datasets should be saved
             indices_path (string) : If set, use predefined indices for data split
         """
-        print(args)
         # Load in data depending on task
         if args['task'] == 1:
             # Task 1 : Imputation
@@ -63,7 +63,7 @@ class TCGAData(object):
                 cancerTypevalid = cancerTypetrainValid[validInd]
 
             if save_dir is None:
-                print("Error, no save path is given so indices for data splits could not be saved. Exiting program")
+                logger.error("Error, no save path is given so indices for data splits could not be saved. Exiting program")
                 sys.exit()
 
             # Save the indices taken for reproducibility
@@ -71,29 +71,37 @@ class TCGAData(object):
             np.save("{}/validation_indices.npy".format(save_dir), validInd)
             np.save("{}/test_indices.npy".format(save_dir), testInd)
 
-        if indices_path is not None:  # Use predefined indices
-            print("Using Predefined split")
-            training_ids = np.load("{}/training_indices.npy".format(indices_path))
-            validation_ids = np.load("{}/validation_indices.npy".format(indices_path))
-            test_ids = np.load("{}/predict_indices.npy".format(indices_path))
+        if args['task'] == 2:
+            logger.success("Running Task 2: {} classification.".format(args['ctype']))
+            # NOTE
+            # For testing purposes, this code uses predefined splits, later this should be done everytime the model is run
+            GEtrainctype = np.load(args['x_ctype_train_file'])
+            GEtrainrest = np.load(args['x_train_file'])
+            self.ge_train_file = np.float32(np.vstack((GEtrainctype, GEtrainrest)))
 
-            self.ge_train_file = np.float32(GE[training_ids])
-            self.me_train_file = np.float32(ME[training_ids])
-            self.ge_valid_file = np.float32(GE[validation_ids])
-            self.me_valid_file = np.float32(ME[validation_ids])
-            self.ge_test_file = np.float32(GE[test_ids])
-            self.me_test_file = np.float32(ME[test_ids])
+            GEvalidctype = np.load(args['x_ctype_valid_file'])
+            GEvalidrest = np.load(args['x_valid_file'])
+            self.ge_val_file = np.float32(np.vstack((GEvalidctype, GEvalidrest)))
+
+            MEtrainctype = np.load(args['y_ctype_train_file'])
+            MEtrainrest = np.load(args['y_train_file'])
+            self.me_train_file = np.float32(np.vstack((MEtrainctype, MEtrainrest)))
+
+            MEvalidctype = np.load(args['y_ctype_valid_file'])
+            MEvalidrest = np.load(args['y_valid_file'])
+            self.me_val_file = np.float32(np.vstack((MEvalidctype, MEvalidrest)))
+
 
     def get_data_partition(self, partition):
         if partition == "train":
             return TCGADataset(self.ge_train_file, self.me_train_file)
         elif partition == "val":
             return TCGADataset(self.ge_val_file, self.me_val_file)
-        elif partition == "predict":
+        elif partition == "test":
             return TCGADataset(self.ge_test_file, self.me_test_file)
         else:  # Full data aka no split
-            return TCGADataset(np.vstack(self.ge_train_file, self.ge_val_file, self.ge_test_file),
-                               np.vstack(self.me_train_file, self.me_val_file, self.me_test_file))
+            return TCGADataset(np.vstack((self.ge_train_file, self.ge_val_file, self.ge_test_file)),
+                               np.vstack((self.me_train_file, self.me_val_file, self.me_test_file)))
 
 
 class TCGADataset(Dataset):
