@@ -239,28 +239,6 @@ def run(args) -> None:
             train_recon_loss_meter.update(train_recon_loss, len(GE))
             train_kld_loss_meter.update(train_kld_loss, len(GE))
 
-            # ELBO
-            # # compute joint loss
-            # joint_train_loss = elbo_loss(joint_recon_rna, rna,
-            #                              joint_recon_gcn, gcn,
-            #                              joint_mu, joint_logvar,
-            #                              annealing_factor=annealing_factor)
-            #
-            # # compute loss with single modal inputs
-            # ge_train_loss = elbo_loss(ge_recon_ge, rna,
-            #                              ge_recon_me, gcn,
-            #                              rna_mu, rna_logvar,
-            #                              annealing_factor=annealing_factor)
-            #
-            # me_train_loss = elbo_loss(me_recon_ge, rna,
-            #                             me_recon_me, gcn,
-            #                             gcn_mu, gcn_logvar,
-            #                             annealing_factor=annealing_factor)
-            #
-            # train_loss = joint_train_loss + ge_train_loss + me_train_loss
-            #
-            # train_loss_meter.update(train_loss.item(), len(rna))
-
             # compute and take gradient step
             train_loss.backward()
             optimizer.step()
@@ -279,34 +257,6 @@ def run(args) -> None:
         test_loss = 0
 
         for batch_idx, (GE, ME) in enumerate(val_loader):
-
-            #
-            # if epoch < args.annealing_epochs:
-            #     # compute the KL annealing factor for the current mini-batch in the current epoch
-            #     annealing_factor = (float(batch_idx + (epoch - 1) * total_batches + 1) /
-            #                         float(args.annealing_epochs * total_batches))
-            # else:
-            #     # by default the KL annealing factor is unity
-            #     annealing_factor = 1.0
-
-            # # compute reconstructions using each of the individual modalities (for results)
-            # (ge_recon_ge, ge_recon_me, rna_recon_dna, rna_mu, rna_logvar) = model(rna=rna)
-            #
-            # (me_recon_ge, me_recon_me, gcn_recon_dna, gcn_mu, gcn_logvar) = model(gcn=gcn)
-            #
-            # (dna_recon_rna, dna_recon_gcn, dna_recon_dna, dna_mu, dna_logvar) = model(dna=dna)
-            #
-            # reconstruction_loss_function("rna", val_recon_loss_meter, ge_recon_ge, rna,
-            #                              ge_recon_me, gcn,
-            #                              rna_recon_dna, dna)
-            #
-            # reconstruction_loss_function("gcn", val_recon_loss_meter, me_recon_ge, rna,
-            #                              me_recon_me, gcn,
-            #                              gcn_recon_dna, dna)
-            #
-            # reconstruction_loss_function("dna", val_recon_loss_meter, dna_recon_rna, rna,
-            #                              dna_recon_gcn, gcn,
-            #                              dna_recon_dna, dna)
 
             # for ease, only compute the joint loss in validation
             (joint_recon_ge, joint_recon_me, joint_mu, joint_logvar) = model(GE, ME)
