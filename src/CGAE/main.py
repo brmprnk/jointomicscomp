@@ -2,10 +2,11 @@ import os
 import numpy as np
 from torch.utils.data import DataLoader
 from src.nets import *
-from src.CGAE.model import train, impute, MultiOmicsDataset
+from src.CGAE.model import train, impute, extract, MultiOmicsDataset
 from src.util import logger
 from sklearn.model_selection import StratifiedShuffleSplit
-
+from mord import OrdinalRidge
+from src.baseline.baseline import ordinal_regression
 
 def run(args: dict) -> None:
     # Check cuda availability
@@ -52,6 +53,17 @@ def run(args: dict) -> None:
             MEvalid = MEtrainValid[validInd]
             cancerTypevalid = cancerTypetrainValid[validInd]
 
+    if args['task'] == 2:
+        # NOTE
+        # For testing purposes, this code uses predefined splits, later this should be done everytime the model is run
+        GEtrain = np.load(args['x_train_file'])
+        MEtrain = np.load(args['y_train_file'])
+        GEvalid = np.load(args['x_valid_file'])
+        MEvalid = np.load(args['y_valid_file'])
+        GEtest = np.load(args['x_test_file'])
+        MEtest = np.load(args['y_test_file'])
+
+    # Number of features
     input_dim1 = GE.shape[1]
     input_dim2 = ME.shape[1]
 
@@ -125,3 +137,42 @@ def run(args: dict) -> None:
 
         # Compute imputation loss
         impute(net=net, model_file=os.path.join(ckpt_dir, "model_epoch{}.pth.tar".format(args['epochs'])), loader=extract_loader, save_dir=save_dir, multimodal=True)
+
+    # Cancer stage prediction
+    if args['task'] == 2:
+        # Test sets are stratified data from cancer type into stages
+        dataExtract1 = GEtest
+        dataExtract2 = MEtest
+
+        dataExtract1 = torch.tensor(dataExtract1, device=device)
+        dataExtract2 = torch.tensor(dataExtract2, device=device)
+
+        datasetExtract = MultiOmicsDataset(dataExtract1, dataExtract2)
+
+        extract_loader = DataLoader(datasetExtract, batch_size=dataExtract1.shape[0], shuffle=False, num_workers=0,
+                                    drop_last=False)
+
+        # Extract Z from all data from the chosen cancer type
+        z1, z2 = extract(net=net, model_file=os.path.join(ckpt_dir, "model_epoch{}.pth.tar".format(args['epochs'])), loader=extract_loader, save_dir=save_dir, multimodal=True)
+
+        accuracies = []
+        alphas = np.array([1e-4, 1e-3, 1e-2, 1e-1, 0.5, 1.0, 2.0, 5.0, 10., 20.])
+        for i, a in enumerate(alphas):
+            model = OrdinalRidge(alpha=a, fit_intercept=True, normalize=False, random_state=1)
+
+            # Train
+            model.fit(latent_train, y_train)
+
+            y_pred = model.predict(latent_test)
+
+            n = len(y_pred)
+            correct = 0
+
+            for t, p in zip(y_test, y_pred):
+                if t == p:
+                    correct += 1
+
+            accuracy = (correct / n) * 100
+            accuracies.append(round(accuracy, 2))
+
+        print("Accuracies: ", accuracies)

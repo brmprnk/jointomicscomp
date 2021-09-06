@@ -166,6 +166,33 @@ def impute(net, model_file, loader, save_dir, multimodal=False):
 				print("Imputation Loss for Methylation: ", imputation_loss_me)
 
 
+def extract(net, model_file, loader, save_dir, multimodal=False):
+	checkpoint = torch.load(model_file)
+	net.load_state_dict(checkpoint['state_dict'])
+	net.opt.load_state_dict(checkpoint['optimizer'])
+
+	# Extract embeddings
+	net.eval()
+
+	with torch.no_grad():  # set all 'requires_grad' to False
+		for data in loader:
+			if not multimodal:
+				raise NotImplementedError
+
+			else:
+				ge_test = data[0][0]
+				me_test = data[1][0]
+
+				# Encode test set in same encoder
+				z1, z2 = net.encode(ge_test, me_test)
+				z1 = z1.cpu().numpy().squeeze()
+				z2 = z2.cpu().numpy().squeeze()
+
+				np.save("{}/task2_z1.npy".format(save_dir), z1)
+				np.save("{}/task2_z2.npy".format(save_dir), z2)
+
+				return z1, z2
+
 
 def load_checkpoint(net, filename='model_last.pth.tar'):
 	start_epoch = 0
