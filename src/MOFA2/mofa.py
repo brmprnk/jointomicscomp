@@ -9,7 +9,7 @@ reconstruction loss.
 import os
 import sys
 # R needs to be installed, and this path needs to be set to the R_Home folder, found by running R.home() in R console.
-os.environ['R_HOME'] = "/Library/Frameworks/R.framework/Resources"
+os.environ['R_HOME'] = "/usr/lib/R"
 import pandas as pd
 import rpy2.robjects as robjects
 import rpy2.robjects.packages as rpackages
@@ -316,6 +316,8 @@ def reconstruction_loss(args: dict, save_dir: str) -> None:
 
     logger.info("Now do imputations : Yi^T * Wj for all i = 1, 2 and j = 1, 2")
 
+
+    print(omic_data1.shape, W_omic2.shape)
     Y_ge_W_me = np.matmul(omic_data1, W_omic2)
     Y_me_W_ge = np.matmul(omic_data2, W_omic1)
 
