@@ -1,33 +1,39 @@
 GLOBAL_PARAMS:
   name: "experiment"
-  data_path1: "/Users/bram/jointomicscomp/data/GE.npy"
-  data_path2: "/Users/bram/jointomicscomp/data/ME.npy"
-  sample_names: "/Users/bram/jointomicscomp/data/sampleNames.npy"
-  cancer_type_index: "/Users/bram/jointomicscomp/data/cancerType.npy"
-  cancertypes: "/Users/bram/jointomicscomp/data/cancerTypes.npy"
+  task: 1
+  data1: "GCN"
+  data2: "ME"
+  data_path1: "/home/bram/jointomicscomp/data/GCN.npy"
+  data_path2: "/home/bram/jointomicscomp/data/ME.npy"
+  data_features1: "/home/bram/jointomicscomp/data/GCN_featureNames.npy"
+  data_features2: "/home/bram/jointomicscomp/data/ME_featureNames.npy"
+  sample_names: "/home/bram/jointomicscomp/data/sampleNames.npy"
+  cancer_type_index: "/home/bram/jointomicscomp/data/cancerType.npy"
+  cancertypes: "/home/bram/jointomicscomp/data/cancerTypes.npy"
   num_features: 5000
-  cuda: false
+  cuda: true
   random_seed: 1
+  validation_fraction: 0.1
 
 BASELINE:
-  x_train_file: "/Users/bram/jointomicscomp/data/uniform_split_train_GE.npy"
-  y_train_file: "/Users/bram/jointomicscomp/data/uniform_split_train_ME.npy"
-  x_valid_file: "/Users/bram/jointomicscomp/data/uniform_split_valid_GE.npy"
-  y_valid_file: "/Users/bram/jointomicscomp/data/uniform_split_valid_ME.npy"
-  x_test_file: "/Users/bram/jointomicscomp/data/uniform_split_test_GE.npy"
-  y_test_file: "/Users/bram/jointomicscomp/data/uniform_split_test_ME.npy"
+  x_train_file: "/home/bram/jointomicscomp/data/task1/GCN_train.npy"
+  y_train_file: "/home/bram/jointomicscomp/data/task1/ME_train.npy"
+  x_valid_file: "/home/bram/jointomicscomp/data/task1/GCN_val.npy"
+  y_valid_file: "/home/bram/jointomicscomp/data/task1/ME_val.npy"
+  x_test_file: "/home/bram/jointomicscomp/data/task1/GCN_test.npy"
+  y_test_file: "/home/bram/jointomicscomp/data/task1/ME_test.npy"
   task: 'impute'               # whether to `impute` one datasource from the other, `classify` (cell type), or `rank` (stage prediction)
   resultsFile: './res.pkl'
   baseline: false
 
 MOFA+:
   # Data options
-  mofa_data_path: "/Users/bram/jointomicscomp/data/mofa_GE_ME_5000MAD.csv"           # MOFA requires different view of the input data
+  mofa_data_path: "/home/bram/jointomicscomp/data/mofa_GE_ME_5000MAD.csv"           # MOFA requires different view of the input data
   scale_groups: false          # if groups have significantly different ranges, it is good practice to scale each group to unit variance
   scale_views: false           # if views have significantly different ranges, it is good practice to scale each view to unit variance
 
   # Model options
-  pre_trained: "/Users/bram/jointomicscomp/results/trained_MOFA_128_nofeatures/MOFA+/trained_MOFA_model.hdf5"              # Use a pre-trained model for downstream analysis
+  pre_trained: ""              # Use a pre-trained model for downstream analysis
   factors: 128
   likelihoods: None            # likelihoods per view (options are "gaussian","poisson","bernoulli").
                                #     Default is None, and they are infered automatically
@@ -50,17 +56,17 @@ MOFA+:
 MVAE:
   # Flags
   mixture: false  # Flag that indicates if the MVAE uses Mixture-of-Experts instead of Product-of-Experts
-  plot: false     # Flag for plotting training and validation losses (loss, recon loss and KL loss)
-  cancer3: false  # Flag for using smaller dataset with only 3 cancer types
+  plot: True     # Flag for plotting training and validation losses (loss, recon loss and KL loss)
 
-  # Hyperparameters
+  # Model optionsmain.yaml
+  pre_trained: ""
   latent_dim: 128
   batch_size: 256
-  epochs: 1
+  epochs: 5
   lr: 0.0001
 
   # Other parameters
-  log_interval: 5
+  log_interval: 1
 
 MVIB:
   # Hyperparameters
@@ -71,6 +77,26 @@ MVIB:
 
   # Other parameters
   log_interval: 5
+
+CGAE:
+  epochs: 5
+  batch_size: 256
+  enc1_lr: 0.0001
+  dec1_lr: 0.0001
+  enc2_lr: 0.0001
+  dec2_lr: 0.0001
+  loss_function: 'bce'
+  use_batch_norm: True
+  dropout_probability: 0.0
+  optimizer: 'Adam'
+  enc1_output_scale: 1.
+  enc2_output_scale: 1.
+  enc1_last_activation: 'relu'
+  enc2_last_activation: 'relu'
+  beta_start_value: 1
+  zconstraintCoef: 1
+  crossPenaltyCoef: 1
+
 
 OMICADE:
   data_path: ""

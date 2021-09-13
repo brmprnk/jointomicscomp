@@ -15,11 +15,11 @@ mcoin <- mcia(data, cia.nf=128)
 # par(mar=c(2, 1, 0.1, 6))
 
 # for (df in NCI60_4arrays) { 
-  #   d <- dist(t(df))
-  #   hcl <- hclust(d)
-  #   dend <- as.dendrogram(hcl)
-  #   plot(dend, horiz=TRUE) 
-  # }
+#   d <- dist(t(df))
+#   hcl <- hclust(d)
+#   dend <- as.dendrogram(hcl)
+#   plot(dend, horiz=TRUE)
+# }
 
 # mcoin <- mcia(NCI60_4arrays, cia.nf=10)
 # cancer_type <- colnames(NCI60_4arrays$agilent)

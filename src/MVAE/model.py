@@ -11,14 +11,12 @@ class MVAE(nn.Module):
     def __init__(self, use_mixture=False, latent_dim=100, use_cuda=False):
         super(MVAE, self).__init__()
         # define q(z|x_i) for i = 1...2
-        self.rna_encoder = Encoder(latent_dim)
-        self.gcn_encoder = Encoder(latent_dim)
-        self.dna_encoder = Encoder(latent_dim)
+        self.ge_encoder = Encoder(latent_dim)
+        self.me_encoder = Encoder(latent_dim)
 
         # define p(x_i|z) for i = 1...2
-        self.rna_decoder = Decoder(latent_dim)
-        self.gcn_decoder = Decoder(latent_dim)
-        self.dna_decoder = Decoder(latent_dim)
+        self.ge_decoder = Decoder(latent_dim)
+        self.me_decoder = Decoder(latent_dim)
 
         # define q(z|x) = q(z|x_1)...q(z|x_6)
         self.experts = ProductOfExperts()
@@ -40,74 +38,73 @@ class MVAE(nn.Module):
         else:  # return mean during inference
             return mu
 
-    def forward(self, rna=None, gcn=None, dna=None):
+    def extract(self, ge=None, me=None):
 
         if self.use_mixture:
-            mu, logvar = self.get_mixture_params(rna=rna, gcn=gcn, dna=dna)
+            mu, logvar = self.get_mixture_params(ge=ge, me=me)
         else:
-            mu, logvar = self.get_product_params(rna=rna, gcn=gcn, dna=dna)
+            mu, logvar = self.get_product_params(ge=ge, me=me)
+
+        # re-parameterization trick to sample
+        z = self.reparameterize(mu, logvar)
+
+        return z
+
+    def forward(self, ge=None, me=None):
+
+        if self.use_mixture:
+            mu, logvar = self.get_mixture_params(ge=ge, me=me)
+        else:
+            mu, logvar = self.get_product_params(ge=ge, me=me)
 
         # re-parameterization trick to sample
         z = self.reparameterize(mu, logvar)
 
         # reconstruct inputs based on sample
-        rna_recon = self.rna_decoder(z)
-        gcn_recon = self.gcn_decoder(z)
-        dna_recon = self.dna_decoder(z)
+        ge_recon = self.ge_decoder(z)
+        me_recon = self.me_decoder(z)
 
-        return rna_recon, gcn_recon, dna_recon, mu, logvar
+        return ge_recon, me_recon, mu, logvar
 
-    def get_product_params(self, rna=None, gcn=None, dna=None):
+    def get_product_params(self, ge=None, me=None):
         # define universal expert
-        batch_size = get_batch_size(rna, gcn, dna)
+        batch_size = get_batch_size(ge, me)
         # initialize the universal prior expert
         mu, logvar = prior_expert((1, batch_size, self.latent_dim))
 
-        if rna is not None:
-            rna_mu, rna_logvar = self.rna_encoder(rna)
+        if ge is not None:
+            ge_mu, ge_logvar = self.ge_encoder(ge)
 
-            mu = torch.cat((mu, rna_mu.unsqueeze(0)), dim=0)
-            logvar = torch.cat((logvar, rna_logvar.unsqueeze(0)), dim=0)
+            mu = torch.cat((mu, ge_mu.unsqueeze(0)), dim=0)
+            logvar = torch.cat((logvar, ge_logvar.unsqueeze(0)), dim=0)
 
-        if gcn is not None:
-            gcn_mu, gcn_logvar = self.gcn_encoder(gcn)
+        if me is not None:
+            me_mu, me_logvar = self.me_encoder(me)
 
-            mu = torch.cat((mu, gcn_mu.unsqueeze(0)), dim=0)
-            logvar = torch.cat((logvar, gcn_logvar.unsqueeze(0)), dim=0)
-
-        if dna is not None:
-            dna_mu, dna_logvar = self.dna_encoder(dna)
-
-            mu = torch.cat((mu, dna_mu.unsqueeze(0)), dim=0)
-            logvar = torch.cat((logvar, dna_logvar.unsqueeze(0)), dim=0)
+            mu = torch.cat((mu, me_mu.unsqueeze(0)), dim=0)
+            logvar = torch.cat((logvar, me_logvar.unsqueeze(0)), dim=0)
 
         # product of experts to combine Gaussian's
         mu, logvar = self.experts(mu, logvar)
 
         return mu, logvar
 
-    def get_mixture_params(self, rna=None, gcn=None, dna=None):
+    def get_mixture_params(self, ge=None, me=None):
 
         mu = []
         logvar = []
 
-        if rna is not None:
-            rna_mu, rna_logvar = self.rna_encoder(rna)
+        if ge is not None:
+            ge_mu, ge_logvar = self.ge_encoder(ge)
 
-            mu.append(rna_mu.unsqueeze(0))
-            logvar.append(rna_logvar.unsqueeze(0))
+            mu.append(ge_mu.unsqueeze(0))
+            logvar.append(ge_logvar.unsqueeze(0))
 
-        if gcn is not None:
-            gcn_mu, gcn_logvar = self.gcn_encoder(gcn)
+        if me is not None:
+            me_mu, me_logvar = self.me_encoder(me)
 
-            mu.append(gcn_mu.unsqueeze(0))
-            logvar.append(gcn_logvar.unsqueeze(0))
-
-        if dna is not None:
-            dna_mu, dna_logvar = self.dna_encoder(dna)
-
-            mu.append(dna_mu.unsqueeze(0))
-            logvar.append(dna_logvar.unsqueeze(0))
+            mu.append(me_mu.unsqueeze(0))
+            logvar.append(me_logvar.unsqueeze(0))
 
         # mixture of experts to combine Gaussian's
         mu, logvar = self.mixture(mu, logvar)
@@ -115,14 +112,11 @@ class MVAE(nn.Module):
         return mu, logvar
 
 
-def get_batch_size(rna, gcn, dna):
-    if rna is None:
-        if gcn is None:
-            return dna.size(0)
-        else:
-            return gcn.size(0)
+def get_batch_size(ge, me):
+    if ge is None:
+        return me.size(0)
     else:
-        return rna.size(0)
+        return ge.size(0)
 
 
 class Encoder(nn.Module):
@@ -137,7 +131,7 @@ class Encoder(nn.Module):
     def __init__(self, latent_dim):
         super(Encoder, self).__init__()
 
-        input_size = 3000
+        input_size = 5000
         hidden_dims = [256]
 
         modules = []
@@ -184,7 +178,7 @@ class Decoder(nn.Module):
     def __init__(self, latent_dim):
         super(Decoder, self).__init__()
 
-        input_size = 3000
+        input_size = 5000
         hidden_dims = [256]
 
         self.decoder = nn.Sequential(

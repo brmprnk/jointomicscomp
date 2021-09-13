@@ -9,7 +9,7 @@ reconstruction loss.
 import os
 import sys
 # R needs to be installed, and this path needs to be set to the R_Home folder, found by running R.home() in R console.
-os.environ['R_HOME'] = "/Library/Frameworks/R.framework/Resources"
+os.environ['R_HOME'] = "/usr/lib/R"
 import pandas as pd
 import rpy2.robjects as robjects
 import rpy2.robjects.packages as rpackages

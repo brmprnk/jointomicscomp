@@ -3,11 +3,10 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import sys
-import os
-
 import numpy as np
-import pandas as pd
 from torch.utils.data.dataset import Dataset
+from sklearn.model_selection import StratifiedShuffleSplit
+from src.util import logger
 
 TRAINING_DATA_SPLIT = 0.7
 VALIDATION_DATA_SPLIT = 0.1
@@ -18,148 +17,91 @@ VALID_PARTITIONS = {'train': 0, 'val': 1}
 class TCGAData(object):
     """TCGA Landmarks dataset."""
 
-    def __init__(self, root_dir, cancer3types=False, save_dir=None, indices_path=None):
+    def __init__(self, args, save_dir=None, indices_path=None):
         """
         Datasets are assumed to be pre-processed and have the same ordering of samples
 
         Args:
-            cancer3types (bool)   : Command line argument indicating if only 3 cancer types should be used (smaller dataset)
             save_dir     (string) : Where the indices taken from the datasets should be saved
             indices_path (string) : If set, use predefined indices for data split
         """
-        # Datafiles are fetched from data folder in project root
-        dirname = os.path.join(root_dir, 'data')
+        # Load in data depending on task
+        if args['task'] == 1:
+            # Task 1 : Imputation
+            # variable y contains cancer type/cell type
+            GE = np.load(args['data_path1'])
+            ME = np.load(args['data_path2'])
 
-        if cancer3types:
-            print("Using a predefined split of 3 cancer types")
-            dirname3types = os.path.join(dirname, '3typesnoclamp')
-            train_dataset = [
-                np.float32(
-                    pd.read_csv(os.path.join(dirname3types, 'RNASeq_3types_training.csv'),
-                                index_col=0).to_numpy()),
-                np.float32(
-                    pd.read_csv(os.path.join(dirname3types, 'GCN_3types_training.csv'),
-                                index_col=0).to_numpy()),
-                np.float32(
-                    pd.read_csv(os.path.join(dirname3types, 'DNAMe_3types_training.csv'),
-                                index_col=0).to_numpy())
-            ]
+            assert GE.shape[0] == ME.shape[0], "Datasets do not have equal samples"
 
-            val_dataset = [
-                np.float32(
-                    pd.read_csv(os.path.join(dirname3types, 'RNASeq_3types_validation.csv'),
-                                index_col=0).to_numpy()),
-                np.float32(
-                    pd.read_csv(os.path.join(dirname3types, 'GCN_3types_validation.csv'),
-                                index_col=0).to_numpy()),
-                np.float32(
-                    pd.read_csv(os.path.join(dirname3types, 'DNAMe_3types_validation.csv'),
-                                index_col=0).to_numpy())
-            ]
+            cancerType = np.load(args['cancer_type_index'])
 
-            predict_dataset = [
-                np.float32(
-                    pd.read_csv(os.path.join(dirname3types, 'RNASeq_3types_predict.csv'),
-                                index_col=0).to_numpy()),
-                np.float32(
-                    pd.read_csv(os.path.join(dirname3types, 'GCN_3types_predict.csv'),
-                                index_col=0).to_numpy()),
-                np.float32(
-                    pd.read_csv(os.path.join(dirname3types, 'DNAMe_3types_predict.csv'),
-                                index_col=0).to_numpy())
-            ]
+            split1 = StratifiedShuffleSplit(n_splits=1, test_size=0.1)
 
-            # Create data arrays
-            self.rna_train_file = train_dataset[0]
-            self.rna_val_file = val_dataset[0]
-            self.rna_predict_file = predict_dataset[0]
+            for trainValidInd, testInd in split1.split(GE, cancerType):
+                # Get test split
+                self.ge_test_file = np.float32(GE[testInd])
+                self.me_test_file = np.float32(ME[testInd])
+                cancerTypetest = cancerType[testInd]
 
-            self.gcn_train_file = train_dataset[1]
-            self.gcn_val_file = val_dataset[1]
-            self.gcn_predict_file = predict_dataset[1]
+                # Get training and validation splits
+                GEtrainValid = GE[trainValidInd]
+                MEtrainValid = ME[trainValidInd]
+                cancerTypetrainValid = cancerType[trainValidInd]
 
-            self.dna_train_file = train_dataset[2]
-            self.dna_val_file = val_dataset[2]
-            self.dna_predict_file = predict_dataset[2]
-            print("All data from 3 cancer types is loaded.")
+            split2 = StratifiedShuffleSplit(n_splits=1, test_size=1 / 9)
 
-        else:
-            # RNA-seq
-            rna_file = os.path.join(dirname, 'shuffle_RNASeq_3000MAD.csv')
-            self.rna_data = pd.read_csv(rna_file, usecols=range(1, 3001))
-            print("-----   RNA file read   -----")
+            for trainInd, validInd in split2.split(GEtrainValid, cancerTypetrainValid):
+                # Train splits
+                self.ge_train_file = np.float32(GEtrainValid[trainInd])
+                self.me_train_file = np.float32(MEtrainValid[trainInd])
+                cancerTypetrain = cancerTypetrainValid[trainInd]
 
-            # Gene Copy Number
-            gcn_file = os.path.join(dirname, 'shuffle_GCN_3000MAD.csv')
-            self.gcn_data = pd.read_csv(gcn_file, usecols=range(1, 3001))
-            print("-----   GCN file read   -----")
+                # Validation splits
+                self.ge_val_file = np.float32(GEtrainValid[validInd])
+                self.me_val_file = np.float32(MEtrainValid[validInd])
+                cancerTypevalid = cancerTypetrainValid[validInd]
 
-            # DNA Methylation
-            dna_file = os.path.join(dirname, 'shuffle_DNAMe_3000MAD.csv')
-            self.dna_data = pd.read_csv(dna_file, usecols=range(1, 3001))
-            print("-----   DNA file read   -----")
+            if save_dir is None:
+                logger.error("Error, no save path is given so indices for data splits could not be saved. Exiting program")
+                sys.exit()
 
-            # Split Datasets into a 70 training / 10 validation / 20 prediction split
-            assert self.rna_data.shape[0] == self.gcn_data.shape[0] == self.dna_data.shape[0], "Datasets do not have equal samples"
+            # Save the indices taken for reproducibility
+            np.save("{}/training_indices.npy".format(save_dir), trainInd)
+            np.save("{}/validation_indices.npy".format(save_dir), validInd)
+            np.save("{}/test_indices.npy".format(save_dir), testInd)
 
-            # Split the dataset
-            if indices_path is None:
-                nr_of_samples = self.rna_data.shape[0]
-                nr_of_training_samples = int(TRAINING_DATA_SPLIT * nr_of_samples)
-                nr_of_validation_samples = int(VALIDATION_DATA_SPLIT * nr_of_samples)
+        if args['task'] == 2:
+            logger.success("Running Task 2: {} classification.".format(args['ctype']))
+            # NOTE
+            # For testing purposes, this code uses predefined splits, later this should be done everytime the model is run
+            GEtrainctype = np.load(args['x_ctype_train_file'])
+            GEtrainrest = np.load(args['x_train_file'])
+            self.ge_train_file = np.float32(np.vstack((GEtrainctype, GEtrainrest)))
 
-                # Random ordering of all sample id's
-                random_sample_indices = np.random.choice(a=nr_of_samples, size=nr_of_samples, replace=False)
+            GEvalidctype = np.load(args['x_ctype_valid_file'])
+            GEvalidrest = np.load(args['x_valid_file'])
+            self.ge_val_file = np.float32(np.vstack((GEvalidctype, GEvalidrest)))
 
-                # Split into three sets of sizes
-                # [:nr_of_training_samples], [nr_of_training_samples:nr_of_validation_samples], [:nr_of_predict_samples]
-                sets = np.split(random_sample_indices,
-                                [nr_of_training_samples, (nr_of_training_samples + nr_of_validation_samples)])
+            MEtrainctype = np.load(args['y_ctype_train_file'])
+            MEtrainrest = np.load(args['y_train_file'])
+            self.me_train_file = np.float32(np.vstack((MEtrainctype, MEtrainrest)))
 
-                training_ids = sets[0]
-                validation_ids = sets[1]
-                predict_ids = sets[2]
+            MEvalidctype = np.load(args['y_ctype_valid_file'])
+            MEvalidrest = np.load(args['y_valid_file'])
+            self.me_val_file = np.float32(np.vstack((MEvalidctype, MEvalidrest)))
 
-                if save_dir is None:
-                    print("Error, no save path is given so indices for data splits could not be saved. Exiting program")
-                    sys.exit()
-
-                # Save the indices taken for reproducibility
-                np.save("{}/training_indices.npy".format(save_dir), training_ids)
-                np.save("{}/validation_indices.npy".format(save_dir), validation_ids)
-                np.save("{}/predict_indices.npy".format(save_dir), predict_ids)
-
-            else:  # Use predefined indices
-                print("Using Predefined split")
-                training_ids = np.load("{}/training_indices.npy".format(indices_path))
-                validation_ids = np.load("{}/validation_indices.npy".format(indices_path))
-                predict_ids = np.load("{}/predict_indices.npy".format(indices_path))
-
-            # Create data arrays
-            self.rna_train_file = np.nan_to_num(np.float32(self.rna_data.iloc[training_ids].to_numpy()))
-            self.rna_val_file = np.nan_to_num(np.float32(self.rna_data.iloc[validation_ids].to_numpy()))
-            self.rna_predict_file = np.nan_to_num(np.float32(self.rna_data.iloc[predict_ids].to_numpy()))
-
-            self.gcn_train_file = np.nan_to_num(np.float32(self.gcn_data.iloc[training_ids].to_numpy()))
-            self.gcn_val_file = np.nan_to_num(np.float32(self.gcn_data.iloc[validation_ids].to_numpy()))
-            self.gcn_predict_file = np.nan_to_num(np.float32(self.gcn_data.iloc[predict_ids].to_numpy()))
-
-            self.dna_train_file = np.nan_to_num(np.float32(self.dna_data.iloc[training_ids].to_numpy()))
-            self.dna_val_file = np.nan_to_num(np.float32(self.dna_data.iloc[validation_ids].to_numpy()))
-            self.dna_predict_file = np.nan_to_num(np.float32(self.dna_data.iloc[predict_ids].to_numpy()))
 
     def get_data_partition(self, partition):
         if partition == "train":
-            return TCGADataset(self.rna_train_file, self.gcn_train_file, self.dna_train_file)
+            return TCGADataset(self.ge_train_file, self.me_train_file)
         elif partition == "val":
-            return TCGADataset(self.rna_val_file, self.gcn_val_file, self.dna_val_file)
-        elif partition == "predict":
-            return TCGADataset(self.rna_predict_file, self.gcn_predict_file, self.dna_predict_file)
+            return TCGADataset(self.ge_val_file, self.me_val_file)
+        elif partition == "test":
+            return TCGADataset(self.ge_test_file, self.me_test_file)
         else:  # Full data aka no split
-            rna_file = np.nan_to_num(np.float32(self.rna_data.to_numpy()))
-            gcn_file = np.nan_to_num(np.float32(self.gcn_data.to_numpy()))
-            dna_file = np.nan_to_num(np.float32(self.dna_data.to_numpy()))
-            return TCGADataset(rna_file, gcn_file, dna_file)
+            return TCGADataset(np.vstack((self.ge_train_file, self.ge_val_file, self.ge_test_file)),
+                               np.vstack((self.me_train_file, self.me_val_file, self.me_test_file)))
 
 
 class TCGADataset(Dataset):
@@ -167,21 +109,19 @@ class TCGADataset(Dataset):
     Dataset Wrapper of TCGA Data (so data is loaded only once)
     """
 
-    def __init__(self, rna_data, gcn_data, dna_data):
+    def __init__(self, ge_data, me_data):
         """
         Args:
-            rna_data (numpy ndarray): Numpy array of the same shape as the .csv holding float32 data of RNA-seq
-            gcn_data (numpy ndarray): Numpy array of the same shape as the .csv holding float32 data of Gene Copy Number
-            dna_data (numpy ndarray): Numpy array of the same shape as the .csv holding float32 data of DNA Methylation
+            ge_data (numpy ndarray): Numpy array of the same shape as the .csv holding float32 data of RNA-seq
+            me_data (numpy ndarray): Numpy array of the same shape as the .csv holding float32 data of Methylation
         """
-        assert rna_data.shape[0] == gcn_data.shape[0] == dna_data.shape[0], "Datasets do not have equal samples"
+        assert ge_data.shape[0] == me_data.shape[0], "Datasets do not have equal samples"
 
-        self.rna_data = rna_data
-        self.gcn_data = gcn_data
-        self.dna_data = dna_data
+        self.ge_data = ge_data
+        self.me_data = me_data
 
     def __len__(self):
-        return self.rna_data.shape[0]
+        return self.ge_data.shape[0]
 
     def __getitem__(self, idx):
-        return self.rna_data[idx], self.gcn_data[idx], self.dna_data[idx]
+        return self.ge_data[idx], self.me_data[idx]
