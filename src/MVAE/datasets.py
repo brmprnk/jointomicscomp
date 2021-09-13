@@ -1,7 +1,3 @@
-from __future__ import division
-from __future__ import print_function
-from __future__ import absolute_import
-
 import sys
 import numpy as np
 from torch.utils.data.dataset import Dataset
@@ -29,47 +25,56 @@ class TCGAData(object):
         if args['task'] == 1:
             # Task 1 : Imputation
             # variable y contains cancer type/cell type
-            GE = np.load(args['data_path1'])
-            ME = np.load(args['data_path2'])
 
-            assert GE.shape[0] == ME.shape[0], "Datasets do not have equal samples"
+            # Load in files for now
+            self.ge_train_file = np.load("/Users/bram/jointomicscomp/data/task1/GE_train.npy")
+            self.ge_val_file = np.load("/Users/bram/jointomicscomp/data/task1/GE_val.npy")
+            self.ge_test_file = np.load("/Users/bram/jointomicscomp/data/task1/GE_test.npy")
+            self.me_train_file = np.load("/Users/bram/jointomicscomp/data/task1/ME_train.npy")
+            self.me_val_file = np.load("/Users/bram/jointomicscomp/data/task1/ME_val.npy")
+            self.me_test_file = np.load("/Users/bram/jointomicscomp/data/task1/ME_test.npy")
 
-            cancerType = np.load(args['cancer_type_index'])
+            # GE = np.load(args['data_path1'])
+            # ME = np.load(args['data_path2'])
 
-            split1 = StratifiedShuffleSplit(n_splits=1, test_size=0.1)
+            # assert GE.shape[0] == ME.shape[0], "Datasets do not have equal samples"
 
-            for trainValidInd, testInd in split1.split(GE, cancerType):
-                # Get test split
-                self.ge_test_file = np.float32(GE[testInd])
-                self.me_test_file = np.float32(ME[testInd])
-                cancerTypetest = cancerType[testInd]
+            # cancerType = np.load(args['cancer_type_index'])
 
-                # Get training and validation splits
-                GEtrainValid = GE[trainValidInd]
-                MEtrainValid = ME[trainValidInd]
-                cancerTypetrainValid = cancerType[trainValidInd]
+            # split1 = StratifiedShuffleSplit(n_splits=1, test_size=0.1)
 
-            split2 = StratifiedShuffleSplit(n_splits=1, test_size=1 / 9)
+            # for trainValidInd, testInd in split1.split(GE, cancerType):
+            #     # Get test split
+            #     self.ge_test_file = np.float32(GE[testInd])
+            #     self.me_test_file = np.float32(ME[testInd])
+            #     cancerTypetest = cancerType[testInd]
 
-            for trainInd, validInd in split2.split(GEtrainValid, cancerTypetrainValid):
-                # Train splits
-                self.ge_train_file = np.float32(GEtrainValid[trainInd])
-                self.me_train_file = np.float32(MEtrainValid[trainInd])
-                cancerTypetrain = cancerTypetrainValid[trainInd]
+            #     # Get training and validation splits
+            #     GEtrainValid = GE[trainValidInd]
+            #     MEtrainValid = ME[trainValidInd]
+            #     cancerTypetrainValid = cancerType[trainValidInd]
 
-                # Validation splits
-                self.ge_val_file = np.float32(GEtrainValid[validInd])
-                self.me_val_file = np.float32(MEtrainValid[validInd])
-                cancerTypevalid = cancerTypetrainValid[validInd]
+            # split2 = StratifiedShuffleSplit(n_splits=1, test_size=1 / 9)
 
-            if save_dir is None:
-                logger.error("Error, no save path is given so indices for data splits could not be saved. Exiting program")
-                sys.exit()
+            # for trainInd, validInd in split2.split(GEtrainValid, cancerTypetrainValid):
+            #     # Train splits
+            #     self.ge_train_file = np.float32(GEtrainValid[trainInd])
+            #     self.me_train_file = np.float32(MEtrainValid[trainInd])
+            #     cancerTypetrain = cancerTypetrainValid[trainInd]
 
-            # Save the indices taken for reproducibility
-            np.save("{}/training_indices.npy".format(save_dir), trainInd)
-            np.save("{}/validation_indices.npy".format(save_dir), validInd)
-            np.save("{}/test_indices.npy".format(save_dir), testInd)
+            #     # Validation splits
+            #     self.ge_val_file = np.float32(GEtrainValid[validInd])
+            #     self.me_val_file = np.float32(MEtrainValid[validInd])
+            #     cancerTypevalid = cancerTypetrainValid[validInd]
+
+            # if save_dir is None:
+            #     logger.error("Error, no save path is given so indices for data splits could not be saved. Exiting program")
+            #     sys.exit()
+
+            # # Save the indices taken for reproducibility
+            # np.save("{}/training_indices.npy".format(save_dir), trainInd)
+            # np.save("{}/validation_indices.npy".format(save_dir), validInd)
+            # np.save("{}/test_indices.npy".format(save_dir), testInd)
 
         if args['task'] == 2:
             logger.success("Running Task 2: {} classification.".format(args['ctype']))
