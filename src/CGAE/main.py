@@ -19,38 +19,46 @@ def run(args: dict) -> None:
     # Load in data, depending on task
     # Task 1 : Imputation
     if args['task'] == 1:
+        # Use predefined split
+        Xtrain = np.load(args['x_train_file'])
+        Xval = np.load(args['x_val_file'])
+        Xtest = np.load(args['x_test_file'])
+        Ytrain = np.load(args['y_train_file'])
+        Yval = np.load(args['y_val_file'])
+        Ytest = np.load(args['y_test_file'])
+
         # variable y contains cancer type/cell type
-        GE = np.load(args['data_path1'])
-        ME = np.load(args['data_path2'])
-        cancerType = np.load(args['cancer_type_index'])
-
-        split1 = StratifiedShuffleSplit(n_splits=1, test_size=0.1)
-
-        for trainValidInd, testInd in split1.split(GE, cancerType):
-
-            # Get test split
-            GEtest = GE[testInd]
-            MEtest = ME[testInd]
-            cancerTypetest = cancerType[testInd]
-
-            # Get training and validation splits
-            GEtrainValid = GE[trainValidInd]
-            MEtrainValid = ME[trainValidInd]
-            cancerTypetrainValid = cancerType[trainValidInd]
-
-        split2 = StratifiedShuffleSplit(n_splits=1, test_size=1 / 9)
-
-        for trainInd, validInd in split2.split(GEtrainValid, cancerTypetrainValid):
-
-            # Train splits
-            GEtrain = GEtrainValid[trainInd]
-            MEtrain = MEtrainValid[trainInd]
-            cancerTypetrain = cancerTypetrainValid[trainInd]
-
-            # Validation splits
-            GEvalid = GEtrainValid[validInd]
-            MEvalid = MEtrainValid[validInd]
-            cancerTypevalid = cancerTypetrainValid[validInd]
+        # GE = np.load(args['data_path1'])
+        # ME = np.load(args['data_path2'])
+        # cancerType = np.load(args['cancer_type_index'])
+        #
+        # split1 = StratifiedShuffleSplit(n_splits=1, test_size=0.1)
+        #
+        # for trainValidInd, testInd in split1.split(GE, cancerType):
+        #
+        #     # Get test split
+        #     GEtest = GE[testInd]
+        #     MEtest = ME[testInd]
+        #     cancerTypetest = cancerType[testInd]
+        #
+        #     # Get training and validation splits
+        #     GEtrainValid = GE[trainValidInd]
+        #     MEtrainValid = ME[trainValidInd]
+        #     cancerTypetrainValid = cancerType[trainValidInd]
+        #
+        # split2 = StratifiedShuffleSplit(n_splits=1, test_size=1 / 9)
+        #
+        # for trainInd, validInd in split2.split(GEtrainValid, cancerTypetrainValid):
+        #
+        #     # Train splits
+        #     GEtrain = GEtrainValid[trainInd]
+        #     MEtrain = MEtrainValid[trainInd]
+        #     cancerTypetrain = cancerTypetrainValid[trainInd]
+        #
+        #     # Validation splits
+        #     GEvalid = GEtrainValid[validInd]
+        #     MEvalid = MEtrainValid[validInd]
+        #     cancerTypevalid = cancerTypetrainValid[validInd]
 
     if args['task'] == 2:
         logger.success("Running Task 2: {} classification.".format(args['ctype']))
@@ -86,8 +94,6 @@ def run(args: dict) -> None:
                        args['dec2_lr'], args['enc2_last_activation'], args['enc1_output_scale'], args['beta_start_value'],
                        args['zconstraintCoef'], args['crossPenaltyCoef']).to(device)
 
-    net = net.double()
-
     logger.success("Initialized MultiOmicVAE model.")
     logger.info(str(net))
     logger.info("Number of model parameters: ")
@@ -103,11 +109,11 @@ def run(args: dict) -> None:
     # Data loading
     logger.info("Loading training and validation data into MultiOmicVAE...")
 
-    dataTrain1 = torch.tensor(GEtrain, device=device)
-    dataTrain2 = torch.tensor(MEtrain, device=device)
+    dataTrain1 = torch.tensor(Xtrain, device=device)
+    dataTrain2 = torch.tensor(Ytrain, device=device)
 
-    dataValidation1 = torch.tensor(GEvalid, device=device)
-    dataValidation2 = torch.tensor(MEvalid, device=device)
+    dataValidation1 = torch.tensor(Xval, device=device)
+    dataValidation2 = torch.tensor(Yval, device=device)
 
     datasetTrain = MultiOmicsDataset(dataTrain1, dataTrain2)
     datasetValidation = MultiOmicsDataset(dataValidation1, dataValidation2)
@@ -134,8 +140,8 @@ def run(args: dict) -> None:
     if args['task'] == 1:
         logger.info("Imputation: Extracting Z1 and Z2 using test set")
 
-        dataExtract1 = GEtest
-        dataExtract2 = MEtest
+        dataExtract1 = Xtest
+        dataExtract2 = Ytest
 
         dataExtract1 = torch.tensor(dataExtract1, device=device)
         dataExtract2 = torch.tensor(dataExtract2, device=device)

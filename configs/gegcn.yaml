@@ -1,27 +1,26 @@
 GLOBAL_PARAMS:
-  name: "experiment"
+  name: "gegcn_moe_poe_task1"
   task: 1
   data1: "GE"
   data2: "GCN"
-  data_path1: "/home/bram/jointomicscomp/data/GE.npy"
-  data_path2: "/home/bram/jointomicscomp/data/GCN.npy"
-  data_features1: "/home/bram/jointomicscomp/data/GE_featureNames.npy"
-  data_features2: "/home/bram/jointomicscomp/data/GCN_featureNames.npy"
-  sample_names: "/home/bram/jointomicscomp/data/sampleNames.npy"
-  cancer_type_index: "/home/bram/jointomicscomp/data/cancerType.npy"
-  cancertypes: "/home/bram/jointomicscomp/data/cancerTypes.npy"
+  data_path1: "/Users/bram/jointomicscomp/data/GE.npy"
+  data_path2: "/Users/bram/jointomicscomp/data/GCN.npy"
+  data_features1: "/Users/bram/jointomicscomp/data/GE_featureNames.npy"
+  data_features2: "/Users/bram/jointomicscomp/data/GCN_featureNames.npy"
+  sample_names: "/Users/bram/jointomicscomp/data/sampleNames.npy"
+  cancer_type_index: "/Users/bram/jointomicscomp/data/cancerType.npy"
+  cancertypes: "/Users/bram/jointomicscomp/data/cancerTypes.npy"
   num_features: 5000
   cuda: true
   random_seed: 1
-  validation_fraction: 0.1
-
-BASELINE:
   x_train_file: "/home/bram/jointomicscomp/data/task1/GE_train.npy"
   y_train_file: "/home/bram/jointomicscomp/data/task1/GCN_train.npy"
-  x_valid_file: "/home/bram/jointomicscomp/data/task1/GE_val.npy"
-  y_valid_file: "/home/bram/jointomicscomp/data/task1/GCN_val.npy"
+  x_val_file: "/home/bram/jointomicscomp/data/task1/GE_val.npy"
+  y_val_file: "/home/bram/jointomicscomp/data/task1/GCN_val.npy"
   x_test_file: "/home/bram/jointomicscomp/data/task1/GE_test.npy"
   y_test_file: "/home/bram/jointomicscomp/data/task1/GCN_test.npy"
+
+BASELINE:
   task: 'impute'               # whether to `impute` one datasource from the other, `classify` (cell type), or `rank` (stage prediction)
   resultsFile: './res.pkl'
   baseline: false
@@ -62,7 +61,7 @@ MVAE:
   pre_trained: ""
   latent_dim: 128
   batch_size: 256
-  epochs: 5
+  epochs: 60
   lr: 0.0001
 
   # Other parameters
@@ -79,8 +78,9 @@ MVIB:
   log_interval: 5
 
 CGAE:
-  epochs: 5
+  epochs: 60
   batch_size: 256
+  latent_dim: 128
   enc1_lr: 0.0001
   dec1_lr: 0.0001
   enc2_lr: 0.0001
