@@ -19,13 +19,13 @@ def predict_loss(recon_data, input_data):
 
 
 def predict(args: dict) -> None:
-    save_dir = "/Users/bram/jointomicscomp/results/experiment 06-09-2021 14:36:06/MoE"
+    save_dir = "/results/geme_moe_poe_task1 13-09-2021 20:52:10/PoE"
 
     print("-----   Loading Trained Model   -----")
     model, checkpoint = load_checkpoint(args['pre_trained'], use_cuda=False)
     model.eval()
 
-    tcga_data = datasets.TCGAData(args, save_dir=save_dir, indices_path=os.path.dirname(args['pre_trained']))
+    tcga_data = datasets.TCGAData(args, save_dir=save_dir)
 
     predict_dataset = tcga_data.get_data_partition("predict")
 
