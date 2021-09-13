@@ -6,7 +6,7 @@ from sklearn.svm import LinearSVC
 from sklearn.decomposition import PCA
 from mord import OrdinalRidge
 from src.baseline.evaluate import *
-
+import src.util.logger as logger
 
 def impute(x_train, y_train, x_valid, y_valid, x_test, y_test, alphas, criterion='mse'):
 
@@ -268,6 +268,7 @@ def run_baseline(args: dict) -> None:
 
     else:
         assert args['task'] == 'impute'
+        logger.success("Running baseline for task {} with data from 1: {} and 2: {}".format(args['task'], args['data1'], args['data2']))
         # other methods should generate the imputations by themselves
         # # TODO: not sure what will happen with MVIB here (ignore it?)
 
@@ -280,10 +281,6 @@ def run_baseline(args: dict) -> None:
 
         with open(args['y_test_file'], 'rb') as f:
             y_test = np.float32(np.load(f, allow_pickle=True))
-
-        print(x_trainlist.shape)
-        print(x_validlist.shape)
-        print(x_testlist.shape)
 
         NR_MODALITIES = 2
 
@@ -298,6 +295,13 @@ def run_baseline(args: dict) -> None:
         _, mse[1, 0], rsquared[1, 0] = impute(y_train, x_trainlist, y_valid, x_validlist, y_test, x_testlist, alphas, 'mse')
 
         performance = {'mse': mse, 'rsquared': rsquared}
+
+        logger.info("BASELINE RESULTS")
+        logger.info("MSE: From {} to {} : {}".format(args['data1'], args['data2'], performance['mse'][0, 1]))
+        logger.info("MSE: From {} to {} : {}".format(args['data2'], args['data1'], performance['mse'][1, 0]))
+        logger.info("")
+        logger.info("R^2 regression score function: From {} to {} : {}".format(args['data1'], args['data2'], performance['rsquared'][0, 1]))
+        logger.info("R^2 regression score function: From {} to {} : {}".format(args['data2'], args['data1'], performance['rsquared'][1, 0]))
 
         print(performance)
         print(type(performance))

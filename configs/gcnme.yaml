@@ -1,8 +1,12 @@
 GLOBAL_PARAMS:
   name: "experiment"
   task: 1
-  data_path1: "/home/bram/jointomicscomp/data/GE.npy"
+  data1: "GCN"
+  data2: "ME"
+  data_path1: "/home/bram/jointomicscomp/data/GCN.npy"
   data_path2: "/home/bram/jointomicscomp/data/ME.npy"
+  data_features1: "/home/bram/jointomicscomp/data/GCN_featureNames.npy"
+  data_features2: "/home/bram/jointomicscomp/data/ME_featureNames.npy"
   sample_names: "/home/bram/jointomicscomp/data/sampleNames.npy"
   cancer_type_index: "/home/bram/jointomicscomp/data/cancerType.npy"
   cancertypes: "/home/bram/jointomicscomp/data/cancerTypes.npy"
@@ -12,12 +16,12 @@ GLOBAL_PARAMS:
   validation_fraction: 0.1
 
 BASELINE:
-  x_train_file: "/home/bram/jointomicscomp/data/uniform_split_train_GE.npy"
-  y_train_file: "/home/bram/jointomicscomp/data/uniform_split_train_ME.npy"
-  x_valid_file: "/home/bram/jointomicscomp/data/uniform_split_valid_GE.npy"
-  y_valid_file: "/home/bram/jointomicscomp/data/uniform_split_valid_ME.npy"
-  x_test_file: "/home/bram/jointomicscomp/data/uniform_split_test_GE.npy"
-  y_test_file: "/home/bram/jointomicscomp/data/uniform_split_test_ME.npy"
+  x_train_file: "/home/bram/jointomicscomp/data/task1/GCN_train.npy"
+  y_train_file: "/home/bram/jointomicscomp/data/task1/ME_train.npy"
+  x_valid_file: "/home/bram/jointomicscomp/data/task1/GCN_val.npy"
+  y_valid_file: "/home/bram/jointomicscomp/data/task1/ME_val.npy"
+  x_test_file: "/home/bram/jointomicscomp/data/task1/GCN_test.npy"
+  y_test_file: "/home/bram/jointomicscomp/data/task1/ME_test.npy"
   task: 'impute'               # whether to `impute` one datasource from the other, `classify` (cell type), or `rank` (stage prediction)
   resultsFile: './res.pkl'
   baseline: false
