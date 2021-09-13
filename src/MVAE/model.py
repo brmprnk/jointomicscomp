@@ -38,6 +38,18 @@ class MVAE(nn.Module):
         else:  # return mean during inference
             return mu
 
+    def extract(self, ge=None, me=None):
+
+        if self.use_mixture:
+            mu, logvar = self.get_mixture_params(ge=ge, me=me)
+        else:
+            mu, logvar = self.get_product_params(ge=ge, me=me)
+
+        # re-parameterization trick to sample
+        z = self.reparameterize(mu, logvar)
+
+        return z
+
     def forward(self, ge=None, me=None):
 
         if self.use_mixture:
