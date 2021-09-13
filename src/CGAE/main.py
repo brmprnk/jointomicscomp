@@ -5,8 +5,7 @@ from src.nets import *
 from src.CGAE.model import train, impute, extract, MultiOmicsDataset
 from src.util import logger
 from sklearn.model_selection import StratifiedShuffleSplit
-from mord import OrdinalRidge
-from src.baseline.baseline import ordinal_regression
+
 
 def run(args: dict) -> None:
     # Check cuda availability

@@ -19,7 +19,7 @@ This can be plugged into Anaconda [following this short tutorial](https://conda.
 
 Then to run the project, simply call the ```run.py``` wrapper with the desired config file like so:
 ```bash
-python run.py -c configs/main.yaml
+python run.py -c configs/geme.yaml
 ```
 This default call to run.py will run all implemented models. For specific models, use one or combine the 
 ```-poe -moe -mofa -mvib -cgae``` flags.
