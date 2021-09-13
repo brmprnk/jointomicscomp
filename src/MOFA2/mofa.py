@@ -76,7 +76,14 @@ def train_mofa(args: dict, output_model: str) -> None:
 
     # (3) Set data using a long data frame
     logger.info("MOFA DATA : Reading ...")
-    ent.set_data_df(pd.read_csv(args['mofa_data_path']))
+
+    data_mat = [[0], [None]]
+
+    data_mat[0][0] = np.load(args['data_path1'])
+    data_mat[1][0] = np.load(args['data_path1'])
+
+    ent.set_data_matrix(data_mat, likelihoods=["gaussian", "gaussian"], views_names=[args['data1'], args['data2']], features_names=[np.load(args['data_features1']).tolist(), np.load(args['data_features2']).tolist()])
+
     logger.success("MOFA DATA : Loading Successful!")
 
     # (4) Set model options ##
