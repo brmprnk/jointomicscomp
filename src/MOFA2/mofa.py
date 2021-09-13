@@ -33,7 +33,7 @@ def run(args: dict) -> None:
     # Setup output paths
     save_dir = os.path.join(args['save_dir'], 'MOFA+')
     os.makedirs(save_dir)
-    output_file = os.path.join(save_dir, "trained_MOFA_model.hdf5")
+    output_file = os.path.join(save_dir, "{}_{}_trained_MOFA_model.hdf5".format(args['data1'], args['data2']))
 
     # Run MOFA+
     if args['pre_trained'] == "":
@@ -76,7 +76,14 @@ def train_mofa(args: dict, output_model: str) -> None:
 
     # (3) Set data using a long data frame
     logger.info("MOFA DATA : Reading ...")
-    ent.set_data_df(pd.read_csv(args['mofa_data_path']))
+
+    data_mat = [[0], [None]]
+
+    data_mat[0][0] = np.load(args['data_path1'])
+    data_mat[1][0] = np.load(args['data_path1'])
+
+    ent.set_data_matrix(data_mat, likelihoods=["gaussian", "gaussian"], views_names=[args['data1'], args['data2']], features_names=[np.load(args['data_features1']).tolist(), np.load(args['data_features2']).tolist()])
+
     logger.success("MOFA DATA : Loading Successful!")
 
     # (4) Set model options ##
@@ -314,20 +321,29 @@ def reconstruction_loss(args: dict, save_dir: str) -> None:
 
     np.save(os.path.join(save_dir, "recon_loss.npy"), result)
 
-    logger.info("Now do imputations : Yi^T * Wj for all i = 1, 2 and j = 1, 2")
+    logger.info("Now do imputations using pseudoinverse of W")
 
+    # Imputation from Y1 to Y2
+    W_pseudo1 = np.linalg.pinv(W_omic1)  # Shape (factors, features)
 
-    print(omic_data1.shape, W_omic2.shape)
-    Y_ge_W_me = np.matmul(omic_data1, W_omic2)
-    Y_me_W_ge = np.matmul(omic_data2, W_omic1)
+    Y1 = omic_data1.transpose()
+    Z_frompseudo1 = np.matmul(W_pseudo1, Y1)
 
-    print(Y_me_W_ge.shape)
+    # Now to impute Y2 from new Z
+    Y2_impute = np.matmul(W_omic2, Z_frompseudo1)
 
-    impute_Y_ge_W_me = mean_squared_error(Y_ge_W_me, np.transpose(Z))
-    impute_Y_me_W_ge = mean_squared_error(Y_me_W_ge, np.transpose(Z))
+    # Imputation from Y1 to Y2
+    W_pseudo2 = np.linalg.pinv(W_omic2)  # Shape (factors, features)
 
-    logger.info("Impute Y_GE and W_ME = {}".format(impute_Y_ge_W_me))
-    logger.info("Impute Y_ME and W_GE = {}".format(impute_Y_me_W_ge))
+    Y2 = omic_data2.transpose()
+    Z_frompseudo2 = np.matmul(W_pseudo2, Y2)
 
-    np.save(os.path.join(save_dir, "impute_loss.npy"), result)
-    logger.success("Saved results. Exiting program.")
+    # Now to impute Y1 from new Z
+    Y1_impute = np.matmul(W_omic1, Z_frompseudo2)
+
+    # Imputation loss is
+    imputeY1_loss = mean_squared_error(Y1_impute, omic_data1.transpose())
+    imputeY2_loss = mean_squared_error(Y2_impute, omic_data2.transpose())
+
+    logger.info("Imputation loss GE from ME = {}".format(imputeY1_loss))
+    logger.info("Imputation loss ME from GE = {}".format(imputeY2_loss))
