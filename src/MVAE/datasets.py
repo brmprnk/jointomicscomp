@@ -27,12 +27,12 @@ class TCGAData(object):
             # variable y contains cancer type/cell type
 
             # Load in files for now
-            self.ge_train_file = np.load("/Users/bram/jointomicscomp/data/task1/GE_train.npy")
-            self.ge_val_file = np.load("/Users/bram/jointomicscomp/data/task1/GE_val.npy")
-            self.ge_test_file = np.load("/Users/bram/jointomicscomp/data/task1/GE_test.npy")
-            self.me_train_file = np.load("/Users/bram/jointomicscomp/data/task1/ME_train.npy")
-            self.me_val_file = np.load("/Users/bram/jointomicscomp/data/task1/ME_val.npy")
-            self.me_test_file = np.load("/Users/bram/jointomicscomp/data/task1/ME_test.npy")
+            self.ge_train_file = np.load(args['x_train_file'])
+            self.ge_val_file = np.load(args['x_val_file'])
+            self.ge_test_file = np.load(args['x_test_file'])
+            self.me_train_file = np.load(args['y_train_file'])
+            self.me_val_file = np.load(args['y_val_file'])
+            self.me_test_file = np.load(args['y_test_file'])
 
             # GE = np.load(args['data_path1'])
             # ME = np.load(args['data_path2'])
