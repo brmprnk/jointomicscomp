@@ -33,7 +33,7 @@ def run(args: dict) -> None:
     # Setup output paths
     save_dir = os.path.join(args['save_dir'], 'MOFA+')
     os.makedirs(save_dir)
-    output_file = os.path.join(save_dir, "trained_MOFA_model.hdf5")
+    output_file = os.path.join(save_dir, "{}_{}_trained_MOFA_model.hdf5".format(args['data1'], args['data2']))
 
     # Run MOFA+
     if args['pre_trained'] == "":
