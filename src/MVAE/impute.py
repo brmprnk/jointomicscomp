@@ -19,7 +19,7 @@ def predict_loss(recon_data, input_data):
 
 
 def predict(args: dict) -> None:
-    save_dir = "/results/geme_moe_poe_task1 13-09-2021 20:52:10/PoE"
+    save_dir = os.path.dirname(args['pre_trained'])
 
     print("-----   Loading Trained Model   -----")
     model, checkpoint = load_checkpoint(args['pre_trained'], use_cuda=False)
