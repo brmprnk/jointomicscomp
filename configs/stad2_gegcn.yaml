@@ -1,29 +1,28 @@
 GLOBAL_PARAMS:
-  name: "task2experiment"
+  name: "stad2_gegcn"
   task: 2
-  ctype: "BRCA"
-  ctype_sample_names: "/home/bram/jointomicscomp/data/BRCA/BRCA_sampleNames.npy"
+  ctype: "STAD"
+  ctype_sample_names: "/home/bram/jointomicscomp/data/STAD/STAD_sampleNames.npy"
   stagetypes: "/home/bram/jointomicscomp/data/stageTypes.npy"
-  stage_type_index: "/home/bram/jointomicscomp/data/BRCA/BRCA_stageType.npy"
+  stage_type_index: "/home/bram/jointomicscomp/data/STAD/STAD_stageType.npy"
   data_path1: "/home/bram/jointomicscomp/data/GE.npy"
-  data_path2: "/home/bram/jointomicscomp/data/ME.npy"
+  data_path2: "/home/bram/jointomicscomp/data/GCN.npy"
   sample_names: "/home/bram/jointomicscomp/data/sampleNames.npy"
   cancer_type_index: "/home/bram/jointomicscomp/data/cancerType.npy"
   cancertypes: "/home/bram/jointomicscomp/data/cancerTypes.npy"
   num_features: 5000
   cuda: true
   random_seed: 1
-  validation_fraction: 0.1
-  x_train_file: "/home/bram/jointomicscomp/data/BRCA/rest_GE_train.npy"
-  y_train_file: "/home/bram/jointomicscomp/data/BRCA/rest_ME_train.npy"
-  x_valid_file: "/home/bram/jointomicscomp/data/BRCA/rest_GE_valid.npy"
-  y_valid_file: "/home/bram/jointomicscomp/data/BRCA/rest_ME_valid.npy"
-  x_ctype_train_file: "/home/bram/jointomicscomp/data/BRCA/BRCA_GE_train.npy"
-  y_ctype_train_file: "/home/bram/jointomicscomp/data/BRCA/BRCA_ME_train.npy"
-  x_ctype_valid_file: "/home/bram/jointomicscomp/data/BRCA/BRCA_GE_valid.npy"
-  y_ctype_valid_file: "/home/bram/jointomicscomp/data/BRCA/BRCA_ME_valid.npy"
-  x_ctype_test_file: "/home/bram/jointomicscomp/data/BRCA/BRCA_GE_test.npy"
-  y_ctype_test_file: "/home/bram/jointomicscomp/data/BRCA/BRCA_ME_test.npy"
+  x_train_file: "/home/bram/jointomicscomp/data/STAD/rest_GE_train.npy"
+  y_train_file: "/home/bram/jointomicscomp/data/STAD/rest_GCN_train.npy"
+  x_val_file: "/home/bram/jointomicscomp/data/STAD/rest_GE_valid.npy"
+  y_val_file: "/home/bram/jointomicscomp/data/STAD/rest_GCN_valid.npy"
+  x_ctype_train_file: "/home/bram/jointomicscomp/data/STAD/STAD_GE_train.npy"
+  y_ctype_train_file: "/home/bram/jointomicscomp/data/STAD/STAD_GCN_train.npy"
+  x_ctype_val_file: "/home/bram/jointomicscomp/data/STAD/STAD_GE_valid.npy"
+  y_ctype_val_file: "/home/bram/jointomicscomp/data/STAD/STAD_GCN_valid.npy"
+  x_ctype_test_file: "/home/bram/jointomicscomp/data/STAD/STAD_GE_test.npy"
+  y_ctype_test_file: "/home/bram/jointomicscomp/data/STAD/STAD_GCN_test.npy"
 
 BASELINE:
   task: 'classify'               # whether to `impute` one datasource from the other, `classify` (cell type), or `rank` (stage prediction)
@@ -83,7 +82,7 @@ MVIB:
   log_interval: 5
 
 CGAE:
-  epochs: 40
+  epochs: 60
   batch_size: 256
   latent_dim: 128
   enc1_lr: 0.0001
