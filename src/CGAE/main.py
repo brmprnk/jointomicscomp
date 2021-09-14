@@ -152,7 +152,7 @@ def run(args: dict) -> None:
                                     drop_last=False)
 
         # Compute imputation loss
-        impute(net=net, model_file=os.path.join(ckpt_dir, "model_epoch{}.pth.tar".format(args['epochs'])), loader=extract_loader, save_dir=save_dir, multimodal=True)
+        impute(net=net, model_file=os.path.join(ckpt_dir, "model_last.pth.tar".format(args['epochs'])), loader=extract_loader, save_dir=save_dir, multimodal=True)
 
     # Cancer stage prediction
     if args['task'] == 2:
