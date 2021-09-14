@@ -86,7 +86,7 @@ def main() -> None:
     # Create directory to store all results in
     now = datetime.now()
     dt_string = now.strftime("%d-%m-%Y %H:%M:%S")
-    if args.experiment:
+    if args.experiment != "experiment":
         config['GLOBAL_PARAMS']['name'] = args.experiment
     save_dir = os.path.join(ROOT_DIR, 'results', '{} {}'.format(config['GLOBAL_PARAMS']['name'], dt_string))
     os.makedirs(save_dir)
