@@ -59,7 +59,7 @@ MVAE:
   plot: True     # Flag for plotting training and validation losses (loss, recon loss and KL loss)
 
   # Model optionsmain.yaml
-  pre_trained: ""
+  pre_trained: "/home/bram/jointomicscomp/results/geme_moe_poe_task1 13-09-2021 20:52:10/PoE/best_model.pth.tar"
   latent_dim: 128
   batch_size: 256
   epochs: 5
