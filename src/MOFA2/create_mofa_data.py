@@ -41,22 +41,18 @@ def create_mofa_dataframe(args: dict) -> None:
     omic_data1 = np.load(args['data_path1'])
     omic_data2 = np.load(args['data_path2'])
     sample_names = np.load(args['sample_names'])
-    cancer_type_index = np.load(args['cancer_type_index'])
-    cancertypes = np.load(args['cancertypes'])
+    omic_features1 = np.load(args['data_features1'])
+    omic_features2 = np.load(args['data_features2'])
 
     logger.success("Finished reading in data : shape {}".format(omic_data1.shape))
 
     assert len(omic_data1) == len(omic_data2), "Modalities do not have the same number of samples, exiting program."
 
-    print(omic_data1)
-    print(sample_names)
-    print(cancer_type_index)
-    print(cancertypes)
     # Create lists for each column in the final dataset
     SAMPLE_DATA = []
     FEATURE_DATA = []
     VALUE_DATA = []
-    VIEW_DATA = np.full((args['num_features'] * omic_data1.shape[0], ), "GE").tolist()  # We will have 5000 features for each sample in this view
+    VIEW_DATA = np.full((args['num_features'] * omic_data1.shape[0], ), args['data1']).tolist()  # We will have 5000 features for each sample in this view
 
     # For each sample, add an entry for each feature to the columns of the output Dataframe
     # Index represents sample name
@@ -69,14 +65,14 @@ def create_mofa_dataframe(args: dict) -> None:
 
         # Add all features to FEATURE_DATA
         # feature_list = [cancertypes[cancer_type_index[index]]] * args['num_features']
-        FEATURE_DATA.extend(np.arange(5000))
+        FEATURE_DATA.extend(omic_features1)
 
         # Add all values to VALUE_DATA
         VALUE_DATA.extend(sample)
         index += 1
 
     # Add View Name to VIEW_DATA
-    VIEW_DATA.extend(np.full((args['num_features'] * omic_data2.shape[0], ), "ME").tolist())
+    VIEW_DATA.extend(np.full((args['num_features'] * omic_data2.shape[0], ), args['data2']).tolist())
 
     # For each sample, add an entry for each feature to the columns of the output Dataframe
     index = 0
@@ -87,8 +83,7 @@ def create_mofa_dataframe(args: dict) -> None:
         SAMPLE_DATA.extend(sample_list)
 
         # Add all features to FEATURE_DATA
-        # feature_list = [cancertypes[cancer_type_index[index]]] * args['num_features']
-        FEATURE_DATA.extend(np.arange(5000))
+        FEATURE_DATA.extend(omic_features2)
 
         # Add all values to VALUE_DATA
         VALUE_DATA.extend(sample)

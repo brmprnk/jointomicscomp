@@ -30,7 +30,7 @@ PARSER.add_argument('--config', '-c',
                     dest='config_file',
                     metavar='FILE',
                     help="path to the config file",
-                    default='configs/gegcngeme.yaml')
+                    default='configs/geme.yaml')
 PARSER.add_argument('--experiment', '-e',
                     help="Name of experiment",
                     default="experiment")
