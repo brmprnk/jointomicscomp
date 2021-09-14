@@ -267,8 +267,8 @@ def reconstruction_loss(args: dict, save_dir: str) -> None:
 
     # Get W matrix for each modality
     try:
-        W_omic1 = W.loc[W['view'] == "GE"]
-        W_omic2 = W.loc[W['view'] == "ME"]
+        W_omic1 = W.loc[W['view'] == args['data1']]
+        W_omic2 = W.loc[W['view'] == args['data2']]
     except (ValueError, Exception) as e:
         logger.error(e)
         logger.error("Probably setup the wrong view names in MOFA+ reconstruction loss.")
