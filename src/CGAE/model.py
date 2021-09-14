@@ -163,8 +163,13 @@ def impute(net, model_file, loader, save_dir, multimodal=False):
 				imputation_loss_ge = mean_squared_error(ge_test, ge_from_me)
 				imputation_loss_me = mean_squared_error(me_test, me_from_ge)
 
-				logger.success("Imputation Loss for Gene Expression: ".format(imputation_loss_ge))
-				logger.success("Imputation Loss for Methylation: ".format(imputation_loss_me))
+				print("z1", imputation_loss_ge, "z2", imputation_loss_me)
+
+
+				logger.info("Imputation Loss for Gene Expression: ".format(imputation_loss_ge))
+				logger.info("Imputation Loss for Methylation: ".format(imputation_loss_me))
+				np.save("{}/task1_z1.npy".format(save_dir), z1)
+				np.save("{}/task1_z2.npy".format(save_dir), z2)
 
 
 def extract(net, model_file, loader, save_dir, multimodal=False):
