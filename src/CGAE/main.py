@@ -64,21 +64,21 @@ def run(args: dict) -> None:
         logger.success("Running Task 2: {} classification.".format(args['ctype']))
         # NOTE
         # For testing purposes, this code uses predefined splits, later this should be done everytime the model is run
-        GEtrainctype = np.load(args['x_ctype_train_file'])
-        GEtrainrest = np.load(args['x_train_file'])
-        GEtrain = np.vstack((GEtrainctype, GEtrainrest))
+        Xtrainctype = np.load(args['x_ctype_train_file'])
+        Xtrainrest = np.load(args['x_train_file'])
+        Xtrain = np.vstack((Xtrainctype, Xtrainrest))
 
-        GEvalidctype = np.load(args['x_ctype_valid_file'])
-        GEvalidrest = np.load(args['x_valid_file'])
-        GEvalid = np.vstack((GEvalidctype, GEvalidrest))
+        Xvalctype = np.load(args['x_ctype_val_file'])
+        Xvalrest = np.load(args['x_val_file'])
+        Xval = np.vstack((Xvalctype, Xvalrest))
 
-        MEtrainctype = np.load(args['y_ctype_train_file'])
-        MEtrainrest = np.load(args['y_train_file'])
-        MEtrain = np.vstack((MEtrainctype, MEtrainrest))
+        Ytrainctype = np.load(args['y_ctype_train_file'])
+        Ytrainrest = np.load(args['y_train_file'])
+        Ytrain = np.vstack((Ytrainctype, Ytrainrest))
 
-        MEvalidctype = np.load(args['y_ctype_valid_file'])
-        MEvalidrest = np.load(args['y_valid_file'])
-        MEvalid = np.vstack((MEvalidctype, MEvalidrest))
+        Yvalctype = np.load(args['y_ctype_val_file'])
+        Yvalrest = np.load(args['y_val_file'])
+        Yval = np.vstack((Yvalctype, Yvalrest))
 
     # Number of features
     input_dim1 = args['num_features']
@@ -93,6 +93,8 @@ def run(args: dict) -> None:
                        args['dec1_lr'], args['enc1_last_activation'], args['enc1_output_scale'], args['enc2_lr'],
                        args['dec2_lr'], args['enc2_last_activation'], args['enc1_output_scale'], args['beta_start_value'],
                        args['zconstraintCoef'], args['crossPenaltyCoef']).to(device)
+
+    net = net.double()
 
     logger.success("Initialized MultiOmicVAE model.")
     logger.info(str(net))
@@ -158,8 +160,8 @@ def run(args: dict) -> None:
     if args['task'] == 2:
         logger.info("Cancer Type Classification: Extracting Z1 and Z2 using {} set".format(args['ctype']))
         # Test sets are stratified data from cancer type into stages
-        dataExtract1 = np.vstack((GEtrainctype, GEvalidctype, np.load(args['x_ctype_test_file'])))
-        dataExtract2 = np.vstack((MEtrainctype, MEvalidctype, np.load(args['y_ctype_test_file'])))
+        dataExtract1 = np.vstack((Xtrainctype, Xvalctype, np.load(args['x_ctype_test_file'])))
+        dataExtract2 = np.vstack((Ytrainctype, Yvalctype, np.load(args['y_ctype_test_file'])))
 
         dataExtract1 = torch.tensor(dataExtract1, device=device)
         dataExtract2 = torch.tensor(dataExtract2, device=device)
