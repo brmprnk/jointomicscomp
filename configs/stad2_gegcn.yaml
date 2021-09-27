@@ -1,22 +1,31 @@
 GLOBAL_PARAMS:
-  name: "experiment"
+  name: "stad2_gegcn"
+  task: 2
+  ctype: "STAD"
+  ctype_sample_names: "/home/bram/jointomicscomp/data/STAD/STAD_sampleNames.npy"
+  stagetypes: "/home/bram/jointomicscomp/data/stageTypes.npy"
+  stage_type_index: "/home/bram/jointomicscomp/data/STAD/STAD_stageType.npy"
   data_path1: "/home/bram/jointomicscomp/data/GE.npy"
-  data_path2: "/home/bram/jointomicscomp/data/ME.npy"
+  data_path2: "/home/bram/jointomicscomp/data/GCN.npy"
   sample_names: "/home/bram/jointomicscomp/data/sampleNames.npy"
   cancer_type_index: "/home/bram/jointomicscomp/data/cancerType.npy"
   cancertypes: "/home/bram/jointomicscomp/data/cancerTypes.npy"
   num_features: 5000
   cuda: true
   random_seed: 1
+  x_train_file: "/home/bram/jointomicscomp/data/STAD/rest_GE_train.npy"
+  y_train_file: "/home/bram/jointomicscomp/data/STAD/rest_GCN_train.npy"
+  x_val_file: "/home/bram/jointomicscomp/data/STAD/rest_GE_valid.npy"
+  y_val_file: "/home/bram/jointomicscomp/data/STAD/rest_GCN_valid.npy"
+  x_ctype_train_file: "/home/bram/jointomicscomp/data/STAD/STAD_GE_train.npy"
+  y_ctype_train_file: "/home/bram/jointomicscomp/data/STAD/STAD_GCN_train.npy"
+  x_ctype_val_file: "/home/bram/jointomicscomp/data/STAD/STAD_GE_valid.npy"
+  y_ctype_val_file: "/home/bram/jointomicscomp/data/STAD/STAD_GCN_valid.npy"
+  x_ctype_test_file: "/home/bram/jointomicscomp/data/STAD/STAD_GE_test.npy"
+  y_ctype_test_file: "/home/bram/jointomicscomp/data/STAD/STAD_GCN_test.npy"
 
 BASELINE:
-  x_train_file: "/home/bram/jointomicscomp/data/uniform_split_train_GE.npy"
-  y_train_file: "/home/bram/jointomicscomp/data/uniform_split_train_ME.npy"
-  x_valid_file: "/home/bram/jointomicscomp/data/uniform_split_valid_GE.npy"
-  y_valid_file: "/home/bram/jointomicscomp/data/uniform_split_valid_ME.npy"
-  x_test_file: "/home/bram/jointomicscomp/data/uniform_split_test_GE.npy"
-  y_test_file: "/home/bram/jointomicscomp/data/uniform_split_test_ME.npy"
-  task: 'impute'               # whether to `impute` one datasource from the other, `classify` (cell type), or `rank` (stage prediction)
+  task: 'classify'               # whether to `impute` one datasource from the other, `classify` (cell type), or `rank` (stage prediction)
   resultsFile: './res.pkl'
   baseline: false
 
@@ -52,7 +61,7 @@ MVAE:
   mixture: false  # Flag that indicates if the MVAE uses Mixture-of-Experts instead of Product-of-Experts
   plot: True     # Flag for plotting training and validation losses (loss, recon loss and KL loss)
 
-  # Model options
+  # Model optionsmain.yaml
   pre_trained: "/Users/bram/jointomicscomp/results/moe_poe_new_data/MoE/best_model.pth.tar"
   latent_dim: 128
   batch_size: 256
@@ -71,6 +80,27 @@ MVIB:
 
   # Other parameters
   log_interval: 5
+
+CGAE:
+  epochs: 60
+  batch_size: 256
+  latent_dim: 128
+  enc1_lr: 0.0001
+  dec1_lr: 0.0001
+  enc2_lr: 0.0001
+  dec2_lr: 0.0001
+  loss_function: 'bce'
+  use_batch_norm: True
+  dropout_probability: 0.0
+  optimizer: 'Adam'
+  enc1_output_scale: 1.
+  enc2_output_scale: 1.
+  enc1_last_activation: 'relu'
+  enc2_last_activation: 'relu'
+  beta_start_value: 1
+  zconstraintCoef: 1
+  crossPenaltyCoef: 1
+
 
 OMICADE:
   data_path: ""

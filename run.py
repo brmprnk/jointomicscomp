@@ -30,7 +30,10 @@ PARSER.add_argument('--config', '-c',
                     dest='config_file',
                     metavar='FILE',
                     help="path to the config file",
-                    default='configs/main.yaml')
+                    default='configs/geme.yaml')
+PARSER.add_argument('--experiment', '-e',
+                    help="Name of experiment",
+                    default="experiment")
 PARSER.add_argument('-baseline',
                     action='store_true',
                     help="Run the baseline and its evaluation")
@@ -83,6 +86,8 @@ def main() -> None:
     # Create directory to store all results in
     now = datetime.now()
     dt_string = now.strftime("%d-%m-%Y %H:%M:%S")
+    if args.experiment != "experiment":
+        config['GLOBAL_PARAMS']['name'] = args.experiment
     save_dir = os.path.join(ROOT_DIR, 'results', '{} {}'.format(config['GLOBAL_PARAMS']['name'], dt_string))
     os.makedirs(save_dir)
     config['GLOBAL_PARAMS']['save_dir'] = save_dir
@@ -203,7 +208,9 @@ def run_cgae(config: dict) -> None:
     @param config: Dictionary containing input parameters
     @return: None
     """
-    print("CGAE has not yet been implemented", config)
+    from src.CGAE.main import run as cgae_model
+
+    cgae_model({**config['GLOBAL_PARAMS'], **config['CGAE']})
 
 
 def run_omicade(config: dict) -> None:
@@ -219,7 +226,7 @@ def run_omicade(config: dict) -> None:
     run_omicade({**config['GLOBAL_PARAMS'], **config['OMICADE']})
 
 def mvae_impute(config: dict):
-    from src.MVAE.predict import predict
+    from src.MVAE.impute import predict
 
     predict({**config['GLOBAL_PARAMS'], **config['MVAE']})
 

@@ -1,10 +1,8 @@
-from __future__ import division
-from __future__ import print_function
-from __future__ import absolute_import
-
 import sys
 import numpy as np
 from torch.utils.data.dataset import Dataset
+from sklearn.model_selection import StratifiedShuffleSplit
+from src.util import logger
 
 TRAINING_DATA_SPLIT = 0.7
 VALIDATION_DATA_SPLIT = 0.1
@@ -23,69 +21,92 @@ class TCGAData(object):
             save_dir     (string) : Where the indices taken from the datasets should be saved
             indices_path (string) : If set, use predefined indices for data split
         """
-        print(args)
-        # GE
-        self.GE = np.load(args['data_path1'])
-        print("-----   GE file read   -----")
+        # Load in data depending on task
+        if args['task'] == 1:
+            # Task 1 : Imputation
+            # variable y contains cancer type/cell type
 
-        # ME
-        self.ME = np.load(args['data_path2'])
-        print("-----   ME file read   -----")
+            # Load in files for now
+            self.ge_train_file = np.load(args['x_train_file'])
+            self.ge_val_file = np.load(args['x_val_file'])
+            self.ge_test_file = np.load(args['x_test_file'])
+            self.me_train_file = np.load(args['y_train_file'])
+            self.me_val_file = np.load(args['y_val_file'])
+            self.me_test_file = np.load(args['y_test_file'])
 
-        # Split Datasets into a 70 training / 10 validation / 20 prediction split
-        assert self.GE.shape[0] == self.ME.shape[0], "Datasets do not have equal samples"
+            # GE = np.load(args['data_path1'])
+            # ME = np.load(args['data_path2'])
 
-        # Split the dataset
-        if indices_path is None:
-            nr_of_samples = self.GE.shape[0]
-            nr_of_training_samples = int(TRAINING_DATA_SPLIT * nr_of_samples)
-            nr_of_validation_samples = int(VALIDATION_DATA_SPLIT * nr_of_samples)
+            # assert GE.shape[0] == ME.shape[0], "Datasets do not have equal samples"
 
-            # Random ordering of all sample id's
-            random_sample_indices = np.random.choice(a=nr_of_samples, size=nr_of_samples, replace=False)
+            # cancerType = np.load(args['cancer_type_index'])
 
-            # Split into three sets of sizes
-            # [:nr_of_training_samples], [nr_of_training_samples:nr_of_validation_samples], [:nr_of_predict_samples]
-            sets = np.split(random_sample_indices,
-                            [nr_of_training_samples, (nr_of_training_samples + nr_of_validation_samples)])
+            # split1 = StratifiedShuffleSplit(n_splits=1, test_size=0.1)
 
-            training_ids = sets[0]
-            validation_ids = sets[1]
-            predict_ids = sets[2]
+            # for trainValidInd, testInd in split1.split(GE, cancerType):
+            #     # Get test split
+            #     self.ge_test_file = np.float32(GE[testInd])
+            #     self.me_test_file = np.float32(ME[testInd])
+            #     cancerTypetest = cancerType[testInd]
 
-            if save_dir is None:
-                print("Error, no save path is given so indices for data splits could not be saved. Exiting program")
-                sys.exit()
+            #     # Get training and validation splits
+            #     GEtrainValid = GE[trainValidInd]
+            #     MEtrainValid = ME[trainValidInd]
+            #     cancerTypetrainValid = cancerType[trainValidInd]
 
-            # Save the indices taken for reproducibility
-            np.save("{}/training_indices.npy".format(save_dir), training_ids)
-            np.save("{}/validation_indices.npy".format(save_dir), validation_ids)
-            np.save("{}/predict_indices.npy".format(save_dir), predict_ids)
+            # split2 = StratifiedShuffleSplit(n_splits=1, test_size=1 / 9)
 
-        else:  # Use predefined indices
-            print("Using Predefined split")
-            training_ids = np.load("{}/training_indices.npy".format(indices_path))
-            validation_ids = np.load("{}/validation_indices.npy".format(indices_path))
-            predict_ids = np.load("{}/predict_indices.npy".format(indices_path))
+            # for trainInd, validInd in split2.split(GEtrainValid, cancerTypetrainValid):
+            #     # Train splits
+            #     self.ge_train_file = np.float32(GEtrainValid[trainInd])
+            #     self.me_train_file = np.float32(MEtrainValid[trainInd])
+            #     cancerTypetrain = cancerTypetrainValid[trainInd]
 
-        # Create data arrays
-        self.ge_train_file = np.float32(self.GE[training_ids])
-        self.ge_val_file = np.float32(self.GE[validation_ids])
-        self.ge_predict_file = np.float32(self.GE[predict_ids])
+            #     # Validation splits
+            #     self.ge_val_file = np.float32(GEtrainValid[validInd])
+            #     self.me_val_file = np.float32(MEtrainValid[validInd])
+            #     cancerTypevalid = cancerTypetrainValid[validInd]
 
-        self.me_train_file = np.float32(self.ME[training_ids])
-        self.me_val_file = np.float32(self.ME[validation_ids])
-        self.me_predict_file = np.float32(self.ME[predict_ids])
+            # if save_dir is None:
+            #     logger.error("Error, no save path is given so indices for data splits could not be saved. Exiting program")
+            #     sys.exit()
+
+            # # Save the indices taken for reproducibility
+            # np.save("{}/training_indices.npy".format(save_dir), trainInd)
+            # np.save("{}/validation_indices.npy".format(save_dir), validInd)
+            # np.save("{}/test_indices.npy".format(save_dir), testInd)
+
+        if args['task'] == 2:
+            logger.success("Running Task 2: {} classification.".format(args['ctype']))
+            # NOTE
+            # For testing purposes, this code uses predefined splits, later this should be done everytime the model is run
+            GEtrainctype = np.load(args['x_ctype_train_file'])
+            GEtrainrest = np.load(args['x_train_file'])
+            self.ge_train_file = np.float32(np.vstack((GEtrainctype, GEtrainrest)))
+
+            GEvalidctype = np.load(args['x_ctype_valid_file'])
+            GEvalidrest = np.load(args['x_valid_file'])
+            self.ge_val_file = np.float32(np.vstack((GEvalidctype, GEvalidrest)))
+
+            MEtrainctype = np.load(args['y_ctype_train_file'])
+            MEtrainrest = np.load(args['y_train_file'])
+            self.me_train_file = np.float32(np.vstack((MEtrainctype, MEtrainrest)))
+
+            MEvalidctype = np.load(args['y_ctype_valid_file'])
+            MEvalidrest = np.load(args['y_valid_file'])
+            self.me_val_file = np.float32(np.vstack((MEvalidctype, MEvalidrest)))
+
 
     def get_data_partition(self, partition):
         if partition == "train":
             return TCGADataset(self.ge_train_file, self.me_train_file)
         elif partition == "val":
             return TCGADataset(self.ge_val_file, self.me_val_file)
-        elif partition == "predict":
-            return TCGADataset(self.ge_predict_file, self.me_predict_file)
+        elif partition == "test":
+            return TCGADataset(self.ge_test_file, self.me_test_file)
         else:  # Full data aka no split
-            return TCGADataset(self.GE, self.ME)
+            return TCGADataset(np.vstack((self.ge_train_file, self.ge_val_file, self.ge_test_file)),
+                               np.vstack((self.me_train_file, self.me_val_file, self.me_test_file)))
 
 
 class TCGADataset(Dataset):
@@ -96,8 +117,8 @@ class TCGADataset(Dataset):
     def __init__(self, ge_data, me_data):
         """
         Args:
-            rna_data (numpy ndarray): Numpy array of the same shape as the .csv holding float32 data of RNA-seq
-            gcn_data (numpy ndarray): Numpy array of the same shape as the .csv holding float32 data of Gene Copy Number
+            ge_data (numpy ndarray): Numpy array of the same shape as the .csv holding float32 data of RNA-seq
+            me_data (numpy ndarray): Numpy array of the same shape as the .csv holding float32 data of Methylation
         """
         assert ge_data.shape[0] == me_data.shape[0], "Datasets do not have equal samples"
 
