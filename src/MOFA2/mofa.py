@@ -43,7 +43,7 @@ def run(args: dict) -> None:
         output_file = args['pre_trained']
 
     # Do computations in R
-    downstream_mofa(save_dir, output_file)
+    # downstream_mofa(save_dir, output_file)
 
     # Calculate reconstruction loss
     reconstruction_loss(args, save_dir)
@@ -243,8 +243,8 @@ def reconstruction_loss(args: dict, save_dir: str) -> None:
     # Y = WZ = 5000 * 9992 : Features on rows, Samples on columns
 
     logger.info("Fetching MOFA+ Z and W")
-    W = pd.read_csv(os.path.join(save_dir, "W.csv"))
-    Z = pd.read_csv(os.path.join(save_dir, "Z.csv"))
+    W = pd.read_csv(os.path.join(os.path.dirname(args['pre_trained']), "W.csv"))
+    Z = pd.read_csv(os.path.join(os.path.dirname(args['pre_trained']), "Z.csv"))
 
     print("W = ", W)
 
@@ -267,8 +267,8 @@ def reconstruction_loss(args: dict, save_dir: str) -> None:
 
     # Get W matrix for each modality
     try:
-        W_omic1 = W.loc[W['view'] == "GE"]
-        W_omic2 = W.loc[W['view'] == "ME"]
+        W_omic1 = W.loc[W['view'] == args['data1']]
+        W_omic2 = W.loc[W['view'] == args['data2']]
     except (ValueError, Exception) as e:
         logger.error(e)
         logger.error("Probably setup the wrong view names in MOFA+ reconstruction loss.")
