@@ -82,7 +82,7 @@ MVIB:
   log_interval: 5
 
 CGAE:
-  epochs: 60
+  epochs: 1000
   batch_size: 256
   latent_dim: 128
   enc1_lr: 0.0001

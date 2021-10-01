@@ -1,8 +1,8 @@
 import os
 import yaml
-import argparse
 from tqdm import tqdm
 from torch.utils.data import DataLoader
+import numpy as np
 
 from src.MVIB.utils.data import MultiOmicsDataset, SingleOmicsDataset
 from src.MVIB.utils.evaluation import evaluate, split
@@ -12,29 +12,26 @@ def run(args: dict) -> None:
 
 	save_dir = os.path.join(args['save_dir'], '{}'.format('MVIB'))
 	os.makedirs(save_dir)
+	#
+	# parser.add_argument("--data-dir", type=str, default='.', help="Root path for the datasets.")
+	# parser.add_argument("--no-logging", action="store_true", help="Disable tensorboard logging")
+	# parser.add_argument("--overwrite", action="store_true",
+	# 					help="Force the over-writing of the previous experiment in the specified directory.")
+	# parser.add_argument("--device", type=str, default="cuda:0",
+	# 					help="Device on which the experiment is executed (as for tensor.device). Specify 'cpu' to "
+	# 						 "force execution on CPU.")
+	# parser.add_argument("--num-workers", type=int, default=8,
+	# 					help="Number of CPU threads used during the data loading procedure.")
+	# parser.add_argument("--batch-size", type=int, default=64, help="Batch size used for the experiments.")
+	# parser.add_argument("--load-model-file", type=str, default=None,
+	# 					help="Checkpoint to load for the experiments. Note that the specified configuration file needs "
+	# 						 "to be compatible with the checkpoint.")
+	# parser.add_argument("--checkpoint-every", type=int, default=50, help="Frequency of model checkpointing (in epochs).")
+	# parser.add_argument("--backup-every", type=int, default=5, help="Frequency of model backups (in epochs).")
+	# parser.add_argument("--evaluate-every", type=int, default=5, help="Frequency of model evaluation.")
+	# parser.add_argument("--epochs", type=int, default=1000, help="Total number of training epochs")
 
-	parser.add_argument("--data-dir", type=str, default='.', help="Root path for the datasets.")
-	parser.add_argument("--no-logging", action="store_true", help="Disable tensorboard logging")
-	parser.add_argument("--overwrite", action="store_true",
-						help="Force the over-writing of the previous experiment in the specified directory.")
-	parser.add_argument("--device", type=str, default="cuda:0",
-						help="Device on which the experiment is executed (as for tensor.device). Specify 'cpu' to "
-							 "force execution on CPU.")
-	parser.add_argument("--num-workers", type=int, default=8,
-						help="Number of CPU threads used during the data loading procedure.")
-	parser.add_argument("--batch-size", type=int, default=64, help="Batch size used for the experiments.")
-	parser.add_argument("--load-model-file", type=str, default=None,
-						help="Checkpoint to load for the experiments. Note that the specified configuration file needs "
-							 "to be compatible with the checkpoint.")
-	parser.add_argument("--checkpoint-every", type=int, default=50, help="Frequency of model checkpointing (in epochs).")
-	parser.add_argument("--backup-every", type=int, default=5, help="Frequency of model backups (in epochs).")
-	parser.add_argument("--evaluate-every", type=int, default=5, help="Frequency of model evaluation.")
-	parser.add_argument("--epochs", type=int, default=1000, help="Total number of training epochs")
-
-
-
-	logging = not args.no_logging
-	save_dir = args.save_dir
+	logging = not args['no_logging']
 	data_dir = args.data_dir
 	config_file = args.config_file
 	overwrite = args.overwrite
@@ -92,27 +89,35 @@ def run(args: dict) -> None:
 	#
 	trainer.double()
 
-	###########
-	# Dataset #
-	###########
-	dataset_suffix = '_train.npy'
-	train_set = SingleOmicsDataset(data_dir + 'view1' + dataset_suffix, data_dir + 'y' + dataset_suffix)
-	dataset_suffix = '_test.npy'
-	test_set = SingleOmicsDataset(data_dir + 'view1' + dataset_suffix, data_dir + 'y' + dataset_suffix)
+	# Load in data, depending on task
+	# Task 1 : Imputation
+	if args['task'] == 1:
+		# Use predefined split
+		Xtrain = np.load(args['x_train_file'])
+		Xval = np.load(args['x_val_file'])
+		Xtest = np.load(args['x_test_file'])
+		Ytrain = np.load(args['y_train_file'])
+		Yval = np.load(args['y_val_file'])
+		Ytest = np.load(args['y_test_file'])
+
+		dataset_suffix = '_train.npy'
+		train_set = SingleOmicsDataset(data_dir + 'view1' + dataset_suffix, data_dir + 'y' + dataset_suffix)
+		dataset_suffix = '_test.npy'
+		test_set = SingleOmicsDataset(data_dir + 'view1' + dataset_suffix, data_dir + 'y' + dataset_suffix)
 
 
-	dataset_suffix = '_train.npy'
-	mv_train_set = MultiOmicsDataset(data_dir + 'view1' + dataset_suffix, data_dir + 'view2' + dataset_suffix, data_dir + 'y' + dataset_suffix )
+		dataset_suffix = '_train.npy'
+		mv_train_set = MultiOmicsDataset(data_dir + 'view1' + dataset_suffix, data_dir + 'view2' + dataset_suffix, data_dir + 'y' + dataset_suffix )
 
-	dataset_suffix = '_test.npy'
-	mv_test_set = MultiOmicsDataset(data_dir + 'view1' + dataset_suffix, data_dir + 'view2' + dataset_suffix, data_dir + 'y' + dataset_suffix )
+		dataset_suffix = '_test.npy'
+		mv_test_set = MultiOmicsDataset(data_dir + 'view1' + dataset_suffix, data_dir + 'view2' + dataset_suffix, data_dir + 'y' + dataset_suffix )
 
 
-	# Initialization of the data loader
-	train_loader = DataLoader(mv_train_set, batch_size=batch_size, shuffle=True, num_workers=num_workers)
+		# Initialization of the data loader
+		train_loader = DataLoader(mv_train_set, batch_size=batch_size, shuffle=True, num_workers=num_workers)
 
-	# Select a subset 100 samples (10 for each per label)
-	train_subset = split(train_set, 100, 'Balanced')
+		# Select a subset 100 samples (10 for each per label)
+		train_subset = split(train_set, 100, 'Balanced')
 
 	##########
 
