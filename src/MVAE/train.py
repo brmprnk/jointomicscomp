@@ -155,6 +155,89 @@ def load_checkpoint(file_path, use_cuda=False):
     trained_model.load_state_dict(checkpoint['state_dict'])
     return trained_model, checkpoint
 
+def train(args, model, train_loader, optimizer, epoch, train_loss_meter, train_recon_loss_meter, train_kld_loss_meter):
+    model.train()
+
+    progress_bar = tqdm(total=len(train_loader))
+    for batch_idx, (GE, ME) in enumerate(train_loader):
+
+        # refresh the optimizer
+        optimizer.zero_grad()
+
+        kld_weight = len(GE) / len(train_loader.dataset)  # Account for the minibatch samples from the dataset
+
+        # compute reconstructions using all the modalities
+        (joint_recon_rna, joint_recon_gcn, joint_mu, joint_logvar) = model.forward(GE, ME)
+
+        # compute reconstructions using each of the individual modalities
+        (ge_recon_ge, ge_recon_me, ge_mu, ge_logvar) = model.forward(ge=GE)
+
+        (me_recon_ge, me_recon_me, me_mu, me_logvar) = model.forward(me=ME)
+
+        # Compute joint train loss
+        joint_train_loss = loss_function(joint_recon_rna, GE,
+                                         joint_recon_gcn, ME,
+                                         joint_mu, joint_logvar, kld_weight)
+
+        # compute loss with single modal inputs
+        ge_train_loss = loss_function(ge_recon_ge, GE,
+                                      ge_recon_me, ME,
+                                      ge_mu, ge_logvar, kld_weight)
+
+        me_train_loss = loss_function(me_recon_ge, GE,
+                                      me_recon_me, ME,
+                                      me_mu, me_logvar, kld_weight)
+
+        train_loss = joint_train_loss['loss'] + ge_train_loss['loss'] + me_train_loss['loss']
+        train_recon_loss = joint_train_loss['Reconstruction_Loss'] + ge_train_loss['Reconstruction_Loss'] + me_train_loss['Reconstruction_Loss']
+        train_kld_loss = joint_train_loss['KLD'] + ge_train_loss['KLD'] + me_train_loss['KLD']
+
+        train_loss_meter.update(train_loss, len(GE))
+        train_recon_loss_meter.update(train_recon_loss, len(GE))
+        train_kld_loss_meter.update(train_kld_loss, len(GE))
+
+        # compute and take gradient step
+        train_loss.backward()
+        optimizer.step()
+
+        progress_bar.update()
+
+    progress_bar.close()
+    if epoch % args['log_interval'] == 0:
+        print('====> Epoch: {}\tLoss: {:.4f}'.format(epoch, train_loss_meter.avg))
+        print('====> Epoch: {}\tReconstruction Loss: {:.4f}'.format(epoch, train_recon_loss_meter.avg))
+        print('====> Epoch: {}\tKLD Loss: {:.4f}'.format(epoch, train_kld_loss_meter.avg))
+
+
+def test(args, model, val_loader, optimizer, epoch, val_loss_meter, val_recon_loss_meter, val_kld_loss_meter):
+    model.eval()
+    test_loss = 0
+
+    for batch_idx, (GE, ME) in enumerate(val_loader):
+
+        # for ease, only compute the joint loss in validation
+        (joint_recon_ge, joint_recon_me, joint_mu, joint_logvar) = model.forward(GE, ME)
+
+        kld_weight = len(GE) / len(val_loader.dataset)  # Account for the minibatch samples from the dataset
+
+        # Compute joint loss
+        joint_test_loss = loss_function(joint_recon_ge, GE,
+                                        joint_recon_me, ME,
+                                        joint_mu, joint_logvar, kld_weight)
+
+        val_loss_meter.update(joint_test_loss['loss'], len(GE))
+        val_recon_loss_meter.update(joint_test_loss['Reconstruction_Loss'], len(GE))
+        val_kld_loss_meter.update(joint_test_loss['KLD'], len(GE))
+
+        test_loss += joint_test_loss['loss']
+
+    if epoch % args['log_interval'] == 0:
+        print('====> Test Loss: {:.4f}'.format(test_loss))
+        print('====> Test Loss: {}\tLoss: {:.4f}'.format(epoch, val_loss_meter.avg))
+        print('====> Test Loss: {}\tReconstruction Loss: {:.4f}'.format(epoch, val_recon_loss_meter.avg))
+        print('====> Test Loss: {}\tKLD Loss: {:.4f}'.format(epoch, val_kld_loss_meter.avg))
+    return val_loss_meter.avg
+
 
 def run(args) -> None:
 
@@ -198,90 +281,6 @@ def run(args) -> None:
     if args['cuda']:
         model.cuda()
 
-    def train(epoch, train_loss_meter, train_recon_loss_meter, train_kld_loss_meter):
-        model.train()
-
-        progress_bar = tqdm(total=len(train_loader))
-        for batch_idx, (GE, ME) in enumerate(train_loader):
-
-            # refresh the optimizer
-            optimizer.zero_grad()
-
-            kld_weight = len(GE) / len(train_loader.dataset)  # Account for the minibatch samples from the dataset
-
-            # compute reconstructions using all the modalities
-            (joint_recon_rna, joint_recon_gcn, joint_mu, joint_logvar) = model(GE, ME)
-
-            # compute reconstructions using each of the individual modalities
-            (ge_recon_ge, ge_recon_me, ge_mu, ge_logvar) = model(ge=GE)
-
-            (me_recon_ge, me_recon_me, me_mu, me_logvar) = model(me=ME)
-
-            # Compute joint train loss
-            joint_train_loss = loss_function(joint_recon_rna, GE,
-                                             joint_recon_gcn, ME,
-                                             joint_mu, joint_logvar, kld_weight)
-
-            # compute loss with single modal inputs
-            ge_train_loss = loss_function(ge_recon_ge, GE,
-                                          ge_recon_me, ME,
-                                          ge_mu, ge_logvar, kld_weight)
-
-            me_train_loss = loss_function(me_recon_ge, GE,
-                                          me_recon_me, ME,
-                                          me_mu, me_logvar, kld_weight)
-
-            train_loss = joint_train_loss['loss'] + ge_train_loss['loss'] + me_train_loss['loss']
-            train_recon_loss = joint_train_loss['Reconstruction_Loss'] + ge_train_loss['Reconstruction_Loss'] + me_train_loss['Reconstruction_Loss']
-            train_kld_loss = joint_train_loss['KLD'] + ge_train_loss['KLD'] + me_train_loss['KLD']
-
-            train_loss_meter.update(train_loss, len(GE))
-            train_recon_loss_meter.update(train_recon_loss, len(GE))
-            train_kld_loss_meter.update(train_kld_loss, len(GE))
-
-            # compute and take gradient step
-            train_loss.backward()
-            optimizer.step()
-
-            progress_bar.update()
-
-        progress_bar.close()
-        if epoch % args['log_interval'] == 0:
-            print('====> Epoch: {}\tLoss: {:.4f}'.format(epoch, train_loss_meter.avg))
-            print('====> Epoch: {}\tReconstruction Loss: {:.4f}'.format(epoch, train_recon_loss_meter.avg))
-            print('====> Epoch: {}\tKLD Loss: {:.4f}'.format(epoch, train_kld_loss_meter.avg))
-
-
-    def test(epoch, val_loss_meter, val_recon_loss_meter, val_kld_loss_meter):
-        model.eval()
-        test_loss = 0
-
-        for batch_idx, (GE, ME) in enumerate(val_loader):
-
-            # for ease, only compute the joint loss in validation
-            (joint_recon_ge, joint_recon_me, joint_mu, joint_logvar) = model(GE, ME)
-
-            kld_weight = len(GE) / len(val_loader.dataset)  # Account for the minibatch samples from the dataset
-
-            # Compute joint loss
-            joint_test_loss = loss_function(joint_recon_ge, GE,
-                                            joint_recon_me, ME,
-                                            joint_mu, joint_logvar, kld_weight)
-
-            val_loss_meter.update(joint_test_loss['loss'], len(GE))
-            val_recon_loss_meter.update(joint_test_loss['Reconstruction_Loss'], len(GE))
-            val_kld_loss_meter.update(joint_test_loss['KLD'], len(GE))
-
-            test_loss += joint_test_loss['loss']
-
-        if epoch % args['log_interval'] == 0:
-            print('====> Test Loss: {:.4f}'.format(test_loss))
-            print('====> Test Loss: {}\tLoss: {:.4f}'.format(epoch, val_loss_meter.avg))
-            print('====> Test Loss: {}\tReconstruction Loss: {:.4f}'.format(epoch, val_recon_loss_meter.avg))
-            print('====> Test Loss: {}\tKLD Loss: {:.4f}'.format(epoch, val_kld_loss_meter.avg))
-        return val_loss_meter.avg
-
-
     train_loss_meter = AverageMeter("Loss")
     train_recon_loss_meter = AverageMeter("Reconstruction Loss")
     train_kld_loss_meter = AverageMeter("KLD Loss")
@@ -290,21 +289,21 @@ def run(args) -> None:
     val_recon_loss_meter = AverageMeter("Validation Reconstruction Loss")
     val_kld_loss_meter = AverageMeter("Validation KLD Loss")
     for epoch in range(1, args['epochs'] + 1):
-        train(epoch, train_loss_meter, train_recon_loss_meter, train_kld_loss_meter)
-        latest_loss = test(epoch, val_loss_meter, val_recon_loss_meter, val_kld_loss_meter)
+        train(args, model, train_loader, optimizer, epoch, train_loss_meter, train_recon_loss_meter, train_kld_loss_meter)
+        latest_loss = test(args, model, val_loader, optimizer, epoch, val_loss_meter, val_recon_loss_meter, val_kld_loss_meter)
 
-        # Save the last model
-        if epoch == args['epochs']:
-            save_checkpoint({
-                'state_dict': model.state_dict(),
-                'best_loss': latest_loss,
-                'latent_dim': args['latent_dim'],
-                'epochs': args['epochs'],
-                'lr': args['lr'],
-                'batch_size': args['batch_size'],
-                'use_mixture': args['mixture'],
-                'optimizer': optimizer.state_dict(),
-            }, True, save_dir)
+        # # Save the last model
+        # if epoch == args['epochs']:
+        #     save_checkpoint({
+        #         'state_dict': model.state_dict(),
+        #         'best_loss': latest_loss,
+        #         'latent_dim': args['latent_dim'],
+        #         'epochs': args['epochs'],
+        #         'lr': args['lr'],
+        #         'batch_size': args['batch_size'],
+        #         'use_mixture': args['mixture'],
+        #         'optimizer': optimizer.state_dict(),
+        #     }, True, save_dir)
 
     print(model)
 

@@ -94,7 +94,7 @@ def run(args: dict) -> None:
                        args['dec2_lr'], args['enc2_last_activation'], args['enc1_output_scale'], args['beta_start_value'],
                        args['zconstraintCoef'], args['crossPenaltyCoef']).to(device)
 
-    net = net.double()
+    # net = net.double()
 
     logger.success("Initialized MultiOmicVAE model.")
     logger.info(str(net))
@@ -130,10 +130,10 @@ def run(args: dict) -> None:
                               drop_last=False)
 
     # Training and validation
-
-    train(device=device, net=net, num_epochs=args['epochs'], train_loader=train_loader,
-          train_loader_eval=train_loader_eval, valid_loader=valid_loader,
-          ckpt_dir=ckpt_dir, logs_dir=logs_dir, save_step=5, multimodal=True)
+    #
+    # train(device=device, net=net, num_epochs=args['epochs'], train_loader=train_loader,
+    #       train_loader_eval=train_loader_eval, valid_loader=valid_loader,
+    #       ckpt_dir=ckpt_dir, logs_dir=logs_dir, save_step=5, multimodal=True)
 
 
     # Extract Phase #
@@ -154,8 +154,7 @@ def run(args: dict) -> None:
                                     drop_last=False)
 
         # Compute imputation loss
-        impute(net=net, model_file=os.path.join(ckpt_dir, "model_last.pth.tar".format(args['epochs'])), loader=extract_loader, save_dir=save_dir, multimodal=True)
-
+        impute(net=net, model_file="/home/bram/jointomicscomp/results/CGAE_gegcn_evenmaxerepochs 28-09-2021 08:14:01/CGAE/checkpoint/model_epoch500.pth.tar", loader=extract_loader, save_dir=save_dir, multimodal=True)
     # Cancer stage prediction
     if args['task'] == 2:
         logger.info("Cancer Type Classification: Extracting Z1 and Z2 using {} set".format(args['ctype']))

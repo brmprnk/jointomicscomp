@@ -1,12 +1,12 @@
 GLOBAL_PARAMS:
-  name: "gegcn_moe_poe_task1"
+  name: "cell_task1"
   task: 1
   num_features: 5000
   cuda: true
   random_seed: 1
   no_logging: false
-  data1: "GE"
-  data2: "GCN"
+  data1: "CELL RNA"
+  data2: "CELL Protein"
   data_path1: "/home/bram/jointomicscomp/data/GE.npy"
   data_path2: "/home/bram/jointomicscomp/data/GCN.npy"
   data_features1: "/home/bram/jointomicscomp/data/GE_featureNames.npy"
