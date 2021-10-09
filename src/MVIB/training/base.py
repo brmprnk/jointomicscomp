@@ -62,7 +62,7 @@ class Trainer(nn.Module):
 	def _log_loss(self):
 		# Log the expected value of the items in loss_items
 		for key, values in self.loss_items.items():
-			self.writer.add_scalar(tag=key, scalar_value=np.mean(values), global_step=self.iterations)
+			self.writer.add_scalar(tag=key, scalar_value=np.mean(values), global_step=(self.iterations / self.log_loss_every))
 			self.loss_items[key] = []
 
 	def save(self, model_path):
