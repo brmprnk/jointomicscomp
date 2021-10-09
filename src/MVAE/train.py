@@ -5,12 +5,15 @@ from tqdm import tqdm
 import torch
 import torch.optim as optim
 import torch.nn.functional as F
+from tensorboardX import SummaryWriter
 
 from src.MVAE.model import MVAE
 import src.MVAE.datasets as datasets
+from src.MVAE.evaluate import impute
 import src.util.logger as logger
 
 import numpy as np
+from sklearn.metrics import mean_squared_error
 
 N_MODALITIES = 2
 
@@ -19,8 +22,8 @@ def elbo_loss(recon_image, image, recon_gray, gray, mu, logvar, annealing_factor
     BCE = 0
     if recon_image is not None and image is not None:
         # recon_image, image = recon_image.view(-1, 3 * 64 * 64), image.view(-1, 3 * 64 * 64)
-        image_BCE = torch.sum(binary_cross_entropy_with_logits(recon_image, image), dim=1)
-        BCE += image_BCE
+        imaomic1_BCE = torch.sum(binary_cross_entropy_with_logits(recon_image, image), dim=1)
+        BCE += imaomic1_BCE
 
     if recon_gray is not None and gray is not None:
         # recon_gray, gray = recon_gray.view(-1, 1 * 64 * 64), gray.view(-1, 1 * 64 * 64)
@@ -82,119 +85,78 @@ def reconstruction_loss_function(key, loss_meter, recon_rna, rna, recon_gcn, gcn
     :return:
     """
     if key == "rna":
-        ge_recon_ge = F.mse_loss(recon_rna, rna)
-        ge_recon_me = F.mse_loss(recon_gcn, gcn)
+        omic1_recon_ge = F.mse_loss(recon_rna, rna)
+        omic1_recon_me = F.mse_loss(recon_gcn, gcn)
         rna_recon_dna = F.mse_loss(recon_dna, dna)
-        loss_meter.modality_loss(ge_recon_ge.detach().numpy(), "rna_rna")
-        loss_meter.modality_loss(ge_recon_me.detach().numpy(), "rna_gcn")
+        loss_meter.modality_loss(omic1_recon_ge.detach().numpy(), "rna_rna")
+        loss_meter.modality_loss(omic1_recon_me.detach().numpy(), "rna_gcn")
         loss_meter.modality_loss(rna_recon_dna.detach().numpy(), "rna_dna")
 
     if key == "gcn":
-        me_recon_me = F.mse_loss(recon_gcn, gcn)
-        me_recon_ge = F.mse_loss(recon_rna, rna)
+        omic2_recon_me = F.mse_loss(recon_gcn, gcn)
+        omic2_recon_ge = F.mse_loss(recon_rna, rna)
         gcn_recon_dna = F.mse_loss(recon_dna, dna)
-        loss_meter.modality_loss(me_recon_me.detach().numpy(), "gcn_gcn")
-        loss_meter.modality_loss(me_recon_ge.detach().numpy(), "gcn_rna")
+        loss_meter.modality_loss(omic2_recon_me.detach().numpy(), "gcn_gcn")
+        loss_meter.modality_loss(omic2_recon_ge.detach().numpy(), "gcn_rna")
         loss_meter.modality_loss(gcn_recon_dna.detach().numpy(), "gcn_dna")
 
     return
 
-
-class AverageMeter(object):
-    """Computes and stores the average and current value"""
-    def __init__(self, name):
-        self.val = 0
-        self.avg = 0
-        self.sum = 0
-        self.count = 0
-        self.name = name
-        self.epochs = 100
-        self.values = []
-        self.reconstruct_losses = {
-            "average": [],
-            "ge_ge": [],
-            "me_me": [],
-            "ge_me": [],
-            "me_ge": [],
-        }
-
-    def update(self, val, n=1):
-        self.val = val
-        self.sum += val * n
-        self.count += n
-        self.avg = self.sum / self.count
-        self.values.append(self.avg.item())
-
-    def modality_loss(self, val, key):
-        self.reconstruct_losses[key].append(val)
-
-
-def save_checkpoint(state, lowest_loss, save_dir):
+def save_checkpoint(state, epoch, save_dir):
     """
     Saves a Pytorch model's state, and also saves it to a separate object if it is the best model (lowest loss) thus far
 
     @param state:       Python dictionary containing the model's state
-    @param lowest_loss: Boolean check if the current checkpoint has had the best (lowest) loss so far
+    @param epoch:       Epoch number for save file name
     @param save_dir:      String of the folder to save the model to
     @return: None
     """
     # Save checkpoint
-    # torch.save(state, os.path.join(save_dir, filename))
-
-    # If this is the best checkpoint (lowest loss) thus far, copy this model to a file named model_best
-    if lowest_loss:
-        print("Final epoch --> Saving to model_best")
-        torch.save(state, os.path.join(save_dir, 'best_model.pth.tar'))
+    torch.save(state, os.path.join(save_dir, 'trained_model_epoch{}.pth.tar'.format(epoch)))
 
 
-def load_checkpoint(file_path, use_cuda=False):
-    checkpoint = torch.load(file_path) if use_cuda else \
-        torch.load(file_path, map_location=lambda storage, location: storage)
-
-    trained_model = MVAE(use_mixture=checkpoint['use_mixture'], latent_dim=checkpoint['latent_dim'])
-    trained_model.load_state_dict(checkpoint['state_dict'])
-    return trained_model, checkpoint
-
-def train(args, model, train_loader, optimizer, epoch, train_loss_meter, train_recon_loss_meter, train_kld_loss_meter):
+def train(args, model, train_loader, optimizer, epoch, tf_logger):
     model.train()
 
     progress_bar = tqdm(total=len(train_loader))
-    for batch_idx, (GE, ME) in enumerate(train_loader):
-
+    train_loss_per_batch = np.zeros(len(train_loader))
+    train_recon_loss_per_batch = np.zeros(len(train_loader))
+    train_kl_loss_per_batch = np.zeros(len(train_loader))
+    for batch_idx, (omic1, omic2) in enumerate(train_loader):
         # refresh the optimizer
         optimizer.zero_grad()
 
-        kld_weight = len(GE) / len(train_loader.dataset)  # Account for the minibatch samples from the dataset
+        kld_weight = len(omic1) / len(train_loader.dataset)  # Account for the minibatch samples from the dataset
 
         # compute reconstructions using all the modalities
-        (joint_recon_rna, joint_recon_gcn, joint_mu, joint_logvar) = model.forward(GE, ME)
+        (joint_recon_omic1, joint_recon_omic2, joint_mu, joint_logvar) = model.forward(omic1, omic2)
 
         # compute reconstructions using each of the individual modalities
-        (ge_recon_ge, ge_recon_me, ge_mu, ge_logvar) = model.forward(ge=GE)
+        (omic1_recon_ge, omic1_recon_me, omic1_mu, omic1_logvar) = model.forward(omic1=omic1)
 
-        (me_recon_ge, me_recon_me, me_mu, me_logvar) = model.forward(me=ME)
+        (omic2_recon_ge, omic2_recon_me, omic2_mu, omic2_logvar) = model.forward(omic2=omic2)
 
         # Compute joint train loss
-        joint_train_loss = loss_function(joint_recon_rna, GE,
-                                         joint_recon_gcn, ME,
+        joint_train_loss = loss_function(joint_recon_omic1, omic1,
+                                         joint_recon_omic2, omic2,
                                          joint_mu, joint_logvar, kld_weight)
 
         # compute loss with single modal inputs
-        ge_train_loss = loss_function(ge_recon_ge, GE,
-                                      ge_recon_me, ME,
-                                      ge_mu, ge_logvar, kld_weight)
+        omic1_train_loss = loss_function(omic1_recon_ge, omic1,
+                                      omic1_recon_me, omic2,
+                                      omic1_mu, omic1_logvar, kld_weight)
 
-        me_train_loss = loss_function(me_recon_ge, GE,
-                                      me_recon_me, ME,
-                                      me_mu, me_logvar, kld_weight)
+        omic2_train_loss = loss_function(omic2_recon_ge, omic1,
+                                      omic2_recon_me, omic2,
+                                      omic2_mu, omic2_logvar, kld_weight)
 
-        train_loss = joint_train_loss['loss'] + ge_train_loss['loss'] + me_train_loss['loss']
-        train_recon_loss = joint_train_loss['Reconstruction_Loss'] + ge_train_loss['Reconstruction_Loss'] + me_train_loss['Reconstruction_Loss']
-        train_kld_loss = joint_train_loss['KLD'] + ge_train_loss['KLD'] + me_train_loss['KLD']
-
-        train_loss_meter.update(train_loss, len(GE))
-        train_recon_loss_meter.update(train_recon_loss, len(GE))
-        train_kld_loss_meter.update(train_kld_loss, len(GE))
+        train_loss = joint_train_loss['loss'] + omic1_train_loss['loss'] + omic2_train_loss['loss']
+        train_loss_per_batch[batch_idx] = train_loss
+        train_recon_loss = joint_train_loss['Reconstruction_Loss'] + omic1_train_loss['Reconstruction_Loss'] + \
+                           omic2_train_loss['Reconstruction_Loss']
+        train_recon_loss_per_batch[batch_idx] = train_recon_loss
+        train_kld_loss = joint_train_loss['KLD'] + omic1_train_loss['KLD'] + omic2_train_loss['KLD']
+        train_kl_loss_per_batch[batch_idx] = train_kld_loss
 
         # compute and take gradient step
         train_loss.backward()
@@ -204,43 +166,51 @@ def train(args, model, train_loader, optimizer, epoch, train_loss_meter, train_r
 
     progress_bar.close()
     if epoch % args['log_interval'] == 0:
-        print('====> Epoch: {}\tLoss: {:.4f}'.format(epoch, train_loss_meter.avg))
-        print('====> Epoch: {}\tReconstruction Loss: {:.4f}'.format(epoch, train_recon_loss_meter.avg))
-        print('====> Epoch: {}\tKLD Loss: {:.4f}'.format(epoch, train_kld_loss_meter.avg))
+        tf_logger.add_scalar("train loss", train_loss_per_batch.mean(), epoch)
+        tf_logger.add_scalar("train reconstruction loss", train_recon_loss_per_batch.mean(), epoch)
+        tf_logger.add_scalar("train KL loss", train_kl_loss_per_batch.mean(), epoch)
+
+        print('====> Epoch: {}\tLoss: {:.4f}'.format(epoch, train_loss_per_batch.mean()))
+        print('====> Epoch: {}\tReconstruction Loss: {:.4f}'.format(epoch, train_recon_loss_per_batch.mean()))
+        print('====> Epoch: {}\tKLD Loss: {:.4f}'.format(epoch, train_kl_loss_per_batch.mean()))
 
 
-def test(args, model, val_loader, optimizer, epoch, val_loss_meter, val_recon_loss_meter, val_kld_loss_meter):
+def test(args, model, val_loader, optimizer, epoch, tf_logger):
     model.eval()
     test_loss = 0
 
-    for batch_idx, (GE, ME) in enumerate(val_loader):
-
+    val_loss_per_batch = np.zeros(len(val_loader))
+    val_recon_loss_per_batch = np.zeros(len(val_loader))
+    val_kl_loss_per_batch = np.zeros(len(val_loader))
+    for batch_idx, (omic1, omic2) in enumerate(val_loader):
         # for ease, only compute the joint loss in validation
-        (joint_recon_ge, joint_recon_me, joint_mu, joint_logvar) = model.forward(GE, ME)
+        (joint_recon_omic1, joint_recon_omic2, joint_mu, joint_logvar) = model.forward(omic1, omic2)
 
-        kld_weight = len(GE) / len(val_loader.dataset)  # Account for the minibatch samples from the dataset
+        kld_weight = len(omic1) / len(val_loader.dataset)  # Account for the minibatch samples from the dataset
 
         # Compute joint loss
-        joint_test_loss = loss_function(joint_recon_ge, GE,
-                                        joint_recon_me, ME,
+        joint_test_loss = loss_function(joint_recon_omic1, omic1,
+                                        joint_recon_omic2, omic2,
                                         joint_mu, joint_logvar, kld_weight)
 
-        val_loss_meter.update(joint_test_loss['loss'], len(GE))
-        val_recon_loss_meter.update(joint_test_loss['Reconstruction_Loss'], len(GE))
-        val_kld_loss_meter.update(joint_test_loss['KLD'], len(GE))
+        val_loss_per_batch[batch_idx] = joint_test_loss['loss']
+        val_recon_loss_per_batch[batch_idx] = joint_test_loss['Reconstruction_Loss']
+        val_kl_loss_per_batch[batch_idx] = joint_test_loss['KLD']
 
         test_loss += joint_test_loss['loss']
 
     if epoch % args['log_interval'] == 0:
-        print('====> Test Loss: {:.4f}'.format(test_loss))
-        print('====> Test Loss: {}\tLoss: {:.4f}'.format(epoch, val_loss_meter.avg))
-        print('====> Test Loss: {}\tReconstruction Loss: {:.4f}'.format(epoch, val_recon_loss_meter.avg))
-        print('====> Test Loss: {}\tKLD Loss: {:.4f}'.format(epoch, val_kld_loss_meter.avg))
-    return val_loss_meter.avg
+        tf_logger.add_scalar("validation loss", val_loss_per_batch.mean(), epoch)
+        tf_logger.add_scalar("validation reconstruction loss", val_recon_loss_per_batch.mean(), epoch)
+        tf_logger.add_scalar("validation KL loss", val_kl_loss_per_batch.mean(), epoch)
+
+        print('====> Epoch: {}\tLoss: {:.4f}'.format(epoch, val_loss_per_batch.mean()))
+        print('====> Epoch: {}\tReconstruction Loss: {:.4f}'.format(epoch, val_recon_loss_per_batch.mean()))
+        print('====> Epoch: {}\tKLD Loss: {:.4f}'.format(epoch, val_kl_loss_per_batch.mean()))
+    return val_loss_per_batch.mean()
 
 
 def run(args) -> None:
-
     args['cuda'] = args['cuda'] and torch.cuda.is_available()
 
     # random seed
@@ -252,8 +222,10 @@ def run(args) -> None:
     save_dir = os.path.join(args['save_dir'], '{}'.format('MoE' if args['mixture'] else 'PoE'))
     os.makedirs(save_dir)
 
-    # Fetch Datasets
+    # Define tensorboard logger
+    tf_logger = SummaryWriter(save_dir)
 
+    # Fetch Datasets
     tcga_data = datasets.TCGAData(args, save_dir=save_dir)
     train_dataset = tcga_data.get_data_partition("train")
     val_dataset = tcga_data.get_data_partition("val")
@@ -266,6 +238,8 @@ def run(args) -> None:
 
     # Setup and log model
     model = MVAE(use_mixture=args['mixture'], latent_dim=args['latent_dim'], use_cuda=args['cuda'])
+
+    model = model.double()
 
     # Log Data shape, input arguments and model
     model_file = open("{}/MVAE {} Model.txt".format(save_dir, 'MoE' if args['mixture'] else 'PoE'), "a")
@@ -281,31 +255,65 @@ def run(args) -> None:
     if args['cuda']:
         model.cuda()
 
-    train_loss_meter = AverageMeter("Loss")
-    train_recon_loss_meter = AverageMeter("Reconstruction Loss")
-    train_kld_loss_meter = AverageMeter("KLD Loss")
-
-    val_loss_meter = AverageMeter("Validation Loss")
-    val_recon_loss_meter = AverageMeter("Validation Reconstruction Loss")
-    val_kld_loss_meter = AverageMeter("Validation KLD Loss")
     for epoch in range(1, args['epochs'] + 1):
-        train(args, model, train_loader, optimizer, epoch, train_loss_meter, train_recon_loss_meter, train_kld_loss_meter)
-        latest_loss = test(args, model, val_loader, optimizer, epoch, val_loss_meter, val_recon_loss_meter, val_kld_loss_meter)
+        train(args, model, train_loader, optimizer, epoch, tf_logger)
+        latest_loss = test(args, model, val_loader, optimizer, epoch, tf_logger)
 
-        # # Save the last model
-        # if epoch == args['epochs']:
-        #     save_checkpoint({
-        #         'state_dict': model.state_dict(),
-        #         'best_loss': latest_loss,
-        #         'latent_dim': args['latent_dim'],
-        #         'epochs': args['epochs'],
-        #         'lr': args['lr'],
-        #         'batch_size': args['batch_size'],
-        #         'use_mixture': args['mixture'],
-        #         'optimizer': optimizer.state_dict(),
-        #     }, True, save_dir)
+        # Save the last model
+        if epoch == args['epochs'] or epoch % args['log_save_interval'] == 0:
+            save_checkpoint({
+                'state_dict': model.state_dict(),
+                'best_loss': latest_loss,
+                'latent_dim': args['latent_dim'],
+                'epochs': args['epochs'],
+                'lr': args['lr'],
+                'batch_size': args['batch_size'],
+                'use_mixture': args['mixture'],
+                'optimizer': optimizer.state_dict(),
+            }, epoch, save_dir)
 
-    print(model)
+    # Extract Phase #
+    logger.success("Finished training MVAE model. Now calculating task results.")
+
+    # Imputation
+    if args['task'] == 1:
+        logger.info("Task 1 Imputation: Extracting Z using test set")
+
+        impute_dataset = tcga_data.get_data_partition("test")
+
+        # 1 batch (whole test set)
+        impute_loader = torch.utils.data.DataLoader(impute_dataset, batch_size=len(impute_dataset), shuffle=False)
+
+        # Get embeddings for UMAP
+        for omic1, omic2 in impute_loader:
+            z = model.extract(omic1, omic2)
+
+        omic1_from_joint, omic2_from_joint, \
+        omic1_from_omic1, omic2_from_omic1, \
+        omic1_from_omic2, omic2_from_omic2 = impute(model, impute_loader)
+
+        # Reconstruction losses
+        omic1_joint_reconstruction_loss = mean_squared_error(omic1_from_joint, impute_dataset.omic1_data)
+        omic1_reconstruction_loss = mean_squared_error(omic1_from_omic1, impute_dataset.omic1_data)
+
+        omic2_joint_reconstruction_loss = mean_squared_error(omic2_from_joint, impute_dataset.omic2_data)
+        omic2_reconstruction_loss = mean_squared_error(omic2_from_omic2, impute_dataset.omic2_data)
+        logger.info("Reconstruction loss for {} from {} : {}".
+                    format(args['data1'], "both omics", omic1_joint_reconstruction_loss))
+        logger.info("Reconstruction loss for {} from {} : {}".
+                    format(args['data1'], args['data1'], omic1_reconstruction_loss))
+        logger.info("Reconstruction loss for {} from {} : {}".
+                    format(args['data2'], "both omics", omic2_joint_reconstruction_loss))
+        logger.info("Reconstruction loss for {} from {} : {}".
+                    format(args['data2'], args['data2'], omic2_reconstruction_loss))
+
+        # Imputation losses
+        omic1_imputation_loss = mean_squared_error(omic1_from_omic2, impute_dataset.omic1_data)
+        omic2_imputation_loss = mean_squared_error(omic2_from_omic1, impute_dataset.omic2_data)
+        logger.info("Imputation loss for {} from {} : {}".
+                    format(args['data1'], args['data2'], omic1_imputation_loss))
+        logger.info("Imputation loss for {} from {} : {}".
+                    format(args['data2'], args['data1'], omic2_imputation_loss))
 
     if args['task'] == 2:
         print(model)
@@ -331,12 +339,3 @@ def run(args) -> None:
 
         # Extract Z from all data from the chosen cancer type
         # Do predictions separately
-
-
-    if args['plot']:
-        # Only import here to save time importing matplotlib only when required
-        from src.util.MVAE_plotting import LossPlotter
-
-        plotter = LossPlotter(args, save_dir)
-        plotter.plot_training_losses(train_loss_meter, train_recon_loss_meter, train_kld_loss_meter, total_batches)
-        plotter.plot_validation_loss(val_loss_meter, val_recon_loss_meter, val_kld_loss_meter, total_val_batches)

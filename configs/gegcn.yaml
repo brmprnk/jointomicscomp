@@ -4,7 +4,7 @@ GLOBAL_PARAMS:
   num_features: 5000
   cuda: false
   random_seed: 1
-  no_logging: false
+  log_save_interval: 5
   data1: "GE"
   data2: "GCN"
   data_path1: "/home/bram/jointomicscomp/data/GE.npy"
@@ -60,7 +60,7 @@ MVAE:
   pre_trained: "/home/bram/jointomicscomp/results/gegcn_moe_poe 13-09-2021 22_58_48/gegcn_moe_poe 13-09-2021 22:58:48/PoE/best_model.pth.tar"
   latent_dim: 128
   batch_size: 256
-  epochs: 60
+  epochs: 5
   lr: 0.0001
 
   # Other parameters
