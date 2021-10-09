@@ -1,13 +1,6 @@
-import sys
 import numpy as np
 from torch.utils.data.dataset import Dataset
-from sklearn.model_selection import StratifiedShuffleSplit
 from src.util import logger
-
-TRAINING_DATA_SPLIT = 0.7
-VALIDATION_DATA_SPLIT = 0.1
-PREDICT_DATA_SPLIT = 0.2
-VALID_PARTITIONS = {'train': 0, 'val': 1}
 
 
 class TCGAData(object):
@@ -29,26 +22,25 @@ class TCGAData(object):
             # Load in data
             omic1 = np.load(args['data_path1'])
             omic2 = np.load(args['data_path2'])
-            sample_names = np.load(args['sample_names'])
-            cancertypes = np.load(args['cancertypes'])
-            cancer_type_index = np.load(args['cancer_type_index'])
+            self.cancertypes = np.load(args['cancertypes'])
+            self.cancer_type_index = np.load(args['cancer_type_index'])
 
             # Use predefined split
-            train_ind = np.load(args['train_ind'])
-            val_ind = np.load(args['val_ind'])
-            test_ind = np.load(args['test_ind'])
+            self.train_ind = np.load(args['train_ind'])
+            self.val_ind = np.load(args['val_ind'])
+            self.test_ind = np.load(args['test_ind'])
 
-            self.omic1_train_file = omic1[train_ind]
-            self.omic1_val_file = omic1[val_ind]
-            self.omic1_test_file = omic1[test_ind]
-            self.omic2_train_file = omic2[train_ind]
-            self.omic2_val_file = omic2[val_ind]
-            self.omic2_test_file = omic2[test_ind]
+            self.omic1_train_file = omic1[self.train_ind]
+            self.omic1_val_file = omic1[self.val_ind]
+            self.omic1_test_file = omic1[self.test_ind]
+            self.omic2_train_file = omic2[self.train_ind]
+            self.omic2_val_file = omic2[self.val_ind]
+            self.omic2_test_file = omic2[self.test_ind]
 
         if args['task'] == 2:
             logger.success("Running Task 2: {} classification.".format(args['ctype']))
             # NOTE
-            # For testing purposes, this code uses predefined splits, later this should be done everytime the model is run
+            # For testing purposes, this code uses predefined splits
             GEtrainctype = np.load(args['x_ctype_train_file'])
             GEtrainrest = np.load(args['x_train_file'])
             self.omic1_train_file = np.float32(np.vstack((GEtrainctype, GEtrainrest)))
@@ -75,6 +67,16 @@ class TCGAData(object):
         else:  # Full data aka no split
             return TCGADataset(np.vstack((self.omic1_train_file, self.omic1_val_file, self.omic1_test_file)),
                                np.vstack((self.omic2_train_file, self.omic2_val_file, self.omic2_test_file)))
+
+    def get_labels_partition(self, partition):
+        if partition == "train":
+            return self.cancertypes, self.cancer_type_index, self.train_ind
+        elif partition == "val":
+            return self.cancertypes, self.cancer_type_index, self.val_ind
+        elif partition == "test":
+            return self.cancertypes, self.cancer_type_index, self.test_ind
+        else:  # Full data aka no split
+            return self.cancertypes, self.cancer_type_index
 
 
 class TCGADataset(Dataset):

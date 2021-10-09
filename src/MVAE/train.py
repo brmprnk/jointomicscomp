@@ -11,49 +11,13 @@ from src.MVAE.model import MVAE
 import src.MVAE.datasets as datasets
 from src.MVAE.evaluate import impute
 import src.util.logger as logger
+from src.util.umapplotter import UMAPPlotter
 
 import numpy as np
 from sklearn.metrics import mean_squared_error
 
-N_MODALITIES = 2
 
-
-def elbo_loss(recon_image, image, recon_gray, gray, mu, logvar, annealing_factor=1.):
-    BCE = 0
-    if recon_image is not None and image is not None:
-        # recon_image, image = recon_image.view(-1, 3 * 64 * 64), image.view(-1, 3 * 64 * 64)
-        imaomic1_BCE = torch.sum(binary_cross_entropy_with_logits(recon_image, image), dim=1)
-        BCE += imaomic1_BCE
-
-    if recon_gray is not None and gray is not None:
-        # recon_gray, gray = recon_gray.view(-1, 1 * 64 * 64), gray.view(-1, 1 * 64 * 64)
-        gray_BCE = torch.sum(binary_cross_entropy_with_logits(recon_gray, gray), dim=1)
-        BCE += gray_BCE
-
-    # Kingma and Welling. Auto-Encoding Variational Bayes. ICLR, 2014
-    # https://arxiv.org/abs/1312.6114
-    KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), dim=1)
-    # NOTE: we use lambda_i = 1 for all i since each modality is roughly equal
-    ELBO = torch.mean(BCE / float(N_MODALITIES) + annealing_factor * KLD)
-    return ELBO
-
-
-def binary_cross_entropy_with_logits(input, target):
-    """Sigmoid Activation + Binary Cross Entropy
-
-    @param input: torch.Tensor (size N)
-    @param target: torch.Tensor (size N)
-    @return loss: torch.Tensor (size N)
-    """
-    if not (target.size() == input.size()):
-        raise ValueError("Target size ({}) must be the same as input size ({})".format(
-            target.size(), input.size()))
-
-    return (torch.clamp(input, 0) - input * target
-            + torch.log(1 + torch.exp(-torch.abs(input))))
-
-
-def loss_function(recon_ge, GE, recon_me, ME, mu, log_var, kld_weight) -> dict:
+def loss_function(recon_omic1, omic1, recon_omic2, omic2, mu, log_var, kld_weight) -> dict:
     """
     Computes the VAE loss function.
     KL(N(\mu, \sigma), N(0, 1)) = \log \frac{1}{\sigma} + \frac{\sigma^2 + \mu^2}{2} - \frac{1}{2}
@@ -62,12 +26,12 @@ def loss_function(recon_ge, GE, recon_me, ME, mu, log_var, kld_weight) -> dict:
     """
     # Reconstruction loss
     recons_loss = 0
-    if recon_ge is not None and GE is not None:
-        recons_loss += F.mse_loss(recon_ge, GE)
-    if recon_me is not None and ME is not None:
-        recons_loss += F.mse_loss(recon_me, ME)
+    if recon_omic1 is not None and omic1 is not None:
+        recons_loss += F.mse_loss(recon_omic1, omic1)
+    if recon_omic2 is not None and omic2 is not None:
+        recons_loss += F.mse_loss(recon_omic2, omic2)
 
-    recons_loss /= float(N_MODALITIES)  # Account for number of modalities
+    recons_loss /= float(2)  # Account for number of modalities
 
     # KLD Loss
     kld_loss = torch.mean(-0.5 * torch.sum(1 + log_var - mu ** 2 - log_var.exp(), dim=1), dim=0)
@@ -76,31 +40,6 @@ def loss_function(recon_ge, GE, recon_me, ME, mu, log_var, kld_weight) -> dict:
     loss = recons_loss + kld_weight * kld_loss
     return {'loss': loss, 'Reconstruction_Loss': recons_loss, 'KLD': -kld_loss}
 
-
-def reconstruction_loss_function(key, loss_meter, recon_rna, rna, recon_gcn, gcn, recon_dna, dna) -> None:
-    """
-    Computes the VAE loss function.
-    KL(N(\mu, \sigma), N(0, 1)) = \log \frac{1}{\sigma} + \frac{\sigma^2 + \mu^2}{2} - \frac{1}{2}
-
-    :return:
-    """
-    if key == "rna":
-        omic1_recon_ge = F.mse_loss(recon_rna, rna)
-        omic1_recon_me = F.mse_loss(recon_gcn, gcn)
-        rna_recon_dna = F.mse_loss(recon_dna, dna)
-        loss_meter.modality_loss(omic1_recon_ge.detach().numpy(), "rna_rna")
-        loss_meter.modality_loss(omic1_recon_me.detach().numpy(), "rna_gcn")
-        loss_meter.modality_loss(rna_recon_dna.detach().numpy(), "rna_dna")
-
-    if key == "gcn":
-        omic2_recon_me = F.mse_loss(recon_gcn, gcn)
-        omic2_recon_ge = F.mse_loss(recon_rna, rna)
-        gcn_recon_dna = F.mse_loss(recon_dna, dna)
-        loss_meter.modality_loss(omic2_recon_me.detach().numpy(), "gcn_gcn")
-        loss_meter.modality_loss(omic2_recon_ge.detach().numpy(), "gcn_rna")
-        loss_meter.modality_loss(gcn_recon_dna.detach().numpy(), "gcn_dna")
-
-    return
 
 def save_checkpoint(state, epoch, save_dir):
     """
@@ -284,10 +223,6 @@ def run(args) -> None:
         # 1 batch (whole test set)
         impute_loader = torch.utils.data.DataLoader(impute_dataset, batch_size=len(impute_dataset), shuffle=False)
 
-        # Get embeddings for UMAP
-        for omic1, omic2 in impute_loader:
-            z = model.extract(omic1, omic2)
-
         omic1_from_joint, omic2_from_joint, \
         omic1_from_omic1, omic2_from_omic1, \
         omic1_from_omic2, omic2_from_omic2 = impute(model, impute_loader)
@@ -314,6 +249,25 @@ def run(args) -> None:
                     format(args['data1'], args['data2'], omic1_imputation_loss))
         logger.info("Imputation loss for {} from {} : {}".
                     format(args['data2'], args['data1'], omic2_imputation_loss))
+
+        # Get embeddings for UMAP
+        for omic1, omic2 in impute_loader: # Runs once since there is 1 batch
+            z = model.extract(omic1, omic2)
+            z = z.detach().numpy()
+            np.save("{}/task1_z.npy".format(save_dir), z)
+
+            label_types, labels, test_ind = tcga_data.get_labels_partition("test")
+
+            labels = labels[test_ind].astype(int)
+            sample_labels = label_types[[labels]]
+
+            plot = UMAPPlotter(z, sample_labels, "{}: Task {} | {} & {} \n"
+                                                 "Epochs: {}, Latent Dimension: {}, LR: {}, Batch size: {}"
+                               .format('MoE' if args['mixture'] else 'PoE', args['task'], args['data1'], args['data2'],
+                                       args['epochs'], args['latent_dim'], args['lr'], args['batch_size']),
+                               save_dir + "/{} UMAP.png".format('MoE' if args['mixture'] else 'PoE', 'MoE' if args['mixture'] else 'PoE'))
+
+            plot.plot()
 
     if args['task'] == 2:
         print(model)
