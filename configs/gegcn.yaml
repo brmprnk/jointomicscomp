@@ -1,8 +1,8 @@
 GLOBAL_PARAMS:
-  name: "gegcn_moe_poe_task1"
+  name: "GEGCN"
   task: 1
   num_features: 5000
-  cuda: true
+  cuda: false
   random_seed: 1
   no_logging: false
   data1: "GE"
@@ -14,12 +14,10 @@ GLOBAL_PARAMS:
   sample_names: "/home/bram/jointomicscomp/data/sampleNames.npy"
   cancer_type_index: "/home/bram/jointomicscomp/data/cancerType.npy"
   cancertypes: "/home/bram/jointomicscomp/data/cancerTypes.npy"
-  x_train_file: "/home/bram/jointomicscomp/data/task1/GE_train.npy"
-  y_train_file: "/home/bram/jointomicscomp/data/task1/GCN_train.npy"
-  x_val_file: "/home/bram/jointomicscomp/data/task1/GE_val.npy"
-  y_val_file: "/home/bram/jointomicscomp/data/task1/GCN_val.npy"
-  x_test_file: "/home/bram/jointomicscomp/data/task1/GE_test.npy"
-  y_test_file: "/home/bram/jointomicscomp/data/task1/GCN_test.npy"
+  train_ind: "/home/bram/jointomicscomp/data/task1/trainInd.npy"
+  val_ind: "/home/bram/jointomicscomp/data/task1/validInd.npy"
+  test_ind: "/home/bram/jointomicscomp/data/task1/testInd.npy"
+
 
 BASELINE:
   task: 'impute'               # whether to `impute` one datasource from the other, `classify` (cell type), or `rank` (stage prediction)
@@ -69,14 +67,31 @@ MVAE:
   log_interval: 1
 
 MVIB:
+  trainer: OmicsMIBTrainer
+
   # Hyperparameters
-  latent_dim: 128
+  z_dim: 128
   batch_size: 256
-  epochs: 1
-  lr: 0.0001
+  epochs: 100
+  input_dim1: 5000
+  input_dim2: 5000
+
+  # Optimization parameters
+  optimizer_name: 'Adam'
+  encoder_lr: 0.0001
+  miest_lr: 0.0001
+
+  # Parameters for the beta-scheduler
+  beta_start_value: 0.001
+  beta_end_value: 1
+  beta_n_iterations: 100000
+  beta_start_iteration: 50000
 
   # Other parameters
+  no_logging: false
   log_interval: 5
+  pre_trained: ""   # Path to a previously trained model
+  overwrite: false  # When overwrite is false, this will resume training on a previous model
 
 CGAE:
   epochs: 1000
