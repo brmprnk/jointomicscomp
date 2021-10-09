@@ -1,12 +1,12 @@
 GLOBAL_PARAMS:
-  name: "GEGCN"
+  name: "cell_task1"
   task: 1
   num_features: 5000
-  cuda: false
+  cuda: true
   random_seed: 1
   no_logging: false
-  data1: "GE"
-  data2: "GCN"
+  data1: "CELL RNA"
+  data2: "CELL Protein"
   data_path1: "/home/bram/jointomicscomp/data/GE.npy"
   data_path2: "/home/bram/jointomicscomp/data/GCN.npy"
   data_features1: "/home/bram/jointomicscomp/data/GE_featureNames.npy"
@@ -14,10 +14,12 @@ GLOBAL_PARAMS:
   sample_names: "/home/bram/jointomicscomp/data/sampleNames.npy"
   cancer_type_index: "/home/bram/jointomicscomp/data/cancerType.npy"
   cancertypes: "/home/bram/jointomicscomp/data/cancerTypes.npy"
-  train_ind: "/home/bram/jointomicscomp/data/task1/trainInd.npy"
-  val_ind: "/home/bram/jointomicscomp/data/task1/validInd.npy"
-  test_ind: "/home/bram/jointomicscomp/data/task1/testInd.npy"
-
+  x_train_file: "/home/bram/jointomicscomp/data/task1/GE_train.npy"
+  y_train_file: "/home/bram/jointomicscomp/data/task1/GCN_train.npy"
+  x_val_file: "/home/bram/jointomicscomp/data/task1/GE_val.npy"
+  y_val_file: "/home/bram/jointomicscomp/data/task1/GCN_val.npy"
+  x_test_file: "/home/bram/jointomicscomp/data/task1/GE_test.npy"
+  y_test_file: "/home/bram/jointomicscomp/data/task1/GCN_test.npy"
 
 BASELINE:
   task: 'impute'               # whether to `impute` one datasource from the other, `classify` (cell type), or `rank` (stage prediction)
@@ -67,31 +69,14 @@ MVAE:
   log_interval: 1
 
 MVIB:
-  trainer: OmicsMIBTrainer
-
   # Hyperparameters
-  z_dim: 128
+  latent_dim: 128
   batch_size: 256
-  epochs: 100
-  input_dim1: 5000
-  input_dim2: 5000
-
-  # Optimization parameters
-  optimizer_name: 'Adam'
-  encoder_lr: 0.0001
-  miest_lr: 0.0001
-
-  # Parameters for the beta-scheduler
-  beta_start_value: 0.001
-  beta_end_value: 1
-  beta_n_iterations: 100000
-  beta_start_iteration: 50000
+  epochs: 1
+  lr: 0.0001
 
   # Other parameters
-  no_logging: false
   log_interval: 5
-  pre_trained: ""   # Path to a previously trained model
-  overwrite: false  # When overwrite is false, this will resume training on a previous model
 
 CGAE:
   epochs: 1000
