@@ -43,7 +43,7 @@ def multiomic_collate(batch):
 
 def train(device, net, num_epochs, train_loader, train_loader_eval, valid_loader, ckpt_dir, logs_dir, save_step=10, multimodal=False):
 	# Define logger
-	logger = SummaryWriter(logs_dir)
+	tf_logger = SummaryWriter(logs_dir)
 
 	# Load checkpoint model and optimizer
 	start_epoch = load_checkpoint(net, filename=ckpt_dir + '/model_last.pth.tar')
@@ -130,8 +130,8 @@ def train(device, net, num_epochs, train_loader, train_loader_eval, valid_loader
 		print("--- Validation loss:\t%.4f" % metricsValidation['loss'])
 
 		for m in metricsTrain:
-			logger.add_scalar(m + '/train', metricsTrain[m], epoch + 1)
-			logger.add_scalar(m + '/validation', metricsValidation[m], epoch + 1)
+			tf_logger.add_scalar(m + '/train', metricsTrain[m], epoch + 1)
+			tf_logger.add_scalar(m + '/validation', metricsValidation[m], epoch + 1)
 
 	print("[*] Finish training.")
 

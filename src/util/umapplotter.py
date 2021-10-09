@@ -4,7 +4,7 @@ class UMAPPlotter:
     """
 
     def __init__(self, data, labels, title, save_file, n_neighbors=15, min_dist=0.1, n_components=2, metric='euclidean',
-                 background='white', color_key_cmap='Spectral', dpi=1200):
+                 background='white', color_key_cmap='Spectral', dpi=800):
         self.data = data
         self.labels = labels
         self.title = title
