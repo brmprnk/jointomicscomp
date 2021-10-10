@@ -8,6 +8,7 @@ reconstruction loss.
 """
 import os
 import sys
+
 # R needs to be installed, and this path needs to be set to the R_Home folder, found by running R.home() in R console.
 os.environ['R_HOME'] = "/usr/lib/R"
 import pandas as pd
@@ -18,7 +19,7 @@ from tqdm import tqdm
 import numpy as np
 from mofapy2.run.entry_point import entry_point
 from src.util import logger
-
+from src.util.umapplotter import UMAPPlotter
 
 
 def run(args: dict) -> None:
@@ -43,18 +44,26 @@ def run(args: dict) -> None:
         output_file = args['pre_trained']
 
     # Do computations in R
-    # downstream_mofa(save_dir, output_file)
+    try:
+        get_W_and_Z(save_dir, output_file)
+    except Exception as e:
+        logger.error("{}".format(e))
+        logger.error("This implementation tries to run R scripts in Python using rpy2 to get W and Z from the model."
+                     "This requires setup of the $Home folder in the mofa.py file."
+                     "It is not a required step, and can be ran manually in mofa_downstream.R")
+        if args['pre_trained'] == "":
+            logger.error("The Trained Model has been saved ")
 
-    # Calculate reconstruction loss
-    reconstruction_loss(args, save_dir)
+    # Calculate task1 or task2
+    downstream_analysis(args, save_dir)
 
 
-def train_mofa(args: dict, output_model: str) -> None:
+def train_mofa(args: dict, save_file_path: str) -> None:
     """
     Run Multi-omics Factor Analysis V2
 
-    @param args:         Dictionary containing input parameters
-    @param output_model: Name of trained model that can be saved in /results dir
+    @param args:           Dictionary containing input parameters
+    @param save_file_path: Name of trained model that can be saved in /results dir
     @return: None
     """
     #########################
@@ -76,13 +85,28 @@ def train_mofa(args: dict, output_model: str) -> None:
 
     # (3) Set data using a long data frame
     logger.info("MOFA DATA : Reading ...")
+    # Load in data, depending on task
+    # Task 1 : Imputation
+    if args['task'] == 1:
+        logger.info("Running Task {} on omic {} and omic {}".format(args['task'], args['data1'], args['data2']))
 
-    data_mat = [[0], [None]]
+        # Load in data
+        omic1 = np.load(args['data_path1'])
+        omic2 = np.load(args['data_path2'])
 
-    data_mat[0][0] = np.load(args['data_path1'])
-    data_mat[1][0] = np.load(args['data_path1'])
+        # Use predefined split
+        train_ind = np.load(args['train_ind'])
+        val_ind = np.load(args['val_ind'])
 
-    ent.set_data_matrix(data_mat, likelihoods=["gaussian", "gaussian"], views_names=[args['data1'], args['data2']], features_names=[np.load(args['data_features1']).tolist(), np.load(args['data_features2']).tolist()])
+        # Train on training + validation set for fair comparison
+        data_mat = [[0], [None]]
+
+        data_mat[0][0] = np.vstack((omic1[train_ind], omic1[val_ind]))
+        data_mat[1][0] = np.vstack((omic2[train_ind], omic2[val_ind]))
+
+        ent.set_data_matrix(data_mat, likelihoods=["gaussian", "gaussian"], views_names=[args['data1'], args['data2']],
+                            features_names=[np.load(args['data_features1']).tolist(),
+                                            np.load(args['data_features2']).tolist()])
 
     logger.success("MOFA DATA : Loading Successful!")
 
@@ -161,10 +185,11 @@ def train_mofa(args: dict, output_model: str) -> None:
 
     # - save_data: logical indicating whether to save the training data in the hdf5 file.
     # this is useful for some downstream analysis in R, but it can take a lot of disk space.
-    ent.save(output_model, save_data=args['save_data'])
+    ent.save(save_file_path, save_data=args['save_data'])
+    logger.success("Trained MOFA+ model has been saved to {}".format(save_file_path))
 
 
-def downstream_mofa(save_dir: str, model_file: str) -> None:
+def get_W_and_Z(save_dir: str, model_file: str) -> None:
     """
     Perform R based code here in Python.
     Documentation: https://rpy2.github.io/doc/v2.9.x/html/introduction.html
@@ -216,45 +241,51 @@ def downstream_mofa(save_dir: str, model_file: str) -> None:
     r_save_z(save_dir, model_file)
 
 
-def reconstruction_loss(args: dict, save_dir: str) -> None:
+def downstream_analysis(args: dict, save_dir: str) -> None:
     """
     Calculating the reconstruction loss using the trained model and input data
 
     @param args:         Dictionary containing input parameters
-    @param save_dir:   path to directory where factors and weights should be saved
+    @param save_dir:     path to directory where factors and weights should be saved
 
     @return: None
     """
-
-    global W_omic1, W_omic2
-
     logger.info("Reading original data...")
-    omic_data1 = np.load(args['data_path1'])
-    omic_data2 = np.load(args['data_path2'])
+    if args['task'] == 1:
+        omic_data1 = np.load(args['data_path1'])
+        omic_data2 = np.load(args['data_path2'])
 
-    logger.info("Omic data 1 shape {}".format(omic_data1.shape))
-    logger.info("Omic data 2 shape {}".format(omic_data2.shape))
+        test_ind = np.load(args['test_ind'])
+        omic_data1 = omic_data1[test_ind]
+        omic_data2 = omic_data2[test_ind]
+
+        logger.info("Omic data 1 test set shape {}".format(omic_data1.shape))
+        logger.info("Omic data 2 test set shape {}".format(omic_data2.shape))
+    else:
+        omic_data1 = np.load(args['x_ctype_test_file'])
+        omic_data2 = np.load(args['y_ctype_test_file'])
+
+        logger.info("Omic data 1 test set {} shape {}".format(args['ctype'], omic_data1.shape))
+        logger.info("Omic data 2 test set {} shape {}".format(args['ctype'], omic_data2.shape))
+
     logger.success("Finished reading original data, now calculate reconstruction losses")
 
     # Now get the results from MOFA
-    # W = 5000 x 10 : Factors on columns, Features on Rows
-    # Z = 10 * 9992 : Samples on columns, Factors on rows
-
-    # Y = WZ = 5000 * 9992 : Features on rows, Samples on columns
-
     logger.info("Fetching MOFA+ Z and W")
-    W = pd.read_csv(os.path.join(os.path.dirname(args['pre_trained']), "W.csv"))
-    Z = pd.read_csv(os.path.join(os.path.dirname(args['pre_trained']), "Z.csv"))
+    logger.info("These should be placed in the directory of the trained model as W.csv and Z.csv ")
 
-    print("W = ", W)
+    if args['pre_trained'] == "":
+        W = pd.read_csv(os.path.join(save_dir, "W.csv"))
+        Z = pd.read_csv(os.path.join(save_dir, "Z.csv"))
+    else:
+        W = pd.read_csv(os.path.join(os.path.dirname(args['pre_trained']), "W.csv"))
+        Z = pd.read_csv(os.path.join(os.path.dirname(args['pre_trained']), "Z.csv"))
 
-    print("Z = ", Z)
+    logger.info("W has shape {}".format(W.shape))
+    logger.info("Z has shape {}".format(Z.shape))
 
     # Get Z matrix
     unique_factors = np.unique(Z['factor'].values)
-
-    print("Unique factors = ", unique_factors)
-
     z_matrix = []
 
     for factor in tqdm(range(len(unique_factors))):
@@ -262,8 +293,21 @@ def reconstruction_loss(args: dict, save_dir: str) -> None:
 
     Z = np.matrix(z_matrix)
 
-    print("Z", Z)
-    print(Z.shape)
+    # Plot this total Z using UMAP
+    np.save("{}/task1_z.npy".format(save_dir), z_matrix)
+
+    cancertypes = np.load(args['cancertypes'])
+    labels = np.load(args['cancer_type_index']).astype(int)
+    # Get correct labels with names
+    training_labels = np.concatenate((cancertypes[[labels[np.load(args['train_ind'])]]], cancertypes[[labels[np.load(args['val_ind'])]]]))
+
+    # training_data_plot = UMAPPlotter(Z.transpose(),
+    #                                  training_labels,
+    #                                  "MOFA+: Task {} Training Data's Z | {} & {} \nFactors: {}, Views: 2, Groups: 1"
+    #                                  .format(args['task'], args['data1'], args['data2'], args['factors']),
+    #                                  save_dir + "/MOFA+ UMAP.png")
+    #
+    # training_data_plot.plot()
 
     # Get W matrix for each modality
     try:
@@ -275,10 +319,6 @@ def reconstruction_loss(args: dict, save_dir: str) -> None:
 
     unique_features = W_omic1['feature'].values[:args['num_features']]
     np.set_printoptions(threshold=sys.maxsize)
-
-    matrix = []
-    print("W_omic1 = ", W_omic1)
-    # print("unique features = ", unique_features)
 
     # Turn W dataframes into np arrays for calculations
     matrix = np.zeros((len(unique_features), len(unique_factors)))
@@ -296,54 +336,83 @@ def reconstruction_loss(args: dict, save_dir: str) -> None:
 
     W_omic2 = matrix
 
-    # Now get original values back (Y = WZ)
-    Y_omic1 = np.matmul(W_omic1, Z)
-    Y_omic2 = np.matmul(W_omic2, Z)
+    # Imputation
+    if args['task'] == 1:
+        logger.info("Now do imputations using pseudo-inverse of W")
 
-    # Get back in the form of original data
-    Y_omic1 = Y_omic1.transpose()
-    Y_omic2 = Y_omic2.transpose()
+        # Imputation from Y1 to Y2
+        W_pseudo1 = np.linalg.pinv(W_omic1)  # Shape (factors, features)
 
-    logger.info("Reconstructed data for omic 1 shape: {}".format(Y_omic1.shape))
+        Y1 = omic_data1.transpose()
+        Z_frompseudo1 = np.matmul(W_pseudo1, Y1)
 
-    logger.info("Reconstructed data for omic 2 shape: {}".format(Y_omic2.shape))
+        print("W_pseudo1.shape : ", W_pseudo1.shape)
+        print("And test set shape : ", Y1.shape)
 
-    # input, predict
-    ge_recon_loss = mean_squared_error(omic_data1, Y_omic1)
+        print("Z from W^+ * Y1: ", Z_frompseudo1.shape)
+        np.save("{}/task1_z_from_pseudoinv_w1.npy".format(save_dir), Z_frompseudo1)
 
-    # input, predict
-    me_recon_loss = mean_squared_error(omic_data2, Y_omic2)
+        # Now to impute Y2 from new Z
+        Y2_impute = np.matmul(W_omic2, Z_frompseudo1)
 
-    result = np.array([ge_recon_loss, me_recon_loss])
+        # Imputation from Y1 to Y2
+        W_pseudo2 = np.linalg.pinv(W_omic2)  # Shape (factors, features)
 
-    logger.info("Reconstruction loss GE = {}".format(ge_recon_loss))
-    logger.info("Reconstruction loss ME = {}".format(me_recon_loss))
+        Y2 = omic_data2.transpose()
+        Z_frompseudo2 = np.matmul(W_pseudo2, Y2)
+        np.save("{}/task1_z_from_pseudoinv_w2.npy".format(save_dir), Z_frompseudo2)
 
-    np.save(os.path.join(save_dir, "recon_loss.npy"), result)
+        # Now to impute Y1 from new Z
+        Y1_impute = np.matmul(W_omic1, Z_frompseudo2)
 
-    logger.info("Now do imputations using pseudoinverse of W")
+        # Imputation loss is
+        imputeY1_loss = mean_squared_error(Y1_impute, omic_data1.transpose())
+        imputeY2_loss = mean_squared_error(Y2_impute, omic_data2.transpose())
 
-    # Imputation from Y1 to Y2
-    W_pseudo1 = np.linalg.pinv(W_omic1)  # Shape (factors, features)
+        logger.info("Imputation loss GE from ME = {}".format(imputeY1_loss))
+        logger.info("Imputation loss ME from GE = {}".format(imputeY2_loss))
 
-    Y1 = omic_data1.transpose()
-    Z_frompseudo1 = np.matmul(W_pseudo1, Y1)
+        test_labels = cancertypes[[labels[test_ind]]]
 
-    # Now to impute Y2 from new Z
-    Y2_impute = np.matmul(W_omic2, Z_frompseudo1)
+        z1_plot = UMAPPlotter(Z_frompseudo1.transpose(),
+                              test_labels,
+                              "MOFA+: Task {} Z from $W^⁺Y_1$ | {} & {} \nFactors: {}, Views: 2, Groups: 1"
+                              .format(args['task'], args['data1'], args['data2'], args['factors']),
+                              save_dir + "/MOFA+ UMAP_Z_from_pseudoinv_w1.png")
 
-    # Imputation from Y1 to Y2
-    W_pseudo2 = np.linalg.pinv(W_omic2)  # Shape (factors, features)
+        z1_plot.plot()
 
-    Y2 = omic_data2.transpose()
-    Z_frompseudo2 = np.matmul(W_pseudo2, Y2)
+        z2_plot = UMAPPlotter(Z_frompseudo2.transpose(),
+                              test_labels,
+                              "MOFA+: Task {} Z from $W⁺Y_2$ | {} & {} \nFactors: {}, Views: 2, Groups: 1"
+                              .format(args['task'], args['data1'], args['data2'], args['factors']),
+                              save_dir + "/MOFA+ UMAP_Z_from_pseudoinv_w2.png")
 
-    # Now to impute Y1 from new Z
-    Y1_impute = np.matmul(W_omic1, Z_frompseudo2)
+        z2_plot.plot()
 
-    # Imputation loss is
-    imputeY1_loss = mean_squared_error(Y1_impute, omic_data1.transpose())
-    imputeY2_loss = mean_squared_error(Y2_impute, omic_data2.transpose())
+    # Prediction
+    if args['task'] == 2:
+        logger.info("Task 2 : Now fetch Z for each omic")
 
-    logger.info("Imputation loss GE from ME = {}".format(imputeY1_loss))
-    logger.info("Imputation loss ME from GE = {}".format(imputeY2_loss))
+        # Imputation from Y1 to Y2
+        W_pseudo1 = np.linalg.pinv(W_omic1)  # Shape (factors, features)
+
+        Y1 = omic_data1.transpose()
+        Z_frompseudo1 = np.matmul(W_pseudo1, Y1)
+
+        print("W_pseudo1.shape : ", W_pseudo1.shape)
+        print("And test set shape : ", Y1.shape)
+
+        print("Z from W^+ * Y1: ", Z_frompseudo1.shape)
+        np.save("{}/task2_z_from_pseudoinv_w1.npy".format(save_dir), Z_frompseudo1)
+
+        W_pseudo2 = np.linalg.pinv(W_omic2)  # Shape (factors, features)
+
+        Y2 = omic_data2.transpose()
+        Z_frompseudo2 = np.matmul(W_pseudo2, Y2)
+        np.save("{}/task2_z_from_pseudoinv_w2.npy".format(save_dir), Z_frompseudo2)
+
+        logger.info("Z's are saved for later predictions.")
+
+
+
