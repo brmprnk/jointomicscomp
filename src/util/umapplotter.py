@@ -1,3 +1,6 @@
+import src.util.logger as logger
+
+
 class UMAPPlotter:
     """
     Class that creates UMAP for any provided data matrix.
@@ -20,6 +23,8 @@ class UMAPPlotter:
     def show(self):
         import umap.plot
 
+        logger.info("Creating/saving UMAP : {}".format(self.title))
+
         mapper = umap.UMAP(
             n_neighbors=self.n_neighbors,
             min_dist=self.min_dist,
@@ -31,10 +36,12 @@ class UMAPPlotter:
         umap.plot.plt.title(self.title)
         umap.plot.plt.savefig(self.save_file, dpi=self.dpi)
         umap.plot.plt.show()
-        print("Showing UMAP")
+        logger.info("Showing UMAP")
 
     def plot(self):
         import umap.plot
+
+        logger.info("Creating/saving UMAP : {}".format(self.title))
 
         mapper = umap.UMAP(
             n_neighbors=self.n_neighbors,
