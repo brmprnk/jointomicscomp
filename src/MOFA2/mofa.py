@@ -273,28 +273,28 @@ def reconstruction_loss(args: dict, save_dir: str) -> None:
         logger.error(e)
         logger.error("Probably setup the wrong view names in MOFA+ reconstruction loss.")
 
-    print(W_omic1)
-    print("Feature, ", W_omic1['feature'])
-    print("FEature values , ",  W_omic1['feature'].values)
     unique_features = W_omic1['feature'].values[:args['num_features']]
-    print("len unique features", len(unique_features))
     np.set_printoptions(threshold=sys.maxsize)
 
     matrix = []
-    for i in tqdm(range(unique_features.shape[0])):
-        matrix.append(W_omic1['value'].loc[W_omic1['feature'] == unique_features[i]])
+    print("W_omic1 = ", W_omic1)
+    # print("unique features = ", unique_features)
 
-    W_omic1 = np.matrix(matrix)
+    # Turn W dataframes into np arrays for calculations
+    matrix = np.zeros((len(unique_features), len(unique_factors)))
+    for i in tqdm(range(args['num_features'])):
+        for j in range(args['factors']):
+            matrix[i][j] = W_omic1['value'].values[j * args['num_features'] + i]
+
+    W_omic1 = matrix
 
     unique_features = W_omic2['feature'].values[:args['num_features']]
-    matrix = []
-    for i in tqdm(range(unique_features.shape[0])):
-        matrix.append(W_omic2['value'].loc[W_omic2['feature'] == unique_features[i]])
+    matrix = np.zeros((len(unique_features), len(unique_factors)))
+    for i in tqdm(range(args['num_features'])):
+        for j in range(args['factors']):
+            matrix[i][j] = W_omic2['value'].values[j * args['num_features'] + i]
 
-    W_omic2 = np.matrix(matrix)
-
-    print(W_omic1.shape, Z.shape)
-    print(W_omic2.shape, Z.shape)
+    W_omic2 = matrix
 
     # Now get original values back (Y = WZ)
     Y_omic1 = np.matmul(W_omic1, Z)
