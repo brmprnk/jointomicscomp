@@ -4,6 +4,7 @@ from torch.utils.data import DataLoader
 from src.nets import *
 from src.CGAE.model import train, impute, extract, MultiOmicsDataset
 from src.util import logger
+from src.util.early_stopping import EarlyStopping
 from sklearn.model_selection import StratifiedShuffleSplit
 
 
@@ -129,11 +130,14 @@ def run(args: dict) -> None:
     valid_loader = DataLoader(datasetValidation, batch_size=dataValidation1.shape[0], shuffle=False, num_workers=0,
                               drop_last=False)
 
+    # Setup early stopping, terminates training when validation loss does not improve for early_stopping_patience epochs
+    early_stopping = EarlyStopping(patience=args['early_stopping_patience'], verbose=True)
+
     # Training and validation
-    #
-    # train(device=device, net=net, num_epochs=args['epochs'], train_loader=train_loader,
-    #       train_loader_eval=train_loader_eval, valid_loader=valid_loader,
-    #       ckpt_dir=ckpt_dir, logs_dir=logs_dir, save_step=5, multimodal=True)
+
+    train(device=device, net=net, num_epochs=args['epochs'], train_loader=train_loader,
+          train_loader_eval=train_loader_eval, valid_loader=valid_loader,
+          ckpt_dir=ckpt_dir, logs_dir=logs_dir, early_stopping=early_stopping, save_step=5, multimodal=True)
 
 
     # Extract Phase #
@@ -155,6 +159,7 @@ def run(args: dict) -> None:
 
         # Compute imputation loss
         impute(net=net, model_file="/home/bram/jointomicscomp/results/CGAE_gegcn_evenmaxerepochs 28-09-2021 08:14:01/CGAE/checkpoint/model_epoch500.pth.tar", loader=extract_loader, save_dir=save_dir, multimodal=True)
+
     # Cancer stage prediction
     if args['task'] == 2:
         logger.info("Cancer Type Classification: Extracting Z1 and Z2 using {} set".format(args['ctype']))

@@ -11,203 +11,203 @@ from sklearn.metrics import mean_squared_error
 from src.util import logger
 
 
-
 class MultiOmicsDataset():
-	def __init__(self, data1, data2):
+    def __init__(self, data1, data2):
+        self.d1 = TensorDataset(data1)
+        # load the 2nd data view
+        self.d2 = TensorDataset(data2)
+        self.length = data1.shape[0]
 
-		self.d1 = TensorDataset(data1)
-		# load the 2nd data view
-		self.d2 = TensorDataset(data2)
-		self.length = data1.shape[0]
+    def __len__(self):
+        return self.length
 
-	def __len__(self):
-		return self.length
-
-	def __getitem__(self, index):
-		# get the index-th element of the 3 matrices
-		return self.d1.__getitem__(index), self.d2.__getitem__(index)
+    def __getitem__(self, index):
+        # get the index-th element of the 3 matrices
+        return self.d1.__getitem__(index), self.d2.__getitem__(index)
 
 
 def multiomic_collate(batch):
-	d1 = [x[0] for x in batch]
-	d2 = [x[1] for x in batch]
-	print(len(d1))
-	print(len(d1[0]))
+    d1 = [x[0] for x in batch]
+    d2 = [x[1] for x in batch]
+    print(len(d1))
+    print(len(d1[0]))
+
+    return torch.from_numpy(np.array(d1)), torch.from_numpy(np.array(d2))
 
 
-	return torch.from_numpy(np.array(d1)), torch.from_numpy(np.array(d2))
+def train(device, net, num_epochs, train_loader, train_loader_eval, valid_loader, ckpt_dir, logs_dir, early_stopping,
+          save_step=10, multimodal=False):
+    # Define logger
+    tf_logger = SummaryWriter(logs_dir)
 
+    # Load checkpoint model and optimizer
+    start_epoch = load_checkpoint(net, filename=ckpt_dir + '/model_last.pth.tar')
 
+    # Evaluate validation set before start training
+    print("[*] Evaluating epoch %d..." % start_epoch)
+    for trd in train_loader_eval:
+        if not multimodal:
+            x = trd[0]
+            metrics = net.evaluate(x)
+        else:
+            x1 = trd[0][0]
+            x2 = trd[1][0]
+            metrics = net.evaluate(x1, x2)
 
+        print(metrics.keys())
+        assert 'loss' in metrics
+        print("--- Training loss:\t%.4f" % metrics['loss'])
 
+    for vld in valid_loader:
+        if not multimodal:
+            x = vld[0]
+            metrics = net.evaluate(x)
+        else:
+            x1 = vld[0][0]
+            x2 = vld[1][0]
+            metrics = net.evaluate(x1, x2)
 
-def train(device, net, num_epochs, train_loader, train_loader_eval, valid_loader, ckpt_dir, logs_dir, save_step=10, multimodal=False):
-	# Define logger
-	tf_logger = SummaryWriter(logs_dir)
+        assert 'loss' in metrics
+        print("--- Validation loss:\t%.4f" % metrics['loss'])
 
-	# Load checkpoint model and optimizer
-	start_epoch = load_checkpoint(net, filename=ckpt_dir + '/model_last.pth.tar')
+    # Start training phase
+    print("[*] Start training...")
+    # Training epochs
+    for epoch in range(start_epoch, num_epochs):
+        net.train()
 
-	# Evaluate validation set before start training
-	print("[*] Evaluating epoch %d..." % start_epoch)
-	for trd in train_loader_eval:
-		if not multimodal:
-			x = trd[0]
-			metrics = net.evaluate(x)
-		else:
-			x1 = trd[0][0]
-			x2 = trd[1][0]
-			metrics = net.evaluate(x1, x2)
+        print("[*] Epoch %d..." % (epoch + 1))
+        # for param_group in optimizer.param_groups:
+        #	print('--- Current learning rate: ', param_group['lr'])
 
-		print(metrics.keys())
-		assert 'loss' in metrics
-		print("--- Training loss:\t%.4f" % metrics['loss'])
+        for data in train_loader:
+            # Get current batch and transfer to device
+            # data = data.to(device)
 
-	for vld in valid_loader:
-		if not multimodal:
-			x = vld[0]
-			metrics = net.evaluate(x)
-		else:
-			x1 = vld[0][0]
-			x2 = vld[1][0]
-			metrics = net.evaluate(x1, x2)
+            with torch.set_grad_enabled(True):  # no need to specify 'requires_grad' in tensors
+                # Set the parameter gradients to zero
+                net.opt.zero_grad()
 
-		assert 'loss' in metrics
-		print("--- Validation loss:\t%.4f" % metrics['loss'])
+                if not multimodal:
+                    current_loss = net.compute_loss(data[0])
+                else:
+                    current_loss = net.compute_loss(data[0][0], data[1][0])
 
-	# Start training phase
-	print("[*] Start training...")
-	# Training epochs
-	for epoch in range(start_epoch, num_epochs):
-		net.train()
+                # Backward pass and optimize
+                current_loss.backward()
+                net.opt.step()
 
-		print("[*] Epoch %d..." % (epoch + 1))
-		#for param_group in optimizer.param_groups:
-		#	print('--- Current learning rate: ', param_group['lr'])
+        # Save last model
+        state = {'epoch': epoch + 1, 'state_dict': net.state_dict(), 'optimizer': net.opt.state_dict()}
+        torch.save(state, ckpt_dir + '/model_last.pth.tar')
 
-		for data in train_loader:
-			# Get current batch and transfer to device
-			# data = data.to(device)
+        # Save model at epoch
+        if (epoch + 1) % save_step == 0:
+            print("[*] Saving model epoch %d..." % (epoch + 1))
+            torch.save(state, ckpt_dir + '/model_epoch%d.pth.tar' % (epoch + 1))
 
-			with torch.set_grad_enabled(True):  # no need to specify 'requires_grad' in tensors
-				# Set the parameter gradients to zero
-				net.opt.zero_grad()
+        # Evaluate all training set and validation set at epoch
+        print("[*] Evaluating epoch %d..." % (epoch + 1))
 
-				if not multimodal:
-					current_loss = net.compute_loss(data[0])
-				else:
-					current_loss = net.compute_loss(data[0][0], data[1][0])
+        for data in train_loader_eval:
+            if not multimodal:
+                metricsTrain = net.evaluate(data[0])
+            else:
+                metricsTrain = net.evaluate(data[0][0], data[1][0])
 
-				# Backward pass and optimize
-				current_loss.backward()
-				net.opt.step()
+        for data in valid_loader:
+            if not multimodal:
+                metricsValidation = net.evaluate(data[0])
+            else:
+                metricsValidation = net.evaluate(data[0][0], data[1][0])
 
-		# Save last model
-		state = {'epoch': epoch + 1, 'state_dict': net.state_dict(), 'optimizer': net.opt.state_dict()}
-		torch.save(state, ckpt_dir + '/model_last.pth.tar')
+        print("--- Training loss:\t%.4f" % metricsTrain['loss'])
+        print("--- Validation loss:\t%.4f" % metricsValidation['loss'])
 
-		# Save model at epoch
-		if (epoch + 1) % save_step == 0:
-			print("[*] Saving model epoch %d..." % (epoch + 1))
-			torch.save(state, ckpt_dir + '/model_epoch%d.pth.tar' % (epoch + 1))
+        for m in metricsTrain:
+            tf_logger.add_scalar(m + '/train', metricsTrain[m], epoch + 1)
+            tf_logger.add_scalar(m + '/validation', metricsValidation[m], epoch + 1)
 
-		# Evaluate all training set and validation set at epoch
-		print("[*] Evaluating epoch %d..." % (epoch + 1))
+        # Stop training when not improving
+        if early_stopping.early_stop:
+            logger.info('Early stopping training since loss did not improve for {} epochs.'
+                        .format(early_stopping.patience))
+            break
 
-		for data in train_loader_eval:
-			if not multimodal:
-				metricsTrain = net.evaluate(data[0])
-			else:
-				metricsTrain = net.evaluate(data[0][0], data[1][0])
-
-		for data in valid_loader:
-			if not multimodal:
-				metricsValidation = net.evaluate(data[0])
-			else:
-				metricsValidation = net.evaluate(data[0][0], data[1][0])
-
-		print("--- Training loss:\t%.4f" % metricsTrain['loss'])
-		print("--- Validation loss:\t%.4f" % metricsValidation['loss'])
-
-		for m in metricsTrain:
-			tf_logger.add_scalar(m + '/train', metricsTrain[m], epoch + 1)
-			tf_logger.add_scalar(m + '/validation', metricsValidation[m], epoch + 1)
-
-	print("[*] Finish training.")
+    print("[*] Finish training.")
 
 
 def impute(net, model_file, loader, save_dir, multimodal=False):
-	checkpoint = torch.load(model_file)
-	net.load_state_dict(checkpoint['state_dict'])
-	net.opt.load_state_dict(checkpoint['optimizer'])
+    checkpoint = torch.load(model_file)
+    net.load_state_dict(checkpoint['state_dict'])
+    net.opt.load_state_dict(checkpoint['optimizer'])
 
-	# Extract embeddings
-	net.eval()
+    # Extract embeddings
+    net.eval()
 
-	with torch.no_grad():  # set all 'requires_grad' to False
-		for data in loader:
-			if not multimodal:
-				raise NotImplementedError
+    with torch.no_grad():  # set all 'requires_grad' to False
+        for data in loader:
+            if not multimodal:
+                raise NotImplementedError
 
-			else:
-				ge_test = data[0][0]
-				me_test = data[1][0]
+            else:
+                ge_test = data[0][0]
+                me_test = data[1][0]
 
-				# Encode test set in same encoder
-				z1, z2 = net.encode(ge_test, me_test)
+                # Encode test set in same encoder
+                z1, z2 = net.encode(ge_test, me_test)
 
-				# Now decode data in different decoder
-				ge_from_me = net.decoder(z2)
-				me_from_ge = net.decoder2(z1)
+                # Now decode data in different decoder
+                ge_from_me = net.decoder(z2)
+                me_from_ge = net.decoder2(z1)
 
-				imputation_loss_ge = mean_squared_error(ge_test, ge_from_me)
-				imputation_loss_me = mean_squared_error(me_test, me_from_ge)
+                imputation_loss_ge = mean_squared_error(ge_test, ge_from_me)
+                imputation_loss_me = mean_squared_error(me_test, me_from_ge)
 
-				print("z1", imputation_loss_ge, "z2", imputation_loss_me)
+                print("z1", imputation_loss_ge, "z2", imputation_loss_me)
 
-
-				logger.info("Imputation Loss for Gene Expression: ".format(imputation_loss_ge))
-				logger.info("Imputation Loss for Methylation: ".format(imputation_loss_me))
-				np.save("{}/task1_z1.npy".format(save_dir), z1)
-				np.save("{}/task1_z2.npy".format(save_dir), z2)
+                logger.info("Imputation Loss for Gene Expression: ".format(imputation_loss_ge))
+                logger.info("Imputation Loss for Methylation: ".format(imputation_loss_me))
+                np.save("{}/task1_z1.npy".format(save_dir), z1)
+                np.save("{}/task1_z2.npy".format(save_dir), z2)
 
 
 def extract(net, model_file, loader, save_dir, multimodal=False):
-	checkpoint = torch.load(model_file)
-	net.load_state_dict(checkpoint['state_dict'])
-	net.opt.load_state_dict(checkpoint['optimizer'])
+    checkpoint = torch.load(model_file)
+    net.load_state_dict(checkpoint['state_dict'])
+    net.opt.load_state_dict(checkpoint['optimizer'])
 
-	# Extract embeddings
-	net.eval()
+    # Extract embeddings
+    net.eval()
 
-	with torch.no_grad():  # set all 'requires_grad' to False
-		for data in loader:
-			if not multimodal:
-				raise NotImplementedError
+    with torch.no_grad():  # set all 'requires_grad' to False
+        for data in loader:
+            if not multimodal:
+                raise NotImplementedError
 
-			else:
-				ge_test = data[0][0]
-				me_test = data[1][0]
+            else:
+                ge_test = data[0][0]
+                me_test = data[1][0]
 
-				# Encode test set in same encoder
-				z1, z2 = net.encode(ge_test, me_test)
-				z1 = z1.cpu().numpy().squeeze()
-				z2 = z2.cpu().numpy().squeeze()
+                # Encode test set in same encoder
+                z1, z2 = net.encode(ge_test, me_test)
+                z1 = z1.cpu().numpy().squeeze()
+                z2 = z2.cpu().numpy().squeeze()
 
-				np.save("{}/task2_z1.npy".format(save_dir), z1)
-				np.save("{}/task2_z2.npy".format(save_dir), z2)
+                np.save("{}/task2_z1.npy".format(save_dir), z1)
+                np.save("{}/task2_z2.npy".format(save_dir), z2)
 
 
 def load_checkpoint(net, filename='model_last.pth.tar'):
-	start_epoch = 0
-	try:
-		checkpoint = torch.load(filename)
-		start_epoch = checkpoint['epoch']
-		net.load_state_dict(checkpoint['state_dict'])
-		net.opt.load_state_dict(checkpoint['optimizer'])
+    start_epoch = 0
+    try:
+        checkpoint = torch.load(filename)
+        start_epoch = checkpoint['epoch']
+        net.load_state_dict(checkpoint['state_dict'])
+        net.opt.load_state_dict(checkpoint['optimizer'])
 
-		print("\n[*] Loaded checkpoint at epoch %d" % start_epoch)
-	except:
-		print("[!] No checkpoint found, start epoch 0")
+        print("\n[*] Loaded checkpoint at epoch %d" % start_epoch)
+    except:
+        print("[!] No checkpoint found, start epoch 0")
 
-	return start_epoch
+    return start_epoch

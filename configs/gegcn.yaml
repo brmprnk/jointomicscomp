@@ -5,12 +5,13 @@ GLOBAL_PARAMS:
   cuda: false
   random_seed: 1
   log_save_interval: 5
+  early_stopping_patience: 5 # If set to 0 or <0, early stopping is turned off.
   data1: "GE"
   data2: "GCN"
   data_path1: "/home/bram/jointomicscomp/data/GE.npy"
   data_path2: "/home/bram/jointomicscomp/data/GCN.npy"
-  data_features1: "/home/bram/jointomicscomp/data/GE_featureNames.npy"
-  data_features2: "/home/bram/jointomicscomp/data/GCN_featureNames.npy"
+  data_features1: "/home/bram/jointomicscomp/data/GE_featureNames_DISTINCT.npy"
+  data_features2: "/home/bram/jointomicscomp/data/GCN_featureNames_DISTINCT.npy"
   sample_names: "/home/bram/jointomicscomp/data/sampleNames.npy"
   cancer_type_index: "/home/bram/jointomicscomp/data/cancerType.npy"
   cancertypes: "/home/bram/jointomicscomp/data/cancerTypes.npy"
@@ -31,7 +32,7 @@ MOFA+:
   scale_views: false           # if views have significantly different ranges, it is good practice to scale each view to unit variance
 
   # Model options
-  pre_trained: "/home/bram/jointomicscomp/results/mofa_gegcn 14-09-2021 07:52:01/MOFA+/GE_GCN_trained_MOFA_model.hdf5"              # Use a pre-trained model for downstream analysis
+  pre_trained: ""              # Use a pre-trained model for downstream analysis
   factors: 128
   likelihoods: None            # likelihoods per view (options are "gaussian","poisson","bernoulli").
                                #     Default is None, and they are infered automatically
@@ -60,7 +61,7 @@ MVAE:
   pre_trained: "/home/bram/jointomicscomp/results/gegcn_moe_poe 13-09-2021 22_58_48/gegcn_moe_poe 13-09-2021 22:58:48/PoE/best_model.pth.tar"
   latent_dim: 128
   batch_size: 256
-  epochs: 5
+  epochs: 1000  # Large since there is early stopping
   lr: 0.0001
 
   # Other parameters

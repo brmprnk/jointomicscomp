@@ -11,6 +11,7 @@ from src.MVAE.model import MVAE
 import src.MVAE.datasets as datasets
 from src.MVAE.evaluate import impute
 import src.util.logger as logger
+from src.util.early_stopping import EarlyStopping
 from src.util.umapplotter import UMAPPlotter
 
 import numpy as np
@@ -191,18 +192,21 @@ def run(args) -> None:
     # Preparation for training
     optimizer = optim.Adam(model.parameters(), lr=args['lr'])
 
+    # Setup early stopping, terminates training when validation loss does not improve for early_stopping_patience epochs
+    early_stopping = EarlyStopping(patience=args['early_stopping_patience'], verbose=True)
+
     if args['cuda']:
         model.cuda()
 
     for epoch in range(1, args['epochs'] + 1):
         train(args, model, train_loader, optimizer, epoch, tf_logger)
-        latest_loss = test(args, model, val_loader, optimizer, epoch, tf_logger)
+        validation_loss = test(args, model, val_loader, optimizer, epoch, tf_logger)
 
         # Save the last model
         if epoch == args['epochs'] or epoch % args['log_save_interval'] == 0:
             save_checkpoint({
                 'state_dict': model.state_dict(),
-                'best_loss': latest_loss,
+                'best_loss': validation_loss,
                 'latent_dim': args['latent_dim'],
                 'epochs': args['epochs'],
                 'lr': args['lr'],
@@ -210,6 +214,12 @@ def run(args) -> None:
                 'use_mixture': args['mixture'],
                 'optimizer': optimizer.state_dict(),
             }, epoch, save_dir)
+
+        # Stop training when not improving
+        if early_stopping.early_stop:
+            logger.info('Early stopping training since loss did not improve for {} epochs.'
+                        .format(args['early_stopping_patience']))
+            break
 
     # Extract Phase #
     logger.success("Finished training MVAE model. Now calculating task results.")
