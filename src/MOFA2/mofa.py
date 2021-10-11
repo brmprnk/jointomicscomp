@@ -301,13 +301,13 @@ def downstream_analysis(args: dict, save_dir: str) -> None:
     # Get correct labels with names
     training_labels = np.concatenate((cancertypes[[labels[np.load(args['train_ind'])]]], cancertypes[[labels[np.load(args['val_ind'])]]]))
 
-    # training_data_plot = UMAPPlotter(Z.transpose(),
-    #                                  training_labels,
-    #                                  "MOFA+: Task {} Training Data's Z | {} & {} \nFactors: {}, Views: 2, Groups: 1"
-    #                                  .format(args['task'], args['data1'], args['data2'], args['factors']),
-    #                                  save_dir + "/MOFA+ UMAP.png")
-    #
-    # training_data_plot.plot()
+    training_data_plot = UMAPPlotter(Z.transpose(),
+                                     training_labels,
+                                     "MOFA+: Task {} Training Data's Z | {} & {} \nFactors: {}, Views: 2, Groups: 1"
+                                     .format(args['task'], args['data1'], args['data2'], args['factors']),
+                                     save_dir + "/MOFA+ UMAP.png")
+
+    training_data_plot.plot()
 
     # Get W matrix for each modality
     try:
@@ -369,8 +369,8 @@ def downstream_analysis(args: dict, save_dir: str) -> None:
         imputeY1_loss = mean_squared_error(Y1_impute, omic_data1.transpose())
         imputeY2_loss = mean_squared_error(Y2_impute, omic_data2.transpose())
 
-        logger.info("Imputation loss GE from ME = {}".format(imputeY1_loss))
-        logger.info("Imputation loss ME from GE = {}".format(imputeY2_loss))
+        logger.info("Imputation loss {} from {} = {}".format(args['data1'], args['data2'], imputeY1_loss))
+        logger.info("Imputation loss {} from {} = {}".format(args['data2'], args['data1'], imputeY2_loss))
 
         test_labels = cancertypes[[labels[test_ind]]]
 
