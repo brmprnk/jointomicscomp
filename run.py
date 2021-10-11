@@ -30,7 +30,10 @@ PARSER.add_argument('--config', '-c',
                     dest='config_file',
                     metavar='FILE',
                     help="path to the config file",
-                    default='configs/main.yaml')
+                    default='configs/geme.yaml')
+PARSER.add_argument('--experiment', '-e',
+                    help="Name of experiment",
+                    default="experiment")
 PARSER.add_argument('-baseline',
                     action='store_true',
                     help="Run the baseline and its evaluation")
@@ -83,6 +86,8 @@ def main() -> None:
     # Create directory to store all results in
     now = datetime.now()
     dt_string = now.strftime("%d-%m-%Y %H:%M:%S")
+    if args.experiment != "experiment":
+        config['GLOBAL_PARAMS']['name'] = args.experiment
     save_dir = os.path.join(ROOT_DIR, 'results', '{} {}'.format(config['GLOBAL_PARAMS']['name'], dt_string))
     os.makedirs(save_dir)
     config['GLOBAL_PARAMS']['save_dir'] = save_dir
@@ -146,7 +151,11 @@ def run_baseline(config: dict) -> None:
     """
     import src.baseline.baseline as baseline
 
+    logger.info("\n##########")
+
     baseline.run_baseline({**config['GLOBAL_PARAMS'], **config['BASELINE']})
+
+    logger.info("##########\n")
 
 
 def run_mofa(config: dict) -> None:
@@ -158,8 +167,11 @@ def run_mofa(config: dict) -> None:
     """
     from src.MOFA2.mofa import run as mofa2
 
+    logger.info("\n##########")
+
     mofa2({**config['GLOBAL_PARAMS'], **config['MOFA+']})
 
+    logger.info("##########\n")
 
 def run_mvae(config: dict, mixture=False, product=False) -> None:
     """
@@ -173,15 +185,21 @@ def run_mvae(config: dict, mixture=False, product=False) -> None:
     from src.MVAE.train import run as mvae_model
 
     if mixture is True:
-        print("Running Mixture-of-Experts MVAE Model")
+        logger.info("\n##########")
+        logger.success("Running Mixture-of-Experts MVAE Model")
 
         config['MVAE']['mixture'] = True
         mvae_model({**config['GLOBAL_PARAMS'], **config['MVAE']})
+        logger.success("Finished running Mixture-of-Experts MVAE Model")
+        logger.info("##########\n")
     if product is True:
-        print("Running Product-of-Experts MVAE Model")
+        logger.info("\n##########")
+        logger.success("Running Product-of-Experts MVAE Model")
 
         config['MVAE']['mixture'] = False
         mvae_model({**config['GLOBAL_PARAMS'], **config['MVAE']})
+        logger.success("Finished running Product-of-Experts MVAE Model")
+        logger.info("##########\n")
 
 
 def run_mvib(config: dict) -> None:
@@ -193,7 +211,11 @@ def run_mvib(config: dict) -> None:
     """
     from src.MVIB.train_representation import run as mvib_model
 
+    logger.info("\n##########")
+
     mvib_model({**config['GLOBAL_PARAMS'], **config['MVIB']})
+
+    logger.info("##########\n")
 
 
 def run_cgae(config: dict) -> None:
@@ -203,7 +225,13 @@ def run_cgae(config: dict) -> None:
     @param config: Dictionary containing input parameters
     @return: None
     """
-    print("CGAE has not yet been implemented", config)
+    from src.CGAE.main import run as cgae_model
+
+    logger.info("\n##########")
+
+    cgae_model({**config['GLOBAL_PARAMS'], **config['CGAE']})
+
+    logger.info("##########\n")
 
 
 def run_omicade(config: dict) -> None:
@@ -216,12 +244,20 @@ def run_omicade(config: dict) -> None:
     """
     from src.omicade4.main import run_omicade
 
+    logger.info("\n##########")
+
     run_omicade({**config['GLOBAL_PARAMS'], **config['OMICADE']})
 
+    logger.info("##########\n")
+
 def mvae_impute(config: dict):
-    from src.MVAE.predict import predict
+    from src.MVAE.evaluate import predict
+
+    logger.info("\n##########")
 
     predict({**config['GLOBAL_PARAMS'], **config['MVAE']})
+
+    logger.info("##########\n")
 
 
 if __name__ == '__main__':

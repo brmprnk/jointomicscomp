@@ -1,15 +1,6 @@
-from __future__ import division
-from __future__ import print_function
-from __future__ import absolute_import
-
-import sys
 import numpy as np
 from torch.utils.data.dataset import Dataset
-
-TRAINING_DATA_SPLIT = 0.7
-VALIDATION_DATA_SPLIT = 0.1
-PREDICT_DATA_SPLIT = 0.2
-VALID_PARTITIONS = {'train': 0, 'val': 1}
+from src.util import logger
 
 
 class TCGAData(object):
@@ -23,69 +14,69 @@ class TCGAData(object):
             save_dir     (string) : Where the indices taken from the datasets should be saved
             indices_path (string) : If set, use predefined indices for data split
         """
-        print(args)
-        # GE
-        self.GE = np.load(args['data_path1'])
-        print("-----   GE file read   -----")
+        # Load in data, depending on task
+        # Task 1 : Imputation
+        if args['task'] == 1:
+            logger.info("Running Task {} on omic {} and omic {}".format(args['task'], args['data1'], args['data2']))
 
-        # ME
-        self.ME = np.load(args['data_path2'])
-        print("-----   ME file read   -----")
+            # Load in data
+            omic1 = np.load(args['data_path1'])
+            omic2 = np.load(args['data_path2'])
+            self.cancertypes = np.load(args['cancertypes'])
+            self.cancer_type_index = np.load(args['cancer_type_index'])
 
-        # Split Datasets into a 70 training / 10 validation / 20 prediction split
-        assert self.GE.shape[0] == self.ME.shape[0], "Datasets do not have equal samples"
+            # Use predefined split
+            self.train_ind = np.load(args['train_ind'])
+            self.val_ind = np.load(args['val_ind'])
+            self.test_ind = np.load(args['test_ind'])
 
-        # Split the dataset
-        if indices_path is None:
-            nr_of_samples = self.GE.shape[0]
-            nr_of_training_samples = int(TRAINING_DATA_SPLIT * nr_of_samples)
-            nr_of_validation_samples = int(VALIDATION_DATA_SPLIT * nr_of_samples)
+            self.omic1_train_file = omic1[self.train_ind]
+            self.omic1_val_file = omic1[self.val_ind]
+            self.omic1_test_file = omic1[self.test_ind]
+            self.omic2_train_file = omic2[self.train_ind]
+            self.omic2_val_file = omic2[self.val_ind]
+            self.omic2_test_file = omic2[self.test_ind]
 
-            # Random ordering of all sample id's
-            random_sample_indices = np.random.choice(a=nr_of_samples, size=nr_of_samples, replace=False)
+        if args['task'] == 2:
+            logger.success("Running Task 2: {} classification.".format(args['ctype']))
+            # NOTE
+            # For testing purposes, this code uses predefined splits
+            GEtrainctype = np.load(args['x_ctype_train_file'])
+            GEtrainrest = np.load(args['x_train_file'])
+            self.omic1_train_file = np.float32(np.vstack((GEtrainctype, GEtrainrest)))
 
-            # Split into three sets of sizes
-            # [:nr_of_training_samples], [nr_of_training_samples:nr_of_validation_samples], [:nr_of_predict_samples]
-            sets = np.split(random_sample_indices,
-                            [nr_of_training_samples, (nr_of_training_samples + nr_of_validation_samples)])
+            GEvalidctype = np.load(args['x_ctype_valid_file'])
+            GEvalidrest = np.load(args['x_valid_file'])
+            self.omic1_val_file = np.float32(np.vstack((GEvalidctype, GEvalidrest)))
 
-            training_ids = sets[0]
-            validation_ids = sets[1]
-            predict_ids = sets[2]
+            MEtrainctype = np.load(args['y_ctype_train_file'])
+            MEtrainrest = np.load(args['y_train_file'])
+            self.omic2_train_file = np.float32(np.vstack((MEtrainctype, MEtrainrest)))
 
-            if save_dir is None:
-                print("Error, no save path is given so indices for data splits could not be saved. Exiting program")
-                sys.exit()
-
-            # Save the indices taken for reproducibility
-            np.save("{}/training_indices.npy".format(save_dir), training_ids)
-            np.save("{}/validation_indices.npy".format(save_dir), validation_ids)
-            np.save("{}/predict_indices.npy".format(save_dir), predict_ids)
-
-        else:  # Use predefined indices
-            print("Using Predefined split")
-            training_ids = np.load("{}/training_indices.npy".format(indices_path))
-            validation_ids = np.load("{}/validation_indices.npy".format(indices_path))
-            predict_ids = np.load("{}/predict_indices.npy".format(indices_path))
-
-        # Create data arrays
-        self.ge_train_file = np.float32(self.GE[training_ids])
-        self.ge_val_file = np.float32(self.GE[validation_ids])
-        self.ge_predict_file = np.float32(self.GE[predict_ids])
-
-        self.me_train_file = np.float32(self.ME[training_ids])
-        self.me_val_file = np.float32(self.ME[validation_ids])
-        self.me_predict_file = np.float32(self.ME[predict_ids])
+            MEvalidctype = np.load(args['y_ctype_valid_file'])
+            MEvalidrest = np.load(args['y_valid_file'])
+            self.omic2_val_file = np.float32(np.vstack((MEvalidctype, MEvalidrest)))
 
     def get_data_partition(self, partition):
         if partition == "train":
-            return TCGADataset(self.ge_train_file, self.me_train_file)
+            return TCGADataset(self.omic1_train_file, self.omic2_train_file)
         elif partition == "val":
-            return TCGADataset(self.ge_val_file, self.me_val_file)
-        elif partition == "predict":
-            return TCGADataset(self.ge_predict_file, self.me_predict_file)
+            return TCGADataset(self.omic1_val_file, self.omic2_val_file)
+        elif partition == "test":
+            return TCGADataset(self.omic1_test_file, self.omic2_test_file)
         else:  # Full data aka no split
-            return TCGADataset(self.GE, self.ME)
+            return TCGADataset(np.vstack((self.omic1_train_file, self.omic1_val_file, self.omic1_test_file)),
+                               np.vstack((self.omic2_train_file, self.omic2_val_file, self.omic2_test_file)))
+
+    def get_labels_partition(self, partition):
+        if partition == "train":
+            return self.cancertypes, self.cancer_type_index, self.train_ind
+        elif partition == "val":
+            return self.cancertypes, self.cancer_type_index, self.val_ind
+        elif partition == "test":
+            return self.cancertypes, self.cancer_type_index, self.test_ind
+        else:  # Full data aka no split
+            return self.cancertypes, self.cancer_type_index
 
 
 class TCGADataset(Dataset):
@@ -93,19 +84,19 @@ class TCGADataset(Dataset):
     Dataset Wrapper of TCGA Data (so data is loaded only once)
     """
 
-    def __init__(self, ge_data, me_data):
+    def __init__(self, omic1_data, omic2_data):
         """
         Args:
-            rna_data (numpy ndarray): Numpy array of the same shape as the .csv holding float32 data of RNA-seq
-            gcn_data (numpy ndarray): Numpy array of the same shape as the .csv holding float32 data of Gene Copy Number
+            omic1_data (numpy ndarray): Numpy array of the same shape as the .csv holding float32 data of RNA-seq
+            omic2_data (numpy ndarray): Numpy array of the same shape as the .csv holding float32 data of Methylation
         """
-        assert ge_data.shape[0] == me_data.shape[0], "Datasets do not have equal samples"
+        assert omic1_data.shape[0] == omic2_data.shape[0], "Datasets do not have equal samples"
 
-        self.ge_data = ge_data
-        self.me_data = me_data
+        self.omic1_data = omic1_data
+        self.omic2_data = omic2_data
 
     def __len__(self):
-        return self.ge_data.shape[0]
+        return self.omic1_data.shape[0]
 
     def __getitem__(self, idx):
-        return self.ge_data[idx], self.me_data[idx]
+        return self.omic1_data[idx], self.omic2_data[idx]
