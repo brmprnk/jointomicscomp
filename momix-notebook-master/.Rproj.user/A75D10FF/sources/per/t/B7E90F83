@@ -1,0 +1,26 @@
+{
+    "id": "B7E90F83",
+    "path": "~/Desktop/momix-notebook-master/scripts/momix_survival.R",
+    "project_path": "scripts/momix_survival.R",
+    "type": "r_source",
+    "hash": "851699863",
+    "contents": "",
+    "dirty": false,
+    "created": 1633943120354.0,
+    "source_on_save": false,
+    "relative_order": 1,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "77,0",
+        "scrollLine": "68"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1633943998,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1633943998292,
+    "read_only": false,
+    "read_only_alternatives": []
+}

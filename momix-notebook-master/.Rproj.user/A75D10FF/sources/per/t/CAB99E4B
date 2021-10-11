@@ -1,0 +1,26 @@
+{
+    "id": "CAB99E4B",
+    "path": "~/Desktop/momix-notebook-master/scripts/runfactorization.R",
+    "project_path": "scripts/runfactorization.R",
+    "type": "r_source",
+    "hash": "780649364",
+    "contents": "",
+    "dirty": false,
+    "created": 1633944069713.0,
+    "source_on_save": false,
+    "relative_order": 2,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "21,1",
+        "scrollLine": "10"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1633944158,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1633944158177,
+    "read_only": false,
+    "read_only_alternatives": []
+}
