@@ -117,11 +117,10 @@ def train(args, model, train_loader, optimizer, epoch, tf_logger):
 
 def test(args, model, val_loader, optimizer, epoch, tf_logger):
     model.eval()
-    test_loss = 0
+    validation_loss = 0
+    validation_recon_loss = 0
+    validation_kl_loss = 0
 
-    val_loss_per_batch = np.zeros(len(val_loader))
-    val_recon_loss_per_batch = np.zeros(len(val_loader))
-    val_kl_loss_per_batch = np.zeros(len(val_loader))
     for batch_idx, (omic1, omic2) in enumerate(val_loader):
         # for ease, only compute the joint loss in validation
         (joint_recon_omic1, joint_recon_omic2, joint_mu, joint_logvar) = model.forward(omic1, omic2)
@@ -133,21 +132,24 @@ def test(args, model, val_loader, optimizer, epoch, tf_logger):
                                         joint_recon_omic2, omic2,
                                         joint_mu, joint_logvar, kld_weight)
 
-        val_loss_per_batch[batch_idx] = joint_test_loss['loss']
-        val_recon_loss_per_batch[batch_idx] = joint_test_loss['Reconstruction_Loss']
-        val_kl_loss_per_batch[batch_idx] = joint_test_loss['KLD']
+        validation_loss += joint_test_loss['loss']
+        validation_recon_loss += joint_test_loss['Reconstruction_Loss']
+        validation_kl_loss += joint_test_loss['KLD']
 
-        test_loss += joint_test_loss['loss']
+    validation_loss /= len(val_loader)
+    validation_recon_loss /= len(val_loader)
+    validation_kl_loss /= len(val_loader)
 
     if epoch % args['log_interval'] == 0:
-        tf_logger.add_scalar("validation loss", val_loss_per_batch.mean(), epoch)
-        tf_logger.add_scalar("validation reconstruction loss", val_recon_loss_per_batch.mean(), epoch)
-        tf_logger.add_scalar("validation KL loss", val_kl_loss_per_batch.mean(), epoch)
+        tf_logger.add_scalar("validation loss", validation_loss, epoch)
+        tf_logger.add_scalar("validation reconstruction loss", validation_recon_loss, epoch)
+        tf_logger.add_scalar("validation KL loss", validation_kl_loss, epoch)
 
-        print('====> Epoch: {}\tLoss: {:.4f}'.format(epoch, val_loss_per_batch.mean()))
-        print('====> Epoch: {}\tReconstruction Loss: {:.4f}'.format(epoch, val_recon_loss_per_batch.mean()))
-        print('====> Epoch: {}\tKLD Loss: {:.4f}'.format(epoch, val_kl_loss_per_batch.mean()))
-    return val_loss_per_batch.mean()
+        print('====> Epoch: {}\tValidation Loss: {:.4f}'.format(epoch, validation_loss))
+        print('====> Epoch: {}\tReconstruction Loss: {:.4f}'.format(epoch, validation_recon_loss))
+        print('====> Epoch: {}\tKLD Loss: {:.4f}'.format(epoch, validation_kl_loss))
+
+    return validation_loss
 
 
 def run(args) -> None:
@@ -215,10 +217,13 @@ def run(args) -> None:
                 'optimizer': optimizer.state_dict(),
             }, epoch, save_dir)
 
+        early_stopping(validation_loss)
+
         # Stop training when not improving
         if early_stopping.early_stop:
             logger.info('Early stopping training since loss did not improve for {} epochs.'
                         .format(args['early_stopping_patience']))
+            args['epochs'] = epoch  # Update nr of epochs for plots
             break
 
     # Extract Phase #

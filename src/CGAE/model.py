@@ -124,6 +124,8 @@ def train(device, net, num_epochs, train_loader, train_loader_eval, valid_loader
         print("--- Training loss:\t%.4f" % metricsTrain['loss'])
         print("--- Validation loss:\t%.4f" % metricsValidation['loss'])
 
+        early_stopping(metricsValidation['loss'])
+
         for m in metricsTrain:
             tf_logger.add_scalar(m + '/train', metricsTrain[m], epoch + 1)
             tf_logger.add_scalar(m + '/validation', metricsValidation[m], epoch + 1)
