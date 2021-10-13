@@ -29,6 +29,7 @@ class MVAE(nn.Module):
 
         self.latent_dim = latent_dim
         self.use_cuda = use_cuda
+        self.training = False
 
     def reparameterize(self, mu, logvar):
         if self.training:

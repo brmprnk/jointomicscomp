@@ -56,6 +56,7 @@ def save_checkpoint(state, epoch, save_dir):
 
 
 def train(args, model, train_loader, optimizer, epoch, tf_logger):
+    model.training = True
     model.train()
 
     progress_bar = tqdm(total=len(train_loader))
@@ -116,6 +117,7 @@ def train(args, model, train_loader, optimizer, epoch, tf_logger):
 
 
 def test(args, model, val_loader, optimizer, epoch, tf_logger):
+    model.training = False
     model.eval()
     validation_loss = 0
     validation_recon_loss = 0
