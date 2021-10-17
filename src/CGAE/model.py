@@ -173,6 +173,8 @@ def impute(net, model_file, loader, save_dir, multimodal=False):
                 np.save("{}/task1_z1.npy".format(save_dir), z1)
                 np.save("{}/task1_z2.npy".format(save_dir), z2)
 
+    return z1, z2
+
 
 def extract(net, model_file, loader, save_dir, multimodal=False):
     checkpoint = torch.load(model_file)
@@ -198,6 +200,8 @@ def extract(net, model_file, loader, save_dir, multimodal=False):
 
                 np.save("{}/task2_z1.npy".format(save_dir), z1)
                 np.save("{}/task2_z2.npy".format(save_dir), z2)
+
+    return z1, z2
 
 
 def load_checkpoint(net, filename='model_last.pth.tar'):
