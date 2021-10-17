@@ -30,16 +30,16 @@ PARSER.add_argument('--config', '-c',
                     dest='config_file',
                     metavar='FILE',
                     help="path to the config file",
-                    default='configs/geme.yaml')
+                    default='configs/gegcn.yaml')
 PARSER.add_argument('--experiment', '-e',
                     help="Name of experiment",
                     default="experiment")
+PARSER.add_argument('-survival',
+                    action='store_true',
+                    help="Run Task 2 for survival time comparison")
 PARSER.add_argument('-baseline',
                     action='store_true',
                     help="Run the baseline and its evaluation")
-PARSER.add_argument('-mofadata',
-                    action='store_true',
-                    help="Preprocessing data for Multi-Omics Factor Analysis V2 (MOFA+)")
 PARSER.add_argument('-mofa',
                     action='store_true',
                     help="Running Multi-Omics Factor Analysis V2 (MOFA+)")
@@ -58,9 +58,6 @@ PARSER.add_argument('-mvib',
 PARSER.add_argument('-cgae',
                     action='store_true',
                     help="Running CGAE Model")
-PARSER.add_argument('-omicade',
-                    action='store_true',
-                    help="Running Omicade4 : https://bioconductor.org/packages/release/bioc/html/omicade4.html")
 
 
 def main() -> None:
@@ -96,12 +93,14 @@ def main() -> None:
     # Setup save directory for output logging
     logger.output_file = save_dir
 
-    # Check for utility arguments, run only these and exit program
-    if args.mofadata:
-        from src.MOFA2.create_mofa_data import create_mofa_dataframe
+    print(args)
 
-        create_mofa_dataframe({**config['GLOBAL_PARAMS']})
+    # Check for utility arguments, run only these and exit program
+    if args.experiment:
+        from src.survival import run as survival_comparison
+        survival_comparison({**config['GLOBAL_PARAMS']})
         sys.exit()
+
 
     # If no specific model set, run all models and end program
     if not args.baseline and not args.mofa and not args.moe and not args.poe and not args.mvib and not args.cgae \
