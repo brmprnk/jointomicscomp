@@ -124,7 +124,7 @@ def train_and_evaluate_linear_model(train_set, test_set, solver='saga', multi_cl
 	x1_train = scaler.fit_transform(x1_train)
 	x2_train = scaler.fit_transform(x2_train)
 	x1_test = scaler.transform(x1_test)
-	x1_test = scaler.transform(x2_test)
+	x2_test = scaler.transform(x2_test)
 
 	model = LogisticRegression(solver=solver, multi_class=multi_class, tol=tol, C=C)
 	model.fit(x1_train, y_train)

@@ -1,13 +1,15 @@
 import os
-import torch
-from tqdm import tqdm
-from torch.utils.data import DataLoader
+
 import numpy as np
-from src.MVIB.utils.data import MultiOmicsDataset
-from src.MVIB.utils.evaluation import evaluate, split
+import torch
+from torch.utils.data import DataLoader
+from tqdm import tqdm
+
 from src.MVIB import training as training_module
+from src.MVIB.utils.data import MultiOmicsDataset
 from src.util import logger
-from sklearn.metrics import mean_squared_error
+from src.util.umapplotter import UMAPPlotter
+from tensorboardX import SummaryWriter
 
 
 def run(args: dict) -> None:
@@ -35,8 +37,9 @@ def run(args: dict) -> None:
     # parser.add_argument("--evaluate-every", type=int, default=5, help="Frequency of model evaluation.")
     # parser.add_argument("--epochs", type=int, default=1000, help="Total number of training epochs")
 
-    logging = not args['no_logging']
+    tf_logger = SummaryWriter(save_dir)
     overwrite = args['overwrite']
+
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
     if args['pre_trained'] != "" and not overwrite:
@@ -46,10 +49,6 @@ def run(args: dict) -> None:
                         "or use the --overwrite flag to force overwriting")
 
     resume_training = args['pre_trained'] != "" and not overwrite
-
-    if logging:
-        from torch.utils.tensorboard import SummaryWriter
-        writer = SummaryWriter(log_dir=save_dir)
 
     # Load in data, depending on task
     # Task 1 : Imputation
@@ -80,7 +79,7 @@ def run(args: dict) -> None:
 
     # Instantiating the trainer according to the specified configuration
     TrainerClass = getattr(training_module, args['trainer'])
-    trainer = TrainerClass(log_loss_every=len(train_loader), writer=writer, **{
+    trainer = TrainerClass(log_loss_every=len(train_loader), writer=tf_logger, **{
         'z_dim': args['z_dim'],
         'input_dim1': args['input_dim1'],
         'input_dim2': args['input_dim2'],
@@ -106,37 +105,28 @@ def run(args: dict) -> None:
 
     ##########
 
-    checkpoint_count = 1
-    checkpoint_every = 5
-
     for epoch in tqdm(range(args['epochs'])):
         for data in tqdm(train_loader):
             trainer.train_step(data)
 
         # Compute train and test_accuracy of a logistic regression
-        print(trainer.encoder_v1)
-        print(trainer.encoder_v2)
-        train_accuracy, test_accuracy = evaluate(encoder1=trainer.encoder_v1,
-                                                 encoder2=trainer.encoder_v2,
-                                                 train_on=mv_train_set,
-                                                 test_on=mv_val_set,
-                                                 device=device)
-        if not (writer is None):
-            writer.add_scalar(tag='evaluation/train_accuracy', scalar_value=train_accuracy,
-                              global_step=trainer.iterations)
-            writer.add_scalar(tag='evaluation/test_accuracy', scalar_value=test_accuracy,
-                              global_step=trainer.iterations)
+        # train_accuracy, test_accuracy = evaluate(encoder1=trainer.encoder_v1,
+        #                                          encoder2=trainer.encoder_v2,
+        #                                          train_on=mv_train_set,
+        #                                          test_on=mv_val_set,
+        #                                          device=device)
+        # if not (writer is None):
+        #     writer.add_scalar(tag='evaluation/train_accuracy', scalar_value=train_accuracy,
+        #                       global_step=trainer.iterations)
+        #     writer.add_scalar(tag='evaluation/test_accuracy', scalar_value=test_accuracy,
+        #                       global_step=trainer.iterations)
+        #
+        # tqdm.write('Epoch {} Train Accuracy: {}'.format(epoch, train_accuracy))
+        # tqdm.write('Epoch {} Test Accuracy: {}'.format(epoch, test_accuracy))
 
-        tqdm.write('Train Accuracy: %f' % train_accuracy)
-        tqdm.write('Test Accuracy: %f' % test_accuracy)
-
-        if epoch % checkpoint_every == 0:
+        if epoch % args['log_save_interval'] == 0:
             tqdm.write('Storing model checkpoint')
-            while os.path.isfile(os.path.join(save_dir, 'checkpoint_%d.pt' % checkpoint_count)):
-                checkpoint_count += 1
-
-            trainer.save(os.path.join(save_dir, 'checkpoint_%d.pt' % checkpoint_count))
-            checkpoint_count += 1
+            trainer.save(os.path.join(save_dir, 'checkpoint_%d.pt' % epoch))
 
     # Extract Phase #
 
@@ -165,6 +155,26 @@ def run(args: dict) -> None:
                 # Encode test set in same encoder
                 z1 = trainer.encoder_v1(omic1_test)
                 z2 = trainer.encoder_v2(omic2_test)
+
+                np.save("{}/task1_z1.npy".format(save_dir), z1)
+                np.save("{}/task1_z2.npy".format(save_dir), z2)
+
+                labels = np.load(args['cancer_type_index']).astype(int)
+                test_labels = cancertypes[[labels[test_ind]]]
+
+                z1_plot = UMAPPlotter(z1, test_labels, "MVIB Z1: Task {} | {} & {} \n"
+                                                       "Epochs: {}, Latent Dimension: {}, LR: {}, Batch size: {}"
+                                      .format(args['task'], args['data1'], args['data2'],
+                                              args['epochs'], args['z_dim'], args['encoder_lr'], args['batch_size']),
+                                      save_dir + "/{} UMAP.png".format('CGAE'))
+                z1_plot.plot()
+
+                z2_plot = UMAPPlotter(z2, test_labels, "MVIB Z2: Task {} | {} & {} \n"
+                                                       "Epochs: {}, Latent Dimension: {}, LR: {}, Batch size: {}"
+                                      .format(args['task'], args['data1'], args['data2'],
+                                              args['epochs'], args['z_dim'], args['encoder_lr'], args['batch_size']),
+                                      save_dir + "/{} UMAP.png".format('CGAE'))
+                z2_plot.plot()
 
                 # Now decode data in different decoder
                 # ge_from_me = net.decoder(z2)
