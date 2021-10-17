@@ -62,7 +62,7 @@ def survival(z, save_dir: str) -> None:
         utils.install_packages(StrVector(names_to_install))
 
     robjects.r('''
-            library('ggplot2')
+            library('survival')
             
             ## Perform survival annotation-based comparison 
             ## INPUTS:
