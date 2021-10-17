@@ -92,25 +92,25 @@ def main() -> None:
 
     # Setup save directory for output logging
     logger.output_file = save_dir
+    logger.success("Starting : {}".format(args.experiment))
+    logger.success("Savind to : {}".format(save_dir))
 
     print(args)
 
     # Check for utility arguments, run only these and exit program
-    if args.experiment:
+    if args.survival:
         from src.survival import run as survival_comparison
         survival_comparison({**config['GLOBAL_PARAMS']})
         sys.exit()
 
-
     # If no specific model set, run all models and end program
     if not args.baseline and not args.mofa and not args.moe and not args.poe and not args.mvib and not args.cgae \
-            and not args.omicade and not args.mvae_impute:
+            and not args.mvae_impute:
         run_baseline(config)
         run_mofa(config)
         run_mvae(config, mixture=True, product=True)
         run_mvib(config)
         run_cgae(config)
-        run_omicade(config)
         return
 
     # Run models individually / combined
@@ -132,13 +132,9 @@ def main() -> None:
     if args.cgae:
         run_cgae(config)
 
-    if args.omicade:
-        run_omicade(config)
-
     # Run special function
     if args.mvae_impute:
         mvae_impute(config)
-
 
 
 def run_baseline(config: dict) -> None:
@@ -171,6 +167,7 @@ def run_mofa(config: dict) -> None:
     mofa2({**config['GLOBAL_PARAMS'], **config['MOFA+']})
 
     logger.info("##########\n")
+
 
 def run_mvae(config: dict, mixture=False, product=False) -> None:
     """
@@ -232,22 +229,6 @@ def run_cgae(config: dict) -> None:
 
     logger.info("##########\n")
 
-
-def run_omicade(config: dict) -> None:
-    """
-    Setup and run Omicade4
-    https://bioconductor.org/packages/release/bioc/html/omicade4.html
-
-    @param config: Dictionary containing input parameters
-    @return: None
-    """
-    from src.omicade4.main import run_omicade
-
-    logger.info("\n##########")
-
-    run_omicade({**config['GLOBAL_PARAMS'], **config['OMICADE']})
-
-    logger.info("##########\n")
 
 def mvae_impute(config: dict):
     from src.MVAE.evaluate import predict
