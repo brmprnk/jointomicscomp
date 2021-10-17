@@ -10,32 +10,21 @@ from src.MVIB.utils.data import MultiOmicsDataset
 from src.util import logger
 from src.util.umapplotter import UMAPPlotter
 from tensorboardX import SummaryWriter
+from src.util.early_stopping import EarlyStopping
 
 
 def run(args: dict) -> None:
     logger.success("Now starting MVIB")
-    print(training_module)
 
+    # Create save directory
     save_dir = os.path.join(args['save_dir'], '{}'.format('MVIB'))
     os.makedirs(save_dir)
-    #
-    # parser.add_argument("--data-dir", type=str, default='.', help="Root path for the datasets.")
-    # parser.add_argument("--no-logging", action="store_true", help="Disable tensorboard logging")
-    # parser.add_argument("--overwrite", action="store_true",
-    # 					help="Force the over-writing of the previous experiment in the specified directory.")
-    # parser.add_argument("--device", type=str, default="cuda:0",
-    # 					help="Device on which the experiment is executed (as for tensor.device). Specify 'cpu' to "
-    # 						 "force execution on CPU.")
-    # parser.add_argument("--num-workers", type=int, default=8,
-    # 					help="Number of CPU threads used during the data loading procedure.")
-    # parser.add_argument("--batch-size", type=int, default=64, help="Batch size used for the experiments.")
-    # parser.add_argument("--load-model-file", type=str, default=None,
-    # 					help="Checkpoint to load for the experiments. Note that the specified configuration file needs "
-    # 						 "to be compatible with the checkpoint.")
-    # parser.add_argument("--checkpoint-every", type=int, default=50, help="Frequency of model checkpointing (in epochs).")
-    # parser.add_argument("--backup-every", type=int, default=5, help="Frequency of model backups (in epochs).")
-    # parser.add_argument("--evaluate-every", type=int, default=5, help="Frequency of model evaluation.")
-    # parser.add_argument("--epochs", type=int, default=1000, help="Total number of training epochs")
+
+    # Create directories for checkpoint, sample and logs files
+    ckpt_dir = save_dir + '/checkpoint'
+    if not os.path.exists(ckpt_dir):
+        os.makedirs(ckpt_dir)
+    logs_dir = save_dir + '/logs'
 
     tf_logger = SummaryWriter(save_dir)
     overwrite = args['overwrite']
@@ -77,20 +66,23 @@ def run(args: dict) -> None:
         # Select a subset 100 samples (10 for each per label)
         # train_subset = split(train_set, 100, 'Balanced')
 
+    # Setup early stopping, terminates training when validation loss does not improve for early_stopping_patience epochs
+    early_stopping = EarlyStopping(patience=args['early_stopping_patience'], verbose=True)
     # Instantiating the trainer according to the specified configuration
     TrainerClass = getattr(training_module, args['trainer'])
-    trainer = TrainerClass(log_loss_every=len(train_loader), writer=tf_logger, **{
-        'z_dim': args['z_dim'],
-        'input_dim1': args['input_dim1'],
-        'input_dim2': args['input_dim2'],
-        'optimizer_name': args['optimizer_name'],
-        'encoder_lr': args['encoder_lr'],
-        'miest_lr': args['miest_lr'],
-        'beta_start_value': args['beta_start_value'],
-        'beta_end_value': args['beta_end_value'],
-        'beta_n_iterations': args['beta_n_iterations'],
-        'beta_start_iteration': args['beta_start_iteration']
-    })
+    trainer = TrainerClass(log_loss_every=len(train_loader), writer=tf_logger,
+                           **{
+                               'z_dim': args['z_dim'],
+                               'input_dim1': args['input_dim1'],
+                               'input_dim2': args['input_dim2'],
+                               'optimizer_name': args['optimizer_name'],
+                               'encoder_lr': args['encoder_lr'],
+                               'miest_lr': args['miest_lr'],
+                               'beta_start_value': args['beta_start_value'],
+                               'beta_end_value': args['beta_end_value'],
+                               'beta_n_iterations': args['beta_n_iterations'],
+                               'beta_start_iteration': args['beta_start_iteration']
+                           })
 
     # Resume the training if specified
     if resume_training:
@@ -98,13 +90,9 @@ def run(args: dict) -> None:
 
     # Moving the models to the specified device
     trainer.to(device)
-
     trainer.double()
 
-
-
-    ##########
-
+    # Begin training loop
     for epoch in tqdm(range(args['epochs'])):
         for data in tqdm(train_loader):
             trainer.train_step(data)
@@ -126,7 +114,18 @@ def run(args: dict) -> None:
 
         if epoch % args['log_save_interval'] == 0:
             tqdm.write('Storing model checkpoint')
-            trainer.save(os.path.join(save_dir, 'checkpoint_%d.pt' % epoch))
+            trainer.save(os.path.join(ckpt_dir, 'checkpoint_%d.pt' % epoch))
+
+        # Check for early stopping
+        early_stopping(np.mean(trainer.loss_items['loss/total_L']))
+
+        print("Epoch {}: Total loss = {}\n".format(epoch, trainer.loss_items['loss/total_L'][0]))
+
+        # Stop training when not improving
+        if early_stopping.early_stop:
+            logger.info('Early stopping training since loss did not improve for {} epochs.'
+                        .format(trainer.early_stop.patience))
+            break
 
     # Extract Phase #
 
@@ -142,19 +141,21 @@ def run(args: dict) -> None:
 
         datasetExtract = MultiOmicsDataset(dataExtract1, dataExtract2, cancer_type_index[test_ind])
 
-        train_loader = DataLoader(datasetExtract, batch_size=args['batch_size'], shuffle=False, num_workers=0)
+        # Use 1 batch
+        test_data_loader = DataLoader(datasetExtract, batch_size=len(dataExtract1), shuffle=False, num_workers=0)
 
         # Compute imputation loss
 
         with torch.no_grad():  # set all 'requires_grad' to False
-            for data in train_loader:
-
+            for data in test_data_loader:
                 omic1_test = data[0]
                 omic2_test = data[1]
 
+                np.save("omic1_test.npy", omic1_test)
+
                 # Encode test set in same encoder
-                z1 = trainer.encoder_v1(omic1_test)
-                z2 = trainer.encoder_v2(omic2_test)
+                z1 = trainer.encoder_v1(omic1_test).mean.numpy()
+                z2 = trainer.encoder_v2(omic2_test).mean.numpy()
 
                 np.save("{}/task1_z1.npy".format(save_dir), z1)
                 np.save("{}/task1_z2.npy".format(save_dir), z2)
@@ -166,14 +167,14 @@ def run(args: dict) -> None:
                                                        "Epochs: {}, Latent Dimension: {}, LR: {}, Batch size: {}"
                                       .format(args['task'], args['data1'], args['data2'],
                                               args['epochs'], args['z_dim'], args['encoder_lr'], args['batch_size']),
-                                      save_dir + "/{} UMAP.png".format('CGAE'))
+                                      save_dir + "/MVIB Z1 UMAP.png")
                 z1_plot.plot()
 
                 z2_plot = UMAPPlotter(z2, test_labels, "MVIB Z2: Task {} | {} & {} \n"
                                                        "Epochs: {}, Latent Dimension: {}, LR: {}, Batch size: {}"
                                       .format(args['task'], args['data1'], args['data2'],
                                               args['epochs'], args['z_dim'], args['encoder_lr'], args['batch_size']),
-                                      save_dir + "/{} UMAP.png".format('CGAE'))
+                                      save_dir + "/MVIB Z2 UMAP.png")
                 z2_plot.plot()
 
                 # Now decode data in different decoder
