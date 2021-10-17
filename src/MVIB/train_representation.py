@@ -129,9 +129,9 @@ def run(args: dict) -> None:
 
     # Extract Phase #
 
-    # Imputation
+    # Imputation (not clearly defined since there is no decoder, simply save the two encoders' Z)
     if args['task'] == 1:
-        logger.info("Imputation: Extracting Z1 and Z2 using test set")
+        logger.info("MVIB has no imputation: Extracting Z1 and Z2 using test set")
 
         dataExtract1 = omic1[test_ind]
         dataExtract2 = omic2[test_ind]
@@ -150,8 +150,6 @@ def run(args: dict) -> None:
             for data in test_data_loader:
                 omic1_test = data[0]
                 omic2_test = data[1]
-
-                np.save("omic1_test.npy", omic1_test)
 
                 # Encode test set in same encoder
                 z1 = trainer.encoder_v1(omic1_test).mean.numpy()
@@ -176,17 +174,3 @@ def run(args: dict) -> None:
                                               args['epochs'], args['z_dim'], args['encoder_lr'], args['batch_size']),
                                       save_dir + "/MVIB Z2 UMAP.png")
                 z2_plot.plot()
-
-                # Now decode data in different decoder
-                # ge_from_me = net.decoder(z2)
-                # me_from_ge = net.decoder2(z1)
-                #
-                # imputation_loss_ge = mean_squared_error(ge_test, ge_from_me)
-                # imputation_loss_me = mean_squared_error(me_test, me_from_ge)
-                #
-                # print("z1", imputation_loss_ge, "z2", imputation_loss_me)
-                #
-                # logger.info("Imputation Loss for Gene Expression: ".format(imputation_loss_ge))
-                # logger.info("Imputation Loss for Methylation: ".format(imputation_loss_me))
-                # np.save("{}/task1_z1.npy".format(save_dir), z1)
-                # np.save("{}/task1_z2.npy".format(save_dir), z2)
