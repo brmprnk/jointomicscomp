@@ -23,6 +23,7 @@ GLOBAL_PARAMS:
   y_ctype_val_file: "/home/bram/jointomicscomp/data/BRCA/BRCA_ME_valid.npy"
   x_ctype_test_file: "/home/bram/jointomicscomp/data/BRCA/BRCA_GE_test.npy"
   y_ctype_test_file: "/home/bram/jointomicscomp/data/BRCA/BRCA_ME_test.npy"
+  ctype_test_file_labels: "/home/bram/jointomicscomp/data/BRCA/BRCA_test_stageType.npy"
 
 BASELINE:
   task: 'classify'               # whether to `impute` one datasource from the other, `classify` (cell type), or `rank` (stage prediction)
