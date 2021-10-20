@@ -5,6 +5,7 @@
 [![MIT License](https://img.shields.io/apm/l/atomic-design-ui.svg?)](https://github.com/tterb/atomic-design-ui/blob/master/LICENSEs)
 
 Wrapper and implementation for comparing five models for multiomics data integration; MOFA+, Mixture-of-Experts, Product-of-Experts, Multi-view Info Bottleneck, and CGAE models.
+MOST RECENT UPDATES ARE FOUND IN THE ```dev``` BRANCH!
 
 ## Installation
 <!---
