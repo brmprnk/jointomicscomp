@@ -1,5 +1,5 @@
 GLOBAL_PARAMS:
-  name: "task2experiment"
+  name: "brca2_geme"
   task: 2
   ctype: "BRCA"
   ctype_sample_names: "/home/bram/jointomicscomp/data/BRCA/BRCA_sampleNames.npy"
@@ -13,17 +13,17 @@ GLOBAL_PARAMS:
   num_features: 5000
   cuda: true
   random_seed: 1
-  validation_fraction: 0.1
   x_train_file: "/home/bram/jointomicscomp/data/BRCA/rest_GE_train.npy"
   y_train_file: "/home/bram/jointomicscomp/data/BRCA/rest_ME_train.npy"
-  x_valid_file: "/home/bram/jointomicscomp/data/BRCA/rest_GE_valid.npy"
-  y_valid_file: "/home/bram/jointomicscomp/data/BRCA/rest_ME_valid.npy"
+  x_val_file: "/home/bram/jointomicscomp/data/BRCA/rest_GE_valid.npy"
+  y_val_file: "/home/bram/jointomicscomp/data/BRCA/rest_ME_valid.npy"
   x_ctype_train_file: "/home/bram/jointomicscomp/data/BRCA/BRCA_GE_train.npy"
   y_ctype_train_file: "/home/bram/jointomicscomp/data/BRCA/BRCA_ME_train.npy"
-  x_ctype_valid_file: "/home/bram/jointomicscomp/data/BRCA/BRCA_GE_valid.npy"
-  y_ctype_valid_file: "/home/bram/jointomicscomp/data/BRCA/BRCA_ME_valid.npy"
+  x_ctype_val_file: "/home/bram/jointomicscomp/data/BRCA/BRCA_GE_valid.npy"
+  y_ctype_val_file: "/home/bram/jointomicscomp/data/BRCA/BRCA_ME_valid.npy"
   x_ctype_test_file: "/home/bram/jointomicscomp/data/BRCA/BRCA_GE_test.npy"
   y_ctype_test_file: "/home/bram/jointomicscomp/data/BRCA/BRCA_ME_test.npy"
+  ctype_test_file_labels: "/home/bram/jointomicscomp/data/BRCA/BRCA_test_stageType.npy"
 
 BASELINE:
   task: 'classify'               # whether to `impute` one datasource from the other, `classify` (cell type), or `rank` (stage prediction)
@@ -83,7 +83,7 @@ MVIB:
   log_interval: 5
 
 CGAE:
-  epochs: 40
+  epochs: 60
   batch_size: 256
   latent_dim: 128
   enc1_lr: 0.0001

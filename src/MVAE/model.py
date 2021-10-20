@@ -11,12 +11,12 @@ class MVAE(nn.Module):
     def __init__(self, use_mixture=False, latent_dim=100, use_cuda=False):
         super(MVAE, self).__init__()
         # define q(z|x_i) for i = 1...2
-        self.ge_encoder = Encoder(latent_dim)
-        self.me_encoder = Encoder(latent_dim)
+        self.omic1_encoder = Encoder(latent_dim)
+        self.omic2_encoder = Encoder(latent_dim)
 
         # define p(x_i|z) for i = 1...2
-        self.ge_decoder = Decoder(latent_dim)
-        self.me_decoder = Decoder(latent_dim)
+        self.omic1_decoder = Decoder(latent_dim)
+        self.omic2_decoder = Decoder(latent_dim)
 
         # define q(z|x) = q(z|x_1)...q(z|x_6)
         self.experts = ProductOfExperts()
@@ -29,6 +29,7 @@ class MVAE(nn.Module):
 
         self.latent_dim = latent_dim
         self.use_cuda = use_cuda
+        self.training = False
 
     def reparameterize(self, mu, logvar):
         if self.training:
@@ -38,73 +39,73 @@ class MVAE(nn.Module):
         else:  # return mean during inference
             return mu
 
-    def extract(self, ge=None, me=None):
+    def extract(self, omic1=None, omic2=None):
 
         if self.use_mixture:
-            mu, logvar = self.get_mixture_params(ge=ge, me=me)
+            mu, logvar = self.get_mixture_params(omic1=omic1, omic2=omic2)
         else:
-            mu, logvar = self.get_product_params(ge=ge, me=me)
+            mu, logvar = self.get_product_params(omic1=omic1, omic2=omic2)
 
         # re-parameterization trick to sample
         z = self.reparameterize(mu, logvar)
 
         return z
 
-    def forward(self, ge=None, me=None):
+    def forward(self, omic1=None, omic2=None):
 
         if self.use_mixture:
-            mu, logvar = self.get_mixture_params(ge=ge, me=me)
+            mu, logvar = self.get_mixture_params(omic1=omic1, omic2=omic2)
         else:
-            mu, logvar = self.get_product_params(ge=ge, me=me)
+            mu, logvar = self.get_product_params(omic1=omic1, omic2=omic2)
 
         # re-parameterization trick to sample
         z = self.reparameterize(mu, logvar)
 
         # reconstruct inputs based on sample
-        ge_recon = self.ge_decoder(z)
-        me_recon = self.me_decoder(z)
+        omic1_recon = self.omic1_decoder(z)
+        omic2_recon = self.omic2_decoder(z)
 
-        return ge_recon, me_recon, mu, logvar
+        return omic1_recon, omic2_recon, mu, logvar
 
-    def get_product_params(self, ge=None, me=None):
+    def get_product_params(self, omic1=None, omic2=None):
         # define universal expert
-        batch_size = get_batch_size(ge, me)
+        batch_size = get_batch_size(omic1, omic2)
         # initialize the universal prior expert
         mu, logvar = prior_expert((1, batch_size, self.latent_dim))
 
-        if ge is not None:
-            ge_mu, ge_logvar = self.ge_encoder(ge)
+        if omic1 is not None:
+            omic1_mu, omic1_logvar = self.omic1_encoder(omic1)
 
-            mu = torch.cat((mu, ge_mu.unsqueeze(0)), dim=0)
-            logvar = torch.cat((logvar, ge_logvar.unsqueeze(0)), dim=0)
+            mu = torch.cat((mu, omic1_mu.unsqueeze(0)), dim=0)
+            logvar = torch.cat((logvar, omic1_logvar.unsqueeze(0)), dim=0)
 
-        if me is not None:
-            me_mu, me_logvar = self.me_encoder(me)
+        if omic2 is not None:
+            omic2_mu, omic2_logvar = self.omic2_encoder(omic2)
 
-            mu = torch.cat((mu, me_mu.unsqueeze(0)), dim=0)
-            logvar = torch.cat((logvar, me_logvar.unsqueeze(0)), dim=0)
+            mu = torch.cat((mu, omic2_mu.unsqueeze(0)), dim=0)
+            logvar = torch.cat((logvar, omic2_logvar.unsqueeze(0)), dim=0)
 
         # product of experts to combine Gaussian's
         mu, logvar = self.experts(mu, logvar)
 
         return mu, logvar
 
-    def get_mixture_params(self, ge=None, me=None):
+    def get_mixture_params(self, omic1=None, omic2=None):
 
         mu = []
         logvar = []
 
-        if ge is not None:
-            ge_mu, ge_logvar = self.ge_encoder(ge)
+        if omic1 is not None:
+            omic1_mu, omic1_logvar = self.omic1_encoder(omic1)
 
-            mu.append(ge_mu.unsqueeze(0))
-            logvar.append(ge_logvar.unsqueeze(0))
+            mu.append(omic1_mu.unsqueeze(0))
+            logvar.append(omic1_logvar.unsqueeze(0))
 
-        if me is not None:
-            me_mu, me_logvar = self.me_encoder(me)
+        if omic2 is not None:
+            omic2_mu, omic2_logvar = self.omic2_encoder(omic2)
 
-            mu.append(me_mu.unsqueeze(0))
-            logvar.append(me_logvar.unsqueeze(0))
+            mu.append(omic2_mu.unsqueeze(0))
+            logvar.append(omic2_logvar.unsqueeze(0))
 
         # mixture of experts to combine Gaussian's
         mu, logvar = self.mixture(mu, logvar)
@@ -112,11 +113,11 @@ class MVAE(nn.Module):
         return mu, logvar
 
 
-def get_batch_size(ge, me):
-    if ge is None:
-        return me.size(0)
+def get_batch_size(omic1, omic2):
+    if omic1 is None:
+        return omic2.size(0)
     else:
-        return ge.size(0)
+        return omic1.size(0)
 
 
 class Encoder(nn.Module):

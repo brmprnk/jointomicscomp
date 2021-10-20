@@ -1,25 +1,25 @@
 GLOBAL_PARAMS:
-  name: "experiment"
+  name: "cell_task1"
   task: 1
-  data1: "GCN"
-  data2: "ME"
-  data_path1: "/home/bram/jointomicscomp/data/GCN.npy"
-  data_path2: "/home/bram/jointomicscomp/data/ME.npy"
-  data_features1: "/home/bram/jointomicscomp/data/GCN_featureNames.npy"
-  data_features2: "/home/bram/jointomicscomp/data/ME_featureNames.npy"
-  sample_names: "/home/bram/jointomicscomp/data/sampleNames.npy"
-  cancer_type_index: "/home/bram/jointomicscomp/data/cancerType.npy"
-  cancertypes: "/home/bram/jointomicscomp/data/cancerTypes.npy"
   num_features: 5000
   cuda: true
   random_seed: 1
-  validation_fraction: 0.1
-  x_train_file: "/home/bram/jointomicscomp/data/task1/GCN_train.npy"
-  y_train_file: "/home/bram/jointomicscomp/data/task1/ME_train.npy"
-  x_val_file: "/home/bram/jointomicscomp/data/task1/GCN_val.npy"
-  y_val_file: "/home/bram/jointomicscomp/data/task1/ME_val.npy"
-  x_test_file: "/home/bram/jointomicscomp/data/task1/GCN_test.npy"
-  y_test_file: "/home/bram/jointomicscomp/data/task1/ME_test.npy"
+  no_logging: false
+  data1: "CELL RNA"
+  data2: "CELL Protein"
+  data_path1: "/home/bram/jointomicscomp/data/GE.npy"
+  data_path2: "/home/bram/jointomicscomp/data/GCN.npy"
+  data_features1: "/home/bram/jointomicscomp/data/GE_featureNames.npy"
+  data_features2: "/home/bram/jointomicscomp/data/GCN_featureNames.npy"
+  sample_names: "/home/bram/jointomicscomp/data/sampleNames.npy"
+  cancer_type_index: "/home/bram/jointomicscomp/data/cancerType.npy"
+  cancertypes: "/home/bram/jointomicscomp/data/cancerTypes.npy"
+  x_train_file: "/home/bram/jointomicscomp/data/task1/GE_train.npy"
+  y_train_file: "/home/bram/jointomicscomp/data/task1/GCN_train.npy"
+  x_val_file: "/home/bram/jointomicscomp/data/task1/GE_val.npy"
+  y_val_file: "/home/bram/jointomicscomp/data/task1/GCN_val.npy"
+  x_test_file: "/home/bram/jointomicscomp/data/task1/GE_test.npy"
+  y_test_file: "/home/bram/jointomicscomp/data/task1/GCN_test.npy"
 
 BASELINE:
   task: 'impute'               # whether to `impute` one datasource from the other, `classify` (cell type), or `rank` (stage prediction)
@@ -33,7 +33,7 @@ MOFA+:
   scale_views: false           # if views have significantly different ranges, it is good practice to scale each view to unit variance
 
   # Model options
-  pre_trained: "/home/bram/jointomicscomp/results/mofa_gcnme 13-09-2021 20:58:45/MOFA+/GCN_ME_trained_MOFA_model.hdf5"              # Use a pre-trained model for downstream analysis
+  pre_trained: "/home/bram/jointomicscomp/results/mofa_gegcn 14-09-2021 07:52:01/MOFA+/GE_GCN_trained_MOFA_model.hdf5"              # Use a pre-trained model for downstream analysis
   factors: 128
   likelihoods: None            # likelihoods per view (options are "gaussian","poisson","bernoulli").
                                #     Default is None, and they are infered automatically
@@ -59,10 +59,10 @@ MVAE:
   plot: True     # Flag for plotting training and validation losses (loss, recon loss and KL loss)
 
   # Model optionsmain.yaml
-  pre_trained: "/home/bram/jointomicscomp/results/gcnme_moe_poe 13-09-2021 23_25_30/gcnme_moe_poe 13-09-2021 23:25:30/PoE/best_model.pth.tar"
+  pre_trained: "/home/bram/jointomicscomp/results/gegcn_moe_poe 13-09-2021 22_58_48/gegcn_moe_poe 13-09-2021 22:58:48/PoE/best_model.pth.tar"
   latent_dim: 128
   batch_size: 256
-  epochs: 5
+  epochs: 60
   lr: 0.0001
 
   # Other parameters
@@ -79,9 +79,9 @@ MVIB:
   log_interval: 5
 
 CGAE:
-  epochs: 60
-  latent_dim: 128
+  epochs: 1000
   batch_size: 256
+  latent_dim: 128
   enc1_lr: 0.0001
   dec1_lr: 0.0001
   enc2_lr: 0.0001
