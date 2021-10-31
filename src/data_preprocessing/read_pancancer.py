@@ -303,7 +303,7 @@ if __name__ == '__main__':
 	tss2cancerType, cancerType = getTss2cancerType(tss)
 	nameLong2short, nameLong2y, classNames = cancerShortNames()
 
-	y = np.array([nameLong2y[c] for c in cancerType])
+	y = np.array([nameLodng2y[c] for c in cancerType])
 
 	#class 8 ESCA is not present
 	del classNames[8]

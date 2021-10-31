@@ -618,6 +618,7 @@ class MultiOmicVAE(MultiOmicRepresentationLearner):
 
 
 	def compute_loss(self, x1, x2):
+		#qz_x in MoE
 		z1 = self.encoder(x1)
 		z1mean = z1.mean
 		z1std = z1.stddev

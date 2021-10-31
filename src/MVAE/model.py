@@ -6,6 +6,8 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 
+from src.nets import MultiOmicVAE
+
 
 class MVAE(nn.Module):
     def __init__(self, use_mixture=False, latent_dim=100, use_cuda=False):
@@ -220,39 +222,92 @@ class ProductOfExperts(nn.Module):
         return pd_mu, pd_logvar
 
 
-class MixtureOfExperts(nn.Module):
+class MixtureOfExperts(MultiOmicVAE):
     """Return parameters for mixture of independent experts.
     See https://papers.nips.cc/paper/2019/file/0ae775a8cb3b499ad1fca944e6f5c836-Paper.pdf for equations.
     https://en.wikipedia.org/wiki/Sum_of_normally_distributed_random_variables
     Z = W + X + Y gives Z ~ N(mu_w + mu_x + mu_y, var_x^2 + var_x^2 + var_y^2)
     """
 
-    @classmethod
-    def forward(cls, mu, logvar, eps=1e-8):
-        """
-        @param mu: list of M x D for M experts
-        @param logvar: list of M x D for M experts
-        @param eps: A small constant
-        @return:
-        """
-        # Combine Gaussians
+    def __init__(self, input_dim1, input_dim2, enc_hidden_dim=[100], dec_hidden_dim=[], loss1='bce', loss2='bce',
+                 use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder1_lr=1e-4, decoder1_lr=1e-4,
+                 enc1_lastActivation='none', enc1_outputScale=1., encoder2_lr=1e-4, decoder2_lr=1e-4,
+                 enc2_lastActivation='none', enc2_outputScale=1., beta=1.0):
+        super(MixtureOfExperts, self).__init__(input_dim1, input_dim2, enc_hidden_dim, dec_hidden_dim, loss1, loss2,
+                                               use_batch_norm, dropoutP,
+                                           optimizer_name, encoder1_lr, decoder1_lr, enc1_lastActivation, enc1_outputScale,
+                                           encoder2_lr, decoder2_lr, enc2_lastActivation, enc2_outputScale, beta)
 
-        # Add mu's
-        mu = torch.cat(mu, dim=0)
-        mx_mu = torch.sum(mu, dim=0) / 3  # For 3 VAE's
+        self.input_dim1 = input_dim1
+        self.input_dim2 = input_dim2
 
-        # Add variances squared
-        var_squared = []
-        for i in range(len(logvar)):
-            var = torch.exp(logvar[i]) + eps
-            var_squared.append(torch.square(var))
 
-        # Divide by 3 for mean, then take log variance
-        mx_var = torch.cat(var_squared, dim=0)
-        mx_var = torch.sum(mx_var, dim=0) / 3
-        mx_logvar = torch.log(mx_var + eps)
+        self.pz = torch.distributions.Laplace(torch.zeros(1, enc_hidden_dim[-1]), torch.ones(1, enc_hidden_dim[-1]))
+        # Using this, loss is ignored
+        self.px_z = torch.distributions.Normal
+        self.qz_x = torch.distributions.Laplace(torch.zeros(1, enc_hidden_dim[-1]), torch.ones(1, enc_hidden_dim[-1]))
 
-        return mx_mu, mx_logvar
+    def forward(self, x, K):
+        # qz_x in MoE
+        x1, x2 = x
+
+        z1 = self.encoder(x1)
+        z1sample = z1.rsample(torch.Size([K]))  # zs from MoE
+
+        x1_hat = self.decoder(z1sample)
+
+        z2 = self.encoder2(x2)
+        z2sample = z2.rsample(torch.Size([K]))  # zs from MoE
+        x2_hat = self.decoder2(z2sample)
+
+        # From Mixture of Experts
+        qz_xs = [z1, z2]
+        zss = [z1sample, z2sample]
+
+        # star_of_z2samples = []
+        # for i in range(K):
+        #     star_of_z2samples.append(self.decoder(z2sample[i]))
+
+        x1_cross_hat = self.decoder(z2sample)
+
+        x2_cross_hat = self.decoder2(z1sample)
+
+        px_zs = [[torch.distributions.Normal(x1_hat, torch.ones(self.input_dim1)), torch.distributions.Normal(x2_cross_hat, self.input_dim2)],
+                 [torch.distributions.Normal(x1_cross_hat, torch.ones(self.input_dim1)), torch.distributions.Normal(x2_hat, self.input_dim2)]]
+
+        return qz_xs, px_zs, zss
+
+    def compute_microbatch_split(self, x, K):
+        """ Checks if batch needs to be broken down further to fit in memory. """
+        B = x[0].size(0) if is_multidata(x) else x.size(0)
+        S = sum([1.0 / (K * prod(_x.size()[1:])) for _x in x]) if is_multidata(x) \
+            else 1.0 / (K * prod(x.size()[1:]))
+        S = int(1e8 * S)  # float heuristic for 12Gb cuda memory
+        assert (S > 0), "Cannot fit individual data in memory, consider smaller K"
+        return min(B, S)
+
+    def _m_iwae(self, x, K=1):
+        """IWAE estimate for log p_\theta(x) for multi-modal vae -- fully vectorised"""
+        qz_xs, px_zs, zss = self.forward(x, K)
+        lws = []
+        for r, qz_x in enumerate(qz_xs):
+            lpz = model.pz(*model.pz_params).log_prob(zss[r]).sum(-1)
+            lqz_x = log_mean_exp(torch.stack([qz_x.log_prob(zss[r]).sum(-1) for qz_x in qz_xs]))
+            lpx_z = [px_z.log_prob(x[d]).view(*px_z.batch_shape[:2], -1)
+                         .mul(model.vaes[d].llik_scaling).sum(-1)
+                     for d, px_z in enumerate(px_zs[r])]
+            lpx_z = torch.stack(lpx_z).sum(0)
+            lw = lpz + lpx_z - lqz_x
+            lws.append(lw)
+        return torch.cat(lws)  # (n_modality * n_samples) x batch_size, batch_size
+
+    def compute_loss(model, x, K=1):
+        """Computes iwae estimate for log p_\theta(x) for multi-modal vae """
+        S = self.compute_microbatch_split(x, K)
+        x_split = zip(*[_x.split(S) for _x in x])
+        lw = [_m_iwae(model, _x, K) for _x in x_split]
+        lw = torch.cat(lw, 1)  # concat on batch
+        return log_mean_exp(lw).sum()
 
 
 def prior_expert(size, use_cuda=False):

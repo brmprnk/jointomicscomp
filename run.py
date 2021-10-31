@@ -95,8 +95,6 @@ def main() -> None:
     logger.success("Starting : {}".format(args.experiment))
     logger.success("Savind to : {}".format(save_dir))
 
-    print(args)
-
     # Check for utility arguments, run only these and exit program
     if args.survival:
         from src.survival import run as survival_comparison

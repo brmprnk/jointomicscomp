@@ -8,7 +8,7 @@ RUN FACTORIZATIONS BEFOREHAND.
 """
 import os
 # R needs to be installed, and this path needs to be set to the R_Home folder, found by running R.home() in R console.
-os.environ['R_HOME'] = "/usr/lib/R"
+os.environ['R_HOME'] = "/Library/Frameworks/R.framework/Resources"
 import numpy as np
 import rpy2.robjects as robjects
 import rpy2.robjects.packages as rpackages
@@ -27,7 +27,7 @@ def run(args: dict) -> None:
     os.makedirs(save_dir)
 
     # Take factorizations:
-    z = np.load("/home/bram/jointomicscomp/results/MVAE Task 1 FINAL GEGCN/PoE/task1_z.npy")
+    z = np.load("/Users/bram/Downloads/task1_z.npy")
 
     survival(z, save_dir=save_dir)
 
@@ -47,19 +47,22 @@ def survival(z, save_dir: str) -> None:
     # import R's "utils" package
     utils = rpackages.importr('utils')
 
-    # select a mirror for R packages
-    utils.chooseCRANmirror(ind=1)  # select the first mirror in the list
+    # # select a mirror for R packages
+    # utils.chooseCRANmirror(ind=1)  # select the first mirror in the list
 
-    # MOFA required R package names
-    package_names = ('ggplot2', 'MOFA2')
+    # # MOFA required R package names
+    # package_names = ('survival')
 
-    # R vector of strings
-    from rpy2.robjects.vectors import StrVector
+    # # R vector of strings
+    # from rpy2.robjects.vectors import StrVector
 
-    # Selectively install what needs to be installed
-    names_to_install = [x for x in package_names if not rpackages.isinstalled(x)]
-    if len(names_to_install) > 0:
-        utils.install_packages(StrVector(names_to_install))
+    # # Selectively install what needs to be installed
+    # names_to_install = [x for x in package_names if not rpackages.isinstalled(x)]
+    # if len(names_to_install) > 0:
+    #     utils.install_packages(StrVector(names_to_install))
+
+    print("okaokok")
+
 
     robjects.r('''
             library('survival')
@@ -130,17 +133,17 @@ def survival(z, save_dir: str) -> None:
             #    print(factors_cancer)
                 return(factors_cancer)
             }
-
             ''')
 
-    nr, nc = z.shape
-    print(nr, nc)
-    Br = rpy2.robjects.r.matrix(z, nrow=nr, ncol=nc)
+    # nr, nc = z.shape
+    # print(nr, nc)
+    # Br = rpy2.robjects.r.matrix(z, nrow=nr, ncol=nc)
 
-    rpy2.robjects.r.assign("z", Br)
+    # rpy2.robjects.r.assign("z", Br)
 
-    print(Br)
+    # print(Br)
 
     # run R code
+    print("Running R  function")
     survival_comparison = robjects.globalenv['survival_comparison']
     # survival_comparison(save_dir, model_file)
