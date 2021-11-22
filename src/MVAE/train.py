@@ -64,57 +64,79 @@ def train(args, model, train_loader, optimizer, epoch, tf_logger):
     train_loss_per_batch = np.zeros(len(train_loader))
     train_recon_loss_per_batch = np.zeros(len(train_loader))
     train_kl_loss_per_batch = np.zeros(len(train_loader))
-    for batch_idx, (omic1, omic2) in enumerate(train_loader):
-        # refresh the optimizer
-        optimizer.zero_grad()
 
-        kld_weight = len(omic1) / len(train_loader.dataset)  # Account for the minibatch samples from the dataset
+    # Incorporate MMVAE training function
+    if model.use_mixture:
 
-        # compute reconstructions using all the modalities
-        (joint_recon_omic1, joint_recon_omic2, joint_mu, joint_logvar) = model.forward(omic1, omic2)
+        b_loss = 0
+        for batch_idx, (omic1, omic2) in enumerate(train_loader):
+            # refresh the optimizer
+            optimizer.zero_grad()
 
-        # compute reconstructions using each of the individual modalities
-        (omic1_recon_ge, omic1_recon_me, omic1_mu, omic1_logvar) = model.forward(omic1=omic1)
+            loss = -model.forward(omic1, omic2)
+            loss.backward()
+            optimizer.step()
+            b_loss += loss.item()
 
-        (omic2_recon_ge, omic2_recon_me, omic2_mu, omic2_logvar) = model.forward(omic2=omic2)
+            progress_bar.update()
+            train_loss_per_batch[batch_idx] = loss.item()
 
-        # Compute joint train loss
-        joint_train_loss = loss_function(joint_recon_omic1, omic1,
-                                         joint_recon_omic2, omic2,
-                                         joint_mu, joint_logvar, kld_weight)
+    else:
+        for batch_idx, (omic1, omic2) in enumerate(train_loader):
+            # refresh the optimizer
+            optimizer.zero_grad()
 
-        # compute loss with single modal inputs
-        omic1_train_loss = loss_function(omic1_recon_ge, omic1,
-                                      omic1_recon_me, omic2,
-                                      omic1_mu, omic1_logvar, kld_weight)
+            kld_weight = len(omic1) / len(train_loader.dataset)  # Account for the minibatch samples from the dataset
 
-        omic2_train_loss = loss_function(omic2_recon_ge, omic1,
-                                      omic2_recon_me, omic2,
-                                      omic2_mu, omic2_logvar, kld_weight)
+            # compute reconstructions using all the modalities
+            (joint_recon_omic1, joint_recon_omic2, joint_mu, joint_logvar) = model.forward(omic1, omic2)
 
-        train_loss = joint_train_loss['loss'] + omic1_train_loss['loss'] + omic2_train_loss['loss']
-        train_loss_per_batch[batch_idx] = train_loss
-        train_recon_loss = joint_train_loss['Reconstruction_Loss'] + omic1_train_loss['Reconstruction_Loss'] + \
-                           omic2_train_loss['Reconstruction_Loss']
-        train_recon_loss_per_batch[batch_idx] = train_recon_loss
-        train_kld_loss = joint_train_loss['KLD'] + omic1_train_loss['KLD'] + omic2_train_loss['KLD']
-        train_kl_loss_per_batch[batch_idx] = train_kld_loss
+            # compute reconstructions using each of the individual modalities
+            (omic1_recon_ge, omic1_recon_me, omic1_mu, omic1_logvar) = model.forward(omic1=omic1)
 
-        # compute and take gradient step
-        train_loss.backward()
-        optimizer.step()
+            (omic2_recon_ge, omic2_recon_me, omic2_mu, omic2_logvar) = model.forward(omic2=omic2)
 
-        progress_bar.update()
+            # Compute joint train loss
+            joint_train_loss = loss_function(joint_recon_omic1, omic1,
+                                             joint_recon_omic2, omic2,
+                                             joint_mu, joint_logvar, kld_weight)
+
+            # compute loss with single modal inputs
+            omic1_train_loss = loss_function(omic1_recon_ge, omic1,
+                                          omic1_recon_me, omic2,
+                                          omic1_mu, omic1_logvar, kld_weight)
+
+            omic2_train_loss = loss_function(omic2_recon_ge, omic1,
+                                          omic2_recon_me, omic2,
+                                          omic2_mu, omic2_logvar, kld_weight)
+
+            train_loss = joint_train_loss['loss'] + omic1_train_loss['loss'] + omic2_train_loss['loss']
+            train_loss_per_batch[batch_idx] = train_loss
+            train_recon_loss = joint_train_loss['Reconstruction_Loss'] + omic1_train_loss['Reconstruction_Loss'] + \
+                               omic2_train_loss['Reconstruction_Loss']
+            train_recon_loss_per_batch[batch_idx] = train_recon_loss
+            train_kld_loss = joint_train_loss['KLD'] + omic1_train_loss['KLD'] + omic2_train_loss['KLD']
+            train_kl_loss_per_batch[batch_idx] = train_kld_loss
+
+            # compute and take gradient step
+            train_loss.backward()
+            optimizer.step()
+
+            progress_bar.update()
 
     progress_bar.close()
     if epoch % args['log_interval'] == 0:
-        tf_logger.add_scalar("train loss", train_loss_per_batch.mean(), epoch)
-        tf_logger.add_scalar("train reconstruction loss", train_recon_loss_per_batch.mean(), epoch)
-        tf_logger.add_scalar("train KL loss", train_kl_loss_per_batch.mean(), epoch)
+        if model.use_mixture:
+            tf_logger.add_scalar("train loss", train_loss_per_batch.mean(), epoch)
+            print('====> Epoch: {}\tLoss: {:.4f}'.format(epoch, train_loss_per_batch.mean()))
+        else:
+            tf_logger.add_scalar("train loss", train_loss_per_batch.mean(), epoch)
+            tf_logger.add_scalar("train reconstruction loss", train_recon_loss_per_batch.mean(), epoch)
+            tf_logger.add_scalar("train KL loss", train_kl_loss_per_batch.mean(), epoch)
 
-        print('====> Epoch: {}\tLoss: {:.4f}'.format(epoch, train_loss_per_batch.mean()))
-        print('====> Epoch: {}\tReconstruction Loss: {:.4f}'.format(epoch, train_recon_loss_per_batch.mean()))
-        print('====> Epoch: {}\tKLD Loss: {:.4f}'.format(epoch, train_kl_loss_per_batch.mean()))
+            print('====> Epoch: {}\tLoss: {:.4f}'.format(epoch, train_loss_per_batch.mean()))
+            print('====> Epoch: {}\tReconstruction Loss: {:.4f}'.format(epoch, train_recon_loss_per_batch.mean()))
+            print('====> Epoch: {}\tKLD Loss: {:.4f}'.format(epoch, train_kl_loss_per_batch.mean()))
 
 
 def test(args, model, val_loader, optimizer, epoch, tf_logger):
@@ -124,33 +146,45 @@ def test(args, model, val_loader, optimizer, epoch, tf_logger):
     validation_recon_loss = 0
     validation_kl_loss = 0
 
-    for batch_idx, (omic1, omic2) in enumerate(val_loader):
-        # for ease, only compute the joint loss in validation
-        (joint_recon_omic1, joint_recon_omic2, joint_mu, joint_logvar) = model.forward(omic1, omic2)
+    if model.use_mixture:
+        with torch.no_grad():
+            for batch_idx, (omic1, omic2)in enumerate(val_loader):
+                loss = -model.forward(omic1, omic2)
 
-        kld_weight = len(omic1) / len(val_loader.dataset)  # Account for the minibatch samples from the dataset
+                validation_loss += loss.item()
 
-        # Compute joint loss
-        joint_test_loss = loss_function(joint_recon_omic1, omic1,
-                                        joint_recon_omic2, omic2,
-                                        joint_mu, joint_logvar, kld_weight)
+    else:
+        for batch_idx, (omic1, omic2) in enumerate(val_loader):
+            # for ease, only compute the joint loss in validation
+            (joint_recon_omic1, joint_recon_omic2, joint_mu, joint_logvar) = model.forward(omic1, omic2)
 
-        validation_loss += joint_test_loss['loss']
-        validation_recon_loss += joint_test_loss['Reconstruction_Loss']
-        validation_kl_loss += joint_test_loss['KLD']
+            kld_weight = len(omic1) / len(val_loader.dataset)  # Account for the minibatch samples from the dataset
+
+            # Compute joint loss
+            joint_test_loss = loss_function(joint_recon_omic1, omic1,
+                                            joint_recon_omic2, omic2,
+                                            joint_mu, joint_logvar, kld_weight)
+
+            validation_loss += joint_test_loss['loss']
+            validation_recon_loss += joint_test_loss['Reconstruction_Loss']
+            validation_kl_loss += joint_test_loss['KLD']
 
     validation_loss /= len(val_loader)
     validation_recon_loss /= len(val_loader)
     validation_kl_loss /= len(val_loader)
 
     if epoch % args['log_interval'] == 0:
-        tf_logger.add_scalar("validation loss", validation_loss, epoch)
-        tf_logger.add_scalar("validation reconstruction loss", validation_recon_loss, epoch)
-        tf_logger.add_scalar("validation KL loss", validation_kl_loss, epoch)
+        if model.use_mixture:
+            tf_logger.add_scalar("validation loss", validation_loss, epoch)
+            print('====> Epoch: {}\tValidation Loss: {:.4f}'.format(epoch, validation_loss))
+        else:
+            tf_logger.add_scalar("validation loss", validation_loss, epoch)
+            tf_logger.add_scalar("validation reconstruction loss", validation_recon_loss, epoch)
+            tf_logger.add_scalar("validation KL loss", validation_kl_loss, epoch)
 
-        print('====> Epoch: {}\tValidation Loss: {:.4f}'.format(epoch, validation_loss))
-        print('====> Epoch: {}\tReconstruction Loss: {:.4f}'.format(epoch, validation_recon_loss))
-        print('====> Epoch: {}\tKLD Loss: {:.4f}'.format(epoch, validation_kl_loss))
+            print('====> Epoch: {}\tValidation Loss: {:.4f}'.format(epoch, validation_loss))
+            print('====> Epoch: {}\tReconstruction Loss: {:.4f}'.format(epoch, validation_recon_loss))
+            print('====> Epoch: {}\tKLD Loss: {:.4f}'.format(epoch, validation_kl_loss))
 
     return validation_loss
 
@@ -232,58 +266,120 @@ def run(args) -> None:
 
     # Imputation
     if args['task'] == 1:
-        logger.info("Task 1 Imputation: Extracting Z using test set")
+        # Correct me if I'm wrong, but we can just get the x1_cross_hat and x2_cross_hat
+        # from the model.forward
+        if model.use_mixture:
+            logger.info("Task 1 Imputation: Extracting Z using test set")
 
-        impute_dataset = tcga_data.get_data_partition("test")
+            impute_dataset = tcga_data.get_data_partition("test")
 
-        # 1 batch (whole test set)
-        impute_loader = torch.utils.data.DataLoader(impute_dataset, batch_size=len(impute_dataset), shuffle=False)
+            # 1 batch (whole test set)
+            impute_loader = torch.utils.data.DataLoader(impute_dataset, batch_size=len(impute_dataset), shuffle=False)
 
-        omic1_from_joint, omic2_from_joint, \
-        omic1_from_omic1, omic2_from_omic1, \
-        omic1_from_omic2, omic2_from_omic2 = impute(model, impute_loader)
+            # Will run only once, since batch size = len(impute_dataset)
+            for batch_idx, (omic1, omic2) in enumerate(impute_loader):
+                qz_xs, px_zs, zss = model.mixture.forward([omic1, omic2], K=1)
 
-        # Reconstruction losses
-        omic1_joint_reconstruction_loss = mean_squared_error(omic1_from_joint, impute_dataset.omic1_data)
-        omic1_reconstruction_loss = mean_squared_error(omic1_from_omic1, impute_dataset.omic1_data)
+                print(px_zs)
+                print(len(px_zs))
 
-        omic2_joint_reconstruction_loss = mean_squared_error(omic2_from_joint, impute_dataset.omic2_data)
-        omic2_reconstruction_loss = mean_squared_error(omic2_from_omic2, impute_dataset.omic2_data)
-        logger.info("Reconstruction loss for {} from {} : {}".
-                    format(args['data1'], "both omics", omic1_joint_reconstruction_loss))
-        logger.info("Reconstruction loss for {} from {} : {}".
-                    format(args['data1'], args['data1'], omic1_reconstruction_loss))
-        logger.info("Reconstruction loss for {} from {} : {}".
-                    format(args['data2'], "both omics", omic2_joint_reconstruction_loss))
-        logger.info("Reconstruction loss for {} from {} : {}".
-                    format(args['data2'], args['data2'], omic2_reconstruction_loss))
+                # Off-diagonal has x1_cross_hat, x2_cross_hat (of shape (1, test_set_samples, num_features))
+                x1_cross_hat = px_zs[0][0].mean.detach().numpy()[0]  # decoder of omic 1 getting sample from omic2
+                x2_cross_hat = px_zs[1][1].mean.detach().numpy()[0]  # decoder of omic 2 getting sample from omic1
+                x1_hat = px_zs[0][1].mean.detach().numpy()[0]
+                x2_hat = px_zs[1][0].mean.detach().numpy()[0]
 
-        # Imputation losses
-        omic1_imputation_loss = mean_squared_error(omic1_from_omic2, impute_dataset.omic1_data)
-        omic2_imputation_loss = mean_squared_error(omic2_from_omic1, impute_dataset.omic2_data)
-        logger.info("Imputation loss for {} from {} : {}".
-                    format(args['data1'], args['data2'], omic1_imputation_loss))
-        logger.info("Imputation loss for {} from {} : {}".
-                    format(args['data2'], args['data1'], omic2_imputation_loss))
+                # Reconstruction losses
+                omic1_reconstruction_loss = mean_squared_error(x1_hat, impute_dataset.omic1_data)
+                omic2_reconstruction_loss = mean_squared_error(x2_hat, impute_dataset.omic2_data)
 
-        # Get embeddings for UMAP
-        for omic1, omic2 in impute_loader: # Runs once since there is 1 batch
-            z = model.extract(omic1, omic2)
-            z = z.detach().numpy()
-            np.save("{}/task1_z.npy".format(save_dir), z)
+                logger.info("Reconstruction loss for {} from {} : {}".
+                            format(args['data1'], args['data1'], omic1_reconstruction_loss))
+                logger.info("Reconstruction loss for {} from {} : {}".
+                            format(args['data2'], args['data2'], omic2_reconstruction_loss))
 
-            labels, label_types, test_ind = tcga_data.get_labels_partition("test")
+                # Imputation losses
+                omic1_imputation_loss = mean_squared_error(x1_cross_hat, impute_dataset.omic1_data)
+                omic2_imputation_loss = mean_squared_error(x2_cross_hat, impute_dataset.omic2_data)
+                logger.info("Imputation loss for {} from {} : {}".
+                            format(args['data1'], args['data2'], omic1_imputation_loss))
+                logger.info("Imputation loss for {} from {} : {}".
+                            format(args['data2'], args['data1'], omic2_imputation_loss))
 
-            labels = labels[test_ind].astype(int)
-            sample_labels = label_types[[labels]]
+                # Get embeddings for UMAP
+                # for omic1, omic2 in impute_loader:  # Runs once since there is 1 batch
+                #
+                #     # How do you get a singular z from MMVAE, when you have multiple qz_x
+                #     z = torch.stack(qz_xs )  # ?
+                #
+                #     labels, label_types, test_ind = tcga_data.get_labels_partition("test")
+                #
+                #     labels = labels[test_ind].astype(int)
+                #     sample_labels = label_types[[labels]]
+                #
+                #     plot = UMAPPlotter(z, sample_labels, "{}: Task {} | {} & {} \n"
+                #                                          "Epochs: {}, Latent Dimension: {}, LR: {}, Batch size: {}"
+                #                        .format('MoE' if args['mixture'] else 'PoE', args['task'], args['data1'],
+                #                                args['data2'],
+                #                                args['epochs'], args['latent_dim'], args['lr'], args['batch_size']),
+                #                        save_dir + "/{} UMAP.png".format('MoE' if args['mixture'] else 'PoE',
+                #                                                         'MoE' if args['mixture'] else 'PoE'))
+                #
+                #     plot.plot()
 
-            plot = UMAPPlotter(z, sample_labels, "{}: Task {} | {} & {} \n"
-                                                 "Epochs: {}, Latent Dimension: {}, LR: {}, Batch size: {}"
-                               .format('MoE' if args['mixture'] else 'PoE', args['task'], args['data1'], args['data2'],
-                                       args['epochs'], args['latent_dim'], args['lr'], args['batch_size']),
-                               save_dir + "/{} UMAP.png".format('MoE' if args['mixture'] else 'PoE', 'MoE' if args['mixture'] else 'PoE'))
+        else:
+            logger.info("Task 1 Imputation: Extracting Z using test set")
 
-            plot.plot()
+            impute_dataset = tcga_data.get_data_partition("test")
+
+            # 1 batch (whole test set)
+            impute_loader = torch.utils.data.DataLoader(impute_dataset, batch_size=len(impute_dataset), shuffle=False)
+
+            omic1_from_joint, omic2_from_joint, \
+            omic1_from_omic1, omic2_from_omic1, \
+            omic1_from_omic2, omic2_from_omic2 = impute(model, impute_loader)
+
+            # Reconstruction losses
+            omic1_joint_reconstruction_loss = mean_squared_error(omic1_from_joint, impute_dataset.omic1_data)
+            omic1_reconstruction_loss = mean_squared_error(omic1_from_omic1, impute_dataset.omic1_data)
+
+            omic2_joint_reconstruction_loss = mean_squared_error(omic2_from_joint, impute_dataset.omic2_data)
+            omic2_reconstruction_loss = mean_squared_error(omic2_from_omic2, impute_dataset.omic2_data)
+            logger.info("Reconstruction loss for {} from {} : {}".
+                        format(args['data1'], "both omics", omic1_joint_reconstruction_loss))
+            logger.info("Reconstruction loss for {} from {} : {}".
+                        format(args['data1'], args['data1'], omic1_reconstruction_loss))
+            logger.info("Reconstruction loss for {} from {} : {}".
+                        format(args['data2'], "both omics", omic2_joint_reconstruction_loss))
+            logger.info("Reconstruction loss for {} from {} : {}".
+                        format(args['data2'], args['data2'], omic2_reconstruction_loss))
+
+            # Imputation losses
+            omic1_imputation_loss = mean_squared_error(omic1_from_omic2, impute_dataset.omic1_data)
+            omic2_imputation_loss = mean_squared_error(omic2_from_omic1, impute_dataset.omic2_data)
+            logger.info("Imputation loss for {} from {} : {}".
+                        format(args['data1'], args['data2'], omic1_imputation_loss))
+            logger.info("Imputation loss for {} from {} : {}".
+                        format(args['data2'], args['data1'], omic2_imputation_loss))
+
+            # Get embeddings for UMAP
+            for omic1, omic2 in impute_loader: # Runs once since there is 1 batch
+                z = model.extract(omic1, omic2)
+                z = z.detach().numpy()
+                np.save("{}/task1_z.npy".format(save_dir), z)
+
+                labels, label_types, test_ind = tcga_data.get_labels_partition("test")
+
+                labels = labels[test_ind].astype(int)
+                sample_labels = label_types[[labels]]
+
+                plot = UMAPPlotter(z, sample_labels, "{}: Task {} | {} & {} \n"
+                                                     "Epochs: {}, Latent Dimension: {}, LR: {}, Batch size: {}"
+                                   .format('MoE' if args['mixture'] else 'PoE', args['task'], args['data1'], args['data2'],
+                                           args['epochs'], args['latent_dim'], args['lr'], args['batch_size']),
+                                   save_dir + "/{} UMAP.png".format('MoE' if args['mixture'] else 'PoE', 'MoE' if args['mixture'] else 'PoE'))
+
+                plot.plot()
 
     if args['task'] == 2:
         print(model)
