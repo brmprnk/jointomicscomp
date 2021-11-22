@@ -214,6 +214,7 @@ class ProductOfExperts(nn.Module):
 class MixtureOfExperts(MultiOmicVAE):
     """Return parameters for mixture of independent experts.
 
+    https://arxiv.org/pdf/1911.03393.pdf
     """
 
     def __init__(self, input_dim1, input_dim2, enc_hidden_dim=[100], dec_hidden_dim=[], loss1='bce', loss2='bce',
