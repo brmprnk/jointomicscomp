@@ -57,6 +57,7 @@ def save_checkpoint(state, epoch, save_dir):
 
 def train(args, model, train_loader, optimizer, epoch, tf_logger):
     model.training = True
+    model = model.double()
     model.train()
 
     progress_bar = tqdm(total=len(train_loader))
@@ -177,11 +178,9 @@ def run(args) -> None:
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args['batch_size'], shuffle=False)
     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=len(val_dataset), shuffle=False)  # (1 batch)
 
-    total_batches = len(train_loader)
-    total_val_batches = len(val_loader)  # Should be 1
 
     # Setup and log model
-    model = MVAE(use_mixture=args['mixture'], latent_dim=args['latent_dim'], use_cuda=args['cuda'])
+    model = MVAE(args)
 
     model = model.double()
 
@@ -273,7 +272,7 @@ def run(args) -> None:
             z = z.detach().numpy()
             np.save("{}/task1_z.npy".format(save_dir), z)
 
-            label_types, labels, test_ind = tcga_data.get_labels_partition("test")
+            labels, label_types, test_ind = tcga_data.get_labels_partition("test")
 
             labels = labels[test_ind].astype(int)
             sample_labels = label_types[[labels]]

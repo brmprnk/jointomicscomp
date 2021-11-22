@@ -10,27 +10,35 @@ from src.nets import MultiOmicVAE
 
 
 class MVAE(nn.Module):
-    def __init__(self, use_mixture=False, latent_dim=100, use_cuda=False):
+    def __init__(self, args):
         super(MVAE, self).__init__()
+
+        latent_dim = args['latent_dim']
         # define q(z|x_i) for i = 1...2
-        self.omic1_encoder = Encoder(latent_dim)
-        self.omic2_encoder = Encoder(latent_dim)
+        self.omic1_encoder = Encoder(latent_dim, args['num_features1'])
+        self.omic2_encoder = Encoder(latent_dim, args['num_features2'])
 
         # define p(x_i|z) for i = 1...2
-        self.omic1_decoder = Decoder(latent_dim)
-        self.omic2_decoder = Decoder(latent_dim)
+        self.omic1_decoder = Decoder(latent_dim, args['num_features1'])
+        self.omic2_decoder = Decoder(latent_dim, args['num_features2'])
 
         # define q(z|x) = q(z|x_1)...q(z|x_6)
         self.experts = ProductOfExperts()
-        self.mixture = MixtureOfExperts()
-        self.use_mixture = use_mixture
+        # use MMVAE model for MoE
+        self.mixture = MixtureOfExperts(args['num_features1'], args['num_features2'],
+                                        enc_hidden_dim=[args['latent_dim']], dec_hidden_dim=[args['latent_dim']],
+                                        # loss1=, loss2=
+                                        use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam',
+                                        encoder1_lr=args['lr'], decoder1_lr=args['lr'],
+                                        encoder2_lr=args['lr'], decoder2_lr=args['lr'])
+        self.use_mixture = args['mixture']
         if self.use_mixture:
             print("Using Mixture-of-Experts Model")
         else:
             print("Using Product-of-Experts Model")
 
         self.latent_dim = latent_dim
-        self.use_cuda = use_cuda
+        self.use_cuda = args['cuda']
         self.training = False
 
     def reparameterize(self, mu, logvar):
@@ -131,11 +139,11 @@ class Encoder(nn.Module):
                       number of latent dimensions
     """
 
-    def __init__(self, latent_dim):
+    def __init__(self, latent_dim, num_features):
         super(Encoder, self).__init__()
 
-        input_size = 5000
-        hidden_dims = [256]
+        input_size = num_features
+        hidden_dims = [latent_dim]
 
         modules = []
         if hidden_dims is None:
@@ -178,11 +186,11 @@ class Decoder(nn.Module):
                       number of latent dimension
     """
 
-    def __init__(self, latent_dim):
+    def __init__(self, latent_dim, num_features):
         super(Decoder, self).__init__()
 
-        input_size = 5000
-        hidden_dims = [256]
+        input_size = num_features
+        hidden_dims = [latent_dim]
 
         self.decoder = nn.Sequential(
             nn.Linear(latent_dim, hidden_dims[-1]),
@@ -224,9 +232,7 @@ class ProductOfExperts(nn.Module):
 
 class MixtureOfExperts(MultiOmicVAE):
     """Return parameters for mixture of independent experts.
-    See https://papers.nips.cc/paper/2019/file/0ae775a8cb3b499ad1fca944e6f5c836-Paper.pdf for equations.
-    https://en.wikipedia.org/wiki/Sum_of_normally_distributed_random_variables
-    Z = W + X + Y gives Z ~ N(mu_w + mu_x + mu_y, var_x^2 + var_x^2 + var_y^2)
+
     """
 
     def __init__(self, input_dim1, input_dim2, enc_hidden_dim=[100], dec_hidden_dim=[], loss1='bce', loss2='bce',
@@ -240,7 +246,6 @@ class MixtureOfExperts(MultiOmicVAE):
 
         self.input_dim1 = input_dim1
         self.input_dim2 = input_dim2
-
 
         self.pz = torch.distributions.Laplace(torch.zeros(1, enc_hidden_dim[-1]), torch.ones(1, enc_hidden_dim[-1]))
         # Using this, loss is ignored
@@ -278,7 +283,10 @@ class MixtureOfExperts(MultiOmicVAE):
         return qz_xs, px_zs, zss
 
     def compute_microbatch_split(self, x, K):
-        """ Checks if batch needs to be broken down further to fit in memory. """
+        """ Checks if batch needs to be broken down further to fit in memory.
+
+        Found in MMVAE/src/objectives.py
+        """
         B = x[0].size(0) if is_multidata(x) else x.size(0)
         S = sum([1.0 / (K * prod(_x.size()[1:])) for _x in x]) if is_multidata(x) \
             else 1.0 / (K * prod(x.size()[1:]))
@@ -302,7 +310,10 @@ class MixtureOfExperts(MultiOmicVAE):
         return torch.cat(lws)  # (n_modality * n_samples) x batch_size, batch_size
 
     def compute_loss(model, x, K=1):
-        """Computes iwae estimate for log p_\theta(x) for multi-modal vae """
+        """Computes iwae estimate for log p_\theta(x) for multi-modal vae
+
+        This function is called m_iwae in the MMVAE repo's objective.py
+        """
         S = self.compute_microbatch_split(x, K)
         x_split = zip(*[_x.split(S) for _x in x])
         lw = [_m_iwae(model, _x, K) for _x in x_split]

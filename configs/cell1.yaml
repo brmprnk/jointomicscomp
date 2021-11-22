@@ -1,25 +1,25 @@
 GLOBAL_PARAMS:
-  name: "cell_task1"
+  name: "cell task 1"
   task: 1
-  num_features: 5000
+  data1: "RNA"
+  data2: "PROTEIN"
+  data_path1: "/home/bram/jointomicscomp/data/CELL/pbmc_multimodal_RNA_5000MAD.npy"
+  data_path2: "/home/bram/jointomicscomp/data/CELL/pbmc_multimodal_ADT_5000MAD.npy"
+  data_features1: "/home/bram/jointomicscomp/data/CELL/pbmc_multimodal_RNA_5000MAD_featureNames.npy"
+  data_features2: "/home/bram/jointomicscomp/data/CELL/pbmc_multimodal_ADT_5000MAD_featureNames_UNIQUE.npy"
+  sample_names: "/home/bram/jointomicscomp/data/CELL/pbmc_multimodal_ADT_5000MAD_sampleNames.npy"
+  labels: "/home/bram/jointomicscomp/data/CELL/pbmc_multimodal_ADT_5000MAD_cellType.npy"
+  labelnames: "/home/bram/jointomicscomp/data/CELL/pbmc_multimodal_ADT_5000MAD_cellTypes.npy"
+  num_features1: 5000
+  num_features2: 224
   cuda: true
   random_seed: 1
-  no_logging: false
-  data1: "CELL RNA"
-  data2: "CELL Protein"
-  data_path1: "/home/bram/jointomicscomp/data/GE.npy"
-  data_path2: "/home/bram/jointomicscomp/data/GCN.npy"
-  data_features1: "/home/bram/jointomicscomp/data/GE_featureNames.npy"
-  data_features2: "/home/bram/jointomicscomp/data/GCN_featureNames.npy"
-  sample_names: "/home/bram/jointomicscomp/data/sampleNames.npy"
-  cancer_type_index: "/home/bram/jointomicscomp/data/cancerType.npy"
-  cancertypes: "/home/bram/jointomicscomp/data/cancerTypes.npy"
-  x_train_file: "/home/bram/jointomicscomp/data/task1/GE_train.npy"
-  y_train_file: "/home/bram/jointomicscomp/data/task1/GCN_train.npy"
-  x_val_file: "/home/bram/jointomicscomp/data/task1/GE_val.npy"
-  y_val_file: "/home/bram/jointomicscomp/data/task1/GCN_val.npy"
-  x_test_file: "/home/bram/jointomicscomp/data/task1/GE_test.npy"
-  y_test_file: "/home/bram/jointomicscomp/data/task1/GCN_test.npy"
+  log_save_interval: 5
+  early_stopping_patience: 20 # If set to 0 or <0, early stopping is turned off.
+  validation_fraction: 0.1
+  train_ind: "/home/bram/jointomicscomp/data/CELL/trainInd.npy"
+  val_ind: "/home/bram/jointomicscomp/data/CELL/validInd.npy"
+  test_ind: "/home/bram/jointomicscomp/data/CELL/testInd.npy"
 
 BASELINE:
   task: 'impute'               # whether to `impute` one datasource from the other, `classify` (cell type), or `rank` (stage prediction)
@@ -28,13 +28,12 @@ BASELINE:
 
 MOFA+:
   # Data options
-  mofa_data_path: "/home/bram/jointomicscomp/data/mofa_GE_ME_5000MAD.csv"           # MOFA requires different view of the input data
   scale_groups: false          # if groups have significantly different ranges, it is good practice to scale each group to unit variance
   scale_views: false           # if views have significantly different ranges, it is good practice to scale each view to unit variance
 
   # Model options
-  pre_trained: "/home/bram/jointomicscomp/results/mofa_gegcn 14-09-2021 07:52:01/MOFA+/GE_GCN_trained_MOFA_model.hdf5"              # Use a pre-trained model for downstream analysis
-  factors: 128
+  pre_trained: ""              # Use a pre-trained model for downstream analysis
+  factors: 10
   likelihoods: None            # likelihoods per view (options are "gaussian","poisson","bernoulli").
                                #     Default is None, and they are infered automatically
   spikeslab_weights: false     # use spike-slab sparsity prior in the weights? (recommended TRUE)
@@ -59,10 +58,10 @@ MVAE:
   plot: True     # Flag for plotting training and validation losses (loss, recon loss and KL loss)
 
   # Model optionsmain.yaml
-  pre_trained: "/home/bram/jointomicscomp/results/gegcn_moe_poe 13-09-2021 22_58_48/gegcn_moe_poe 13-09-2021 22:58:48/PoE/best_model.pth.tar"
+  pre_trained: "/home/bram/jointomicscomp/results/gcnme_moe_poe 13-09-2021 23_25_30/gcnme_moe_poe 13-09-2021 23:25:30/PoE/best_model.pth.tar"
   latent_dim: 128
   batch_size: 256
-  epochs: 60
+  epochs: 1
   lr: 0.0001
 
   # Other parameters
@@ -79,9 +78,9 @@ MVIB:
   log_interval: 5
 
 CGAE:
-  epochs: 1000
-  batch_size: 256
+  epochs: 1
   latent_dim: 128
+  batch_size: 256
   enc1_lr: 0.0001
   dec1_lr: 0.0001
   enc2_lr: 0.0001
@@ -97,7 +96,3 @@ CGAE:
   beta_start_value: 1
   zconstraintCoef: 1
   crossPenaltyCoef: 1
-
-
-OMICADE:
-  data_path: ""

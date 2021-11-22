@@ -20,10 +20,10 @@ class TCGAData(object):
             logger.info("Running Task {} on omic {} and omic {}".format(args['task'], args['data1'], args['data2']))
 
             # Load in data
-            omic1 = np.load(args['data_path1'])
-            omic2 = np.load(args['data_path2'])
-            self.cancertypes = np.load(args['cancertypes'])
-            self.cancer_type_index = np.load(args['cancer_type_index'])
+            omic1 = np.load(args['data_path1']).astype(np.float64)
+            omic2 = np.load(args['data_path2']).astype(np.float64)
+            self.labels = np.load(args['labels'])
+            self.labelnames = np.load(args['labelnames'])
 
             # Use predefined split
             self.train_ind = np.load(args['train_ind'])
@@ -70,13 +70,13 @@ class TCGAData(object):
 
     def get_labels_partition(self, partition):
         if partition == "train":
-            return self.cancertypes, self.cancer_type_index, self.train_ind
+            return self.labels, self.labelnames, self.train_ind
         elif partition == "val":
-            return self.cancertypes, self.cancer_type_index, self.val_ind
+            return self.labels, self.labelnames, self.val_ind
         elif partition == "test":
-            return self.cancertypes, self.cancer_type_index, self.test_ind
+            return self.labels, self.labelnames, self.test_ind
         else:  # Full data aka no split
-            return self.cancertypes, self.cancer_type_index
+            return self.labels, self.labelnames
 
 
 class TCGADataset(Dataset):

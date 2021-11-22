@@ -93,7 +93,7 @@ def main() -> None:
     # Setup save directory for output logging
     logger.output_file = save_dir
     logger.success("Starting : {}".format(args.experiment))
-    logger.success("Savind to : {}".format(save_dir))
+    logger.success("Saving to : {}".format(save_dir))
 
     # Check for utility arguments, run only these and exit program
     if args.survival:
