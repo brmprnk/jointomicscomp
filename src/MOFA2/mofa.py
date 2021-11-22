@@ -104,9 +104,13 @@ def train_mofa(args: dict, save_file_path: str) -> None:
         data_mat[0][0] = np.vstack((omic1[train_ind], omic1[val_ind]))
         data_mat[1][0] = np.vstack((omic2[train_ind], omic2[val_ind]))
 
-        ent.set_data_matrix(data_mat, likelihoods=["gaussian", "gaussian"], views_names=[args['data1'], args['data2']],
-                            features_names=[np.load(args['data_features1']).tolist(),
-                                            np.load(args['data_features2']).tolist()])
+        try:
+            ent.set_data_matrix(data_mat, likelihoods=["gaussian", "gaussian"], views_names=[args['data1'], args['data2']],
+                                features_names=[np.load(args['data_features1'], allow_pickle=True).astype(str).tolist(),
+                                                np.load(args['data_features2'], allow_pickle=True).astype(str).tolist()])
+        except AssertionError as e:
+            print(e)
+            print("MOFA+ wants feature names to be unique :(. Suggest add the datatype in front of each feature.")
 
     logger.success("MOFA DATA : Loading Successful!")
 
