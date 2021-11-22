@@ -10,8 +10,8 @@ import numpy as np
 import os
 from pathlib import Path
 
-rna_path = "/home/bram/jointomicscomp/data/pbmc_multimodal_RNA.h5ad"
-adt_path = "/home/bram/jointomicscomp/data/pbmc_multimodal_ADT.h5ad"
+rna_path = "/home/bram/jointomicscomp/data/CELL/pbmc_multimodal_RNA.h5ad"
+adt_path = "/home/bram/jointomicscomp/data/CELL/pbmc_multimodal_ADT.h5ad"
 
 rna_save_dir = os.path.dirname(rna_path) + '/'
 adt_save_dir = os.path.dirname(adt_path) + '/'
@@ -21,25 +21,25 @@ adata = sc.read_h5ad(rna_path)
 
 sc.pp.highly_variable_genes(adata, n_top_genes=5000)
 
-adata.obs.to_csv(rna_save_dir + Path(rna_path).stem + "5000MAD_obs.csv")
-adata.var.to_csv(rna_save_dir + Path(rna_path).stem + "5000MAD_obs.csv")
+adata.obs.to_csv(rna_save_dir + Path(rna_path).stem + "_5000MAD_obs.csv")
+adata.var.to_csv(rna_save_dir + Path(rna_path).stem + "_5000MAD_var.csv")
 
 np.save(rna_save_dir + Path(rna_path).stem + "_5000MAD.npy", adata.X[:, adata.var['highly_variable']].astype(np.float64))
 
-np.save(rna_save_dir + Path(rna_path).stem + "_5000MAD.npy", adata[:, adata.var['highly_variable']].var['features'].values)
-np.save(rna_save_dir + Path(rna_path).stem + "_5000MAD.npy", adata[:, adata.var['highly_variable']].obs.index.values)
-np.save(rna_save_dir + Path(rna_path).stem + "_5000MAD.npy", adata[:, adata.var['highly_variable']].obs['celltype.l2'].values)
+np.save(rna_save_dir + Path(rna_path).stem + "_5000MAD_featureNames.npy", adata[:, adata.var['highly_variable']].var['features'].values)
+np.save(rna_save_dir + Path(rna_path).stem + "_5000MAD_sampleNames.npy", adata[:, adata.var['highly_variable']].obs.index.values)
+np.save(rna_save_dir + Path(rna_path).stem + "_5000MAD_celltype_l2.npy", adata[:, adata.var['highly_variable']].obs['celltype.l2'].values)
 
 # Now do protein
 adata = sc.read_h5ad(adt_path)
 
 sc.pp.highly_variable_genes(adata, n_top_genes=5000)
 
-adata.obs.to_csv(adt_save_dir + Path(adt_path).stem + "5000MAD_obs.csv")
-adata.var.to_csv(adt_save_dir + Path(adt_path).stem + "5000MAD_var.csv")
+adata.obs.to_csv(adt_save_dir + Path(adt_path).stem + "_5000MAD_obs.csv")
+adata.var.to_csv(adt_save_dir + Path(adt_path).stem + "_5000MAD_var.csv")
 
 np.save(adt_save_dir + Path(adt_path).stem + "_5000MAD.npy", adata.X[:, adata.var['highly_variable']].astype(np.float64))
 
-np.save(adt_save_dir + Path(adt_path).stem + "_5000MAD.npy", adata[:, adata.var['highly_variable']].var['features'].values)
-np.save(adt_save_dir + Path(adt_path).stem + "_5000MAD.npy", adata[:, adata.var['highly_variable']].obs.index.values)
-np.save(adt_save_dir + Path(adt_path).stem + "_5000MAD.npy", adata[:, adata.var['highly_variable']].obs['celltype.l2'].values)
+np.save(adt_save_dir + Path(adt_path).stem + "_5000MAD_featureNames.npy", adata[:, adata.var['highly_variable']].var['features'].values)
+np.save(adt_save_dir + Path(adt_path).stem + "_5000MAD_sampleNames.npy", adata[:, adata.var['highly_variable']].obs.index.values)
+np.save(adt_save_dir + Path(adt_path).stem + "_5000MAD_celltype_l2.npy", adata[:, adata.var['highly_variable']].obs['celltype.l2'].values)
