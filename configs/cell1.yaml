@@ -68,14 +68,29 @@ MVAE:
   log_interval: 1
 
 MVIB:
+  trainer: OmicsMIBTrainer
+
   # Hyperparameters
-  latent_dim: 128
+  z_dim: 128
   batch_size: 256
   epochs: 1
-  lr: 0.0001
+
+  # Optimization parameters
+  optimizer_name: 'Adam'
+  encoder_lr: 0.0001
+  miest_lr: 0.0001
+
+  # Parameters for the beta-scheduler
+  beta_start_value: 0.001
+  beta_end_value: 1
+  beta_n_iterations: 100000
+  beta_start_iteration: 50000
 
   # Other parameters
+  no_logging: false
   log_interval: 5
+  pre_trained: ""   # Path to a previously trained model
+  overwrite: false  # When overwrite is false, this will resume training on a previous model
 
 CGAE:
   epochs: 1

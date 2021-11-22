@@ -25,8 +25,8 @@ def run(args: dict) -> None:
         # Load in data
         omic1 = np.load(args['data_path1'])
         omic2 = np.load(args['data_path2'])
-        cancertypes = np.load(args['cancertypes'])
-        cancer_type_index = np.load(args['cancer_type_index'])
+        labels = np.load(args['labels'])
+        labeltypes = np.load(args['labelnames'])
 
         # Use predefined split
         train_ind = np.load(args['train_ind'])
@@ -61,8 +61,8 @@ def run(args: dict) -> None:
         Yval = np.vstack((Yvalctype, Yvalrest))
 
     # Number of features
-    input_dim1 = args['num_features']
-    input_dim2 = args['num_features']
+    input_dim1 = args['num_features1']
+    input_dim2 = args['num_features2']
 
     encoder_layers = [args['latent_dim']]
     decoder_layers = [args['latent_dim']]
@@ -76,7 +76,7 @@ def run(args: dict) -> None:
                        args['beta_start_value'],
                        args['zconstraintCoef'], args['crossPenaltyCoef']).to(device)
 
-    net = net.double()
+    # net = net.double()
 
     logger.success("Initialized MultiOmicVAE model.")
     logger.info(str(net))
@@ -142,9 +142,10 @@ def run(args: dict) -> None:
                         model_file="/home/bram/jointomicscomp/results/cgae_task1_earlystop 12-10-2021 09:31:35/CGAE/checkpoint/model_epoch460.pth.tar",
                         loader=extract_loader, save_dir=save_dir, multimodal=True)
 
-        cancertypes = np.load(args['cancertypes'])
-        labels = np.load(args['cancer_type_index']).astype(int)
-        test_labels = cancertypes[[labels[test_ind]]]
+        labels = np.load(args['labels']).astype(int)
+        labeltypes = np.load(args['labelnames'])
+
+        test_labels = labeltypes[[labels[test_ind]]]
 
         z1_plot = UMAPPlotter(z1, test_labels, "CGAE Z1: Task {} | {} & {} \n"
                                                "Epochs: {}, Latent Dimension: {}, LR: {}, Batch size: {}"

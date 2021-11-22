@@ -47,18 +47,18 @@ def run(args: dict) -> None:
         # Load in data
         omic1 = np.load(args['data_path1'])
         omic2 = np.load(args['data_path2'])
-        sample_names = np.load(args['sample_names'])
-        cancertypes = np.load(args['cancertypes'])
-        cancer_type_index = np.load(args['cancer_type_index'])
+        sample_names = np.load(args['sample_names'], allow_pickle=True).astype(str)
+        labels = np.load(args['labels'])
+        labeltypes = np.load(args['labelnames'])
 
         # Use predefined split
         train_ind = np.load(args['train_ind'])
         val_ind = np.load(args['val_ind'])
         test_ind = np.load(args['test_ind'])
 
-        mv_train_set = MultiOmicsDataset(omic1[train_ind], omic2[train_ind], cancer_type_index[train_ind])
+        mv_train_set = MultiOmicsDataset(omic1[train_ind], omic2[train_ind], labels[train_ind])
 
-        mv_val_set = MultiOmicsDataset(omic1[val_ind], omic2[val_ind], cancer_type_index[val_ind])
+        mv_val_set = MultiOmicsDataset(omic1[val_ind], omic2[val_ind], labels[val_ind])
 
         # Initialization of the data loader
         train_loader = DataLoader(mv_train_set, batch_size=args['batch_size'], shuffle=True, num_workers=0)
@@ -73,15 +73,15 @@ def run(args: dict) -> None:
     trainer = TrainerClass(log_loss_every=len(train_loader), writer=tf_logger,
                            **{
                                'z_dim': args['z_dim'],
-                               'input_dim1': args['input_dim1'],
-                               'input_dim2': args['input_dim2'],
+                               'input_dim1': args['num_features1'],
+                               'input_dim2': args['num_features2'],
                                'optimizer_name': args['optimizer_name'],
                                'encoder_lr': args['encoder_lr'],
                                'miest_lr': args['miest_lr'],
                                'beta_start_value': args['beta_start_value'],
                                'beta_end_value': args['beta_end_value'],
                                'beta_n_iterations': args['beta_n_iterations'],
-                               'beta_start_iteration': args['beta_start_iteration']
+                               'beta_start_iteration': args['beta_start_iteration'] 
                            })
 
     # Resume the training if specified
@@ -90,7 +90,7 @@ def run(args: dict) -> None:
 
     # Moving the models to the specified device
     trainer.to(device)
-    trainer.double()
+    # trainer.double()
 
     # Begin training loop
     for epoch in tqdm(range(args['epochs'])):
@@ -139,7 +139,7 @@ def run(args: dict) -> None:
         dataExtract1 = torch.tensor(dataExtract1, device=device)
         dataExtract2 = torch.tensor(dataExtract2, device=device)
 
-        datasetExtract = MultiOmicsDataset(dataExtract1, dataExtract2, cancer_type_index[test_ind])
+        datasetExtract = MultiOmicsDataset(dataExtract1, dataExtract2, labels[test_ind])
 
         # Use 1 batch
         test_data_loader = DataLoader(datasetExtract, batch_size=len(dataExtract1), shuffle=False, num_workers=0)
@@ -158,8 +158,8 @@ def run(args: dict) -> None:
                 np.save("{}/task1_z1.npy".format(save_dir), z1)
                 np.save("{}/task1_z2.npy".format(save_dir), z2)
 
-                labels = np.load(args['cancer_type_index']).astype(int)
-                test_labels = cancertypes[[labels[test_ind]]]
+                labels = np.load(args['labels']).astype(int)
+                test_labels = labeltypes[[labels[test_ind]]]
 
                 z1_plot = UMAPPlotter(z1, test_labels, "MVIB Z1: Task {} | {} & {} \n"
                                                        "Epochs: {}, Latent Dimension: {}, LR: {}, Batch size: {}"

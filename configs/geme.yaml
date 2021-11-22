@@ -14,12 +14,15 @@ GLOBAL_PARAMS:
   cuda: true
   random_seed: 1
   validation_fraction: 0.1
-  x_train_file: "/home/bram/jointomicscomp/data/task1/GE_train.npy"
-  y_train_file: "/home/bram/jointomicscomp/data/task1/ME_train.npy"
-  x_val_file: "/home/bram/jointomicscomp/data/task1/GE_val.npy"
-  y_val_file: "/home/bram/jointomicscomp/data/task1/ME_val.npy"
-  x_test_file: "/home/bram/jointomicscomp/data/task1/GE_test.npy"
-  y_test_file: "/home/bram/jointomicscomp/data/task1/ME_test.npy"
+#  x_train_file: "/home/bram/jointomicscomp/data/task1/GE_train.npy"
+#  y_train_file: "/home/bram/jointomicscomp/data/task1/ME_train.npy"
+#  x_val_file: "/home/bram/jointomicscomp/data/task1/GE_val.npy"
+#  y_val_file: "/home/bram/jointomicscomp/data/task1/ME_val.npy"
+#  x_test_file: "/home/bram/jointomicscomp/data/task1/GE_test.npy"
+#  y_test_file: "/home/bram/jointomicscomp/data/task1/ME_test.npy"
+  train_ind: "/home/bram/jointomicscomp/data/task1/trainInd.npy"
+  val_ind: "/home/bram/jointomicscomp/data/task1/validInd.npy"
+  test_ind: "/home/bram/jointomicscomp/data/task1/testInd.npy"
 
 BASELINE:
   task: 'impute'               # whether to `impute` one datasource from the other, `classify` (cell type), or `rank` (stage prediction)

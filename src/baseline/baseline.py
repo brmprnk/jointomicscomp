@@ -122,62 +122,61 @@ def run_baseline(args: dict) -> None:
 
     print(args['task'])
 
+    # Load in data
+    omic1 = np.load(args['data_path1']).astype(np.float64)
+    omic2 = np.load(args['data_path2']).astype(np.float64)
+
+    # Use predefined split
+    train_ind = np.load(args['train_ind'])
+    val_ind = np.load(args['val_ind'])
+    test_ind = np.load(args['test_ind'])
+
     # load features (raw GE/ME/etc or VAE embeddings) from K data sources, N tumors, F features
     # a pickle file with a list of length K, each element containing a N x F npy array
-    with open(args['x_train_file'], 'rb') as f:
-        x_trainlist = np.float32(np.load(f, allow_pickle=True))
+    omic1_train_file = omic1[train_ind]
+    omic1_valid_file = omic1[val_ind]
+    omic1_test_file = omic1[test_ind]
 
-    with open(args['x_valid_file'], 'rb') as f:
-        x_validlist = np.float32(np.load(f, allow_pickle=True))
-
-    with open(args['x_test_file'], 'rb') as f:
-        x_testlist = np.float32(np.load(f, allow_pickle=True))
+    omic2_train_file = omic2[train_ind]
+    omic2_valid_file = omic2[val_ind]
+    omic2_test_file = omic2[test_ind]
 
     if args['task'] == 'classify':
-        # a pickle file with the class label npy array with shape (N,)
-        with open(args['y_train_file'], 'rb') as f:
-            y_train = np.load(f, allow_pickle=True)
 
-        with open(args['y_valid_file'], 'rb') as f:
-            y_valid = np.load(f, allow_pickle=True)
-
-        with open(args['y_test_file'], 'rb') as f:
-            y_test = np.load(f, allow_pickle=True)
-
-        Nclasses = np.unique(y_train).shape[0]
+        Nclasses = np.unique(omic2_train_file).shape[0]
 
         # MOFA, MoE, PoE, MVIB learn a common z --> X will be just an array N x F
         # CGAE has  a separate z for each modality --> so evaluate K times
         # baseline has the raw data and requires pca --> in both of these cases there will be a list of length K, with N x F matrices as elements
 
-        if type(x_trainlist) == list:
+        if type(omic1_train_file) == list:
             if args['baseline']:
                 pcTrainList = []
                 pcValidList = []
                 pcTestList = []
 
-                for i in range(x_trainlist):
+                for i in range(omic1_train_file):
                     pca = PCA(n_components=50, whiten=False, svd_solver='full')
-                    pca.fit(x_trainlist[i])
+                    pca.fit(omic1_train_file[i])
 
-                    pcTrainList.append(pca.transform(x_trainlist[i]))
-                    pcValidList.append(pca.transform(x_validlist[i]))
-                    pcTestList.append(pca.transform(x_testlist[i]))
+                    pcTrainList.append(pca.transform(omic1_train_file[i]))
+                    pcValidList.append(pca.transform(omic1_valid_file[i]))
+                    pcTestList.append(pca.transform(omic1_test_file[i]))
 
                 x_train = np.hstack(pcTrainList)
                 x_valid = np.hstack(pcValidList)
                 x_test = np.hstack(pcTestList)
 
                 assert x_train.shape[0] == x_test.shape[0]
-                assert x_train.shape[1] == 50 * len(x_trainlist)
+                assert x_train.shape[1] == 50 * len(omic1_train_file)
 
-                _, acc, pr, rc, f1, mcc, confMat = classification(x_trainlist, y_train, x_validlist, y_valid, x_testlist,
-                                                                  y_test, Cs, 'mcc')
+                _, acc, pr, rc, f1, mcc, confMat = classification(omic1_train_file, omic2_train_file, omic1_valid_file, omic2_valid_file, omic1_test_file,
+                                                                  omic2_test_file, Cs, 'mcc')
 
             else:
-                K = len(x_trainlist)
-                assert len(x_validlist) == K
-                assert len(x_testlist) == K
+                K = len(omic1_train_file)
+                assert len(omic1_valid_file) == K
+                assert len(omic1_test_file) == K
 
                 acc = np.zeros(K)
                 pr = np.zeros(K)
@@ -187,13 +186,14 @@ def run_baseline(args: dict) -> None:
                 confMat = np.zeros(K, Nclasses, Nclasses)
 
                 for i in range(K):
-                    _, acc[i], pr[i], rc[i], f1[i], mcc[i], confMat[i] = classification(x_trainlist, y_train, x_validlist,
-                                                                                        y_valid, x_testlist, y_test, Cs,
+                    _, acc[i], pr[i], rc[i], f1[i], mcc[i], confMat[i] = classification(omic1_train_file, omic2_train_file, omic1_valid_file, omic2_valid_file, omic1_test_file,
+                                                                  omic2_test_file, Cs,
                                                                                         'mcc')
 
 
         else:
-            _, acc, pr, rc, f1, mcc, confMat = classification(x_trainlist, y_train, x_validlist, y_valid, x_testlist, y_test,
+            _, acc, pr, rc, f1, mcc, confMat = classification(omic1_train_file, omic2_train_file, omic1_valid_file, omic2_valid_file, omic1_test_file,
+                                                                  omic2_test_file,
                                                               Cs, 'mcc')
 
         performance = {'acc': acc, 'precision': pr, 'recall': rc, 'f1': f1, 'mcc': mcc, 'confMat': confMat}
@@ -202,50 +202,40 @@ def run_baseline(args: dict) -> None:
     elif args['task'] == 'rank':
         # this should be the same as classification
 
-        # a pickle file with the class label npy array with shape (N,)
-        with open(args['y_train_file'], 'rb') as f:
-            y_train = np.load(f, allow_pickle=True)
-
-        with open(args['y_valid_file'], 'rb') as f:
-            y_valid = np.load(f, allow_pickle=True)
-
-        with open(args['y_test_file'], 'rb') as f:
-            y_test = np.load(f, allow_pickle=True)
-
-        Nclasses = np.unique(y_train).shape[0]
+        Nclasses = np.unique(omic2_train_file).shape[0]
 
         # MOFA, MoE, PoE, MVIB learn a common z --> X will be just an array N x F
         # CGAE has  a separate z for each modality --> so evaluate K times
         # baseline has the raw data and requires pca --> in both of these cases there will be a list of length K, with N x F matrices as elements
 
-        if type(x_trainlist) == list:
+        if type(omic1_train_file) == list:
             if args['baseline']:
                 pcTrainList = []
                 pcValidList = []
                 pcTestList = []
 
-                for i in range(x_trainlist):
+                for i in range(omic1_train_file):
                     pca = PCA(n_components=50, whiten=False, svd_solver='full')
-                    pca.fit(x_trainlist[i])
+                    pca.fit(omic1_train_file[i])
 
-                    pcTrainList.append(pca.transform(x_trainlist[i]))
-                    pcValidList.append(pca.transform(x_validlist[i]))
-                    pcTestList.append(pca.transform(x_testlist[i]))
+                    pcTrainList.append(pca.transform(omic1_train_file[i]))
+                    pcValidList.append(pca.transform(omic1_valid_file[i]))
+                    pcTestList.append(pca.transform(omic1_test_file[i]))
 
                 x_train = np.hstack(pcTrainList)
                 x_valid = np.hstack(pcValidList)
                 x_test = np.hstack(pcTestList)
 
                 assert x_train.shape[0] == x_test.shape[0]
-                assert x_train.shape[1] == 50 * len(x_trainlist)
+                assert x_train.shape[1] == 50 * len(omic1_train_file)
 
-                _, acc, pr, rc, f1, mcc, confMat = ordinal_regression(x_trainlist, y_train, x_validlist, y_valid, x_testlist,
-                                                                     y_test, Cs, 'mcc')
+                _, acc, pr, rc, f1, mcc, confMat = ordinal_regression(omic1_train_file, omic2_train_file, omic1_valid_file, omic2_valid_file, omic1_test_file,
+                                                                  omic2_test_file, Cs, 'mcc')
 
             else:
-                K = len(x_trainlist)
-                assert len(x_validlist) == K
-                assert len(x_testlist) == K
+                K = len(omic1_train_file)
+                assert len(omic1_valid_file) == K
+                assert len(omic1_test_file) == K
 
                 acc = np.zeros(K)
                 pr = np.zeros(K)
@@ -255,14 +245,13 @@ def run_baseline(args: dict) -> None:
                 confMat = np.zeros(K, Nclasses, Nclasses)
 
                 for i in range(K):
-                    _, acc[i], pr[i], rc[i], f1[i], mcc[i], confMat[i] = ordinal_regression(x_trainlist, y_train,
-                                                                                           x_validlist, y_valid,
-                                                                                           x_testlist, y_test, Cs, 'mcc')
+                    _, acc[i], pr[i], rc[i], f1[i], mcc[i], confMat[i] = ordinal_regression(omic1_train_file, omic2_train_file, omic1_valid_file, omic2_valid_file, omic1_test_file,
+                                                                  omic2_test_file, Cs, 'mcc')
 
 
         else:
-            _, acc, pr, rc, f1, mcc, confMat = ordinal_regression(x_trainlist, y_train, x_validlist, y_valid, x_testlist,
-                                                                 y_test, Cs, 'mcc')
+            _, acc, pr, rc, f1, mcc, confMat = ordinal_regression(omic1_train_file, omic2_train_file, omic1_valid_file, omic2_valid_file, omic1_test_file,
+                                                                  omic2_test_file, Cs, 'mcc')
 
         performance = {'acc': acc, 'precision': pr, 'recall': rc, 'f1': f1, 'mcc': mcc, 'confMat': confMat}
 
@@ -272,16 +261,6 @@ def run_baseline(args: dict) -> None:
         # other methods should generate the imputations by themselves
         # # TODO: not sure what will happen with MVIB here (ignore it?)
 
-        # a pickle file with the class label npy array with shape (N,)
-        with open(args['y_train_file'], 'rb') as f:
-            y_train = np.float32(np.load(f, allow_pickle=True))
-
-        with open(args['y_valid_file'], 'rb') as f:
-            y_valid = np.float32(np.load(f, allow_pickle=True))
-
-        with open(args['y_test_file'], 'rb') as f:
-            y_test = np.float32(np.load(f, allow_pickle=True))
-
         NR_MODALITIES = 2
 
         # mse[i,j]: performance of using modality i to predict modality j
@@ -289,10 +268,10 @@ def run_baseline(args: dict) -> None:
         rsquared = np.eye(NR_MODALITIES)
 
         # From x to y
-        _, mse[0, 1], rsquared[0, 1] = impute(x_trainlist, y_train, x_validlist, y_valid, x_testlist, y_test, alphas, 'mse')
+        _, mse[0, 1], rsquared[0, 1] = impute(omic1_train_file, omic2_train_file, omic1_valid_file, omic2_valid_file, omic1_test_file, omic2_test_file, alphas, 'mse')
 
         # From y to x
-        _, mse[1, 0], rsquared[1, 0] = impute(y_train, x_trainlist, y_valid, x_validlist, y_test, x_testlist, alphas, 'mse')
+        _, mse[1, 0], rsquared[1, 0] = impute(omic2_train_file, omic1_train_file, omic2_valid_file, omic1_valid_file, omic2_test_file, omic1_test_file, alphas, 'mse')
 
         performance = {'mse': mse, 'rsquared': rsquared}
 
