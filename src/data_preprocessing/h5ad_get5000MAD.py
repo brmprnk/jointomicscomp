@@ -28,7 +28,16 @@ np.save(rna_save_dir + Path(rna_path).stem + "_5000MAD.npy", adata.X[:, adata.va
 
 np.save(rna_save_dir + Path(rna_path).stem + "_5000MAD_featureNames.npy", adata[:, adata.var['highly_variable']].var['features'].values)
 np.save(rna_save_dir + Path(rna_path).stem + "_5000MAD_sampleNames.npy", adata[:, adata.var['highly_variable']].obs.index.values)
-np.save(rna_save_dir + Path(rna_path).stem + "_5000MAD_celltype_l2.npy", adata[:, adata.var['highly_variable']].obs['celltype.l2'].values)
+
+celltype_l2 = adata[:, adata.var['highly_variable']].obs['celltype.l2'].values
+celltype_l2_unique = np.unique(celltype_l2)
+
+for i in range(len(celltype_l2)):
+    celltype_l2[i] = np.where(celltype_l2_unique == celltype_l2[i])[0]
+
+np.save(rna_save_dir + Path(rna_path).stem + "_5000MAD_cellType.npy", celltype_l2.astype(int))
+np.save(rna_save_dir + Path(rna_path).stem + "_5000MAD_cellTypes.npy", celltype_l2_unique.astype(str))
+
 
 # Now do protein
 adata = sc.read_h5ad(adt_path)
@@ -42,4 +51,12 @@ np.save(adt_save_dir + Path(adt_path).stem + "_5000MAD.npy", adata.X[:, adata.va
 
 np.save(adt_save_dir + Path(adt_path).stem + "_5000MAD_featureNames.npy", adata[:, adata.var['highly_variable']].var['features'].values)
 np.save(adt_save_dir + Path(adt_path).stem + "_5000MAD_sampleNames.npy", adata[:, adata.var['highly_variable']].obs.index.values)
-np.save(adt_save_dir + Path(adt_path).stem + "_5000MAD_celltype_l2.npy", adata[:, adata.var['highly_variable']].obs['celltype.l2'].values)
+
+celltype_l2 = adata[:, adata.var['highly_variable']].obs['celltype.l2'].values
+celltype_l2_unique = np.unique(celltype_l2)
+
+for i in range(len(celltype_l2)):
+    celltype_l2[i] = np.where(celltype_l2_unique == celltype_l2[i])[0][0]
+
+np.save(adt_save_dir + Path(adt_path).stem + "_5000MAD_cellType.npy", celltype_l2.astype(int))
+np.save(adt_save_dir + Path(adt_path).stem + "_5000MAD_cellTypes.npy", celltype_l2_unique.astype(str))
