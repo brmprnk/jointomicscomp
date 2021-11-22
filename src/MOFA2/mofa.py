@@ -300,10 +300,11 @@ def downstream_analysis(args: dict, save_dir: str) -> None:
     # Plot this total Z using UMAP
     np.save("{}/task1_z.npy".format(save_dir), z_matrix)
 
-    cancertypes = np.load(args['cancertypes'])
-    labels = np.load(args['cancer_type_index']).astype(int)
+    labels = np.load(args['labels'])
+    labeltypes = np.load(args['labelnames'])
+
     # Get correct labels with names
-    training_labels = np.concatenate((cancertypes[[labels[np.load(args['train_ind'])]]], cancertypes[[labels[np.load(args['val_ind'])]]]))
+    training_labels = np.concatenate((labeltypes[[labels[np.load(args['train_ind'])]]], labeltypes[[labels[np.load(args['val_ind'])]]]))
 
     training_data_plot = UMAPPlotter(Z.transpose(),
                                      training_labels,
@@ -321,22 +322,22 @@ def downstream_analysis(args: dict, save_dir: str) -> None:
         logger.error(e)
         logger.error("Probably setup the wrong view names in MOFA+ reconstruction loss.")
 
-    unique_features = W_omic1['feature'].values[:args['num_features']]
+    unique_features = W_omic1['feature'].values[:args['num_features1']]
     np.set_printoptions(threshold=sys.maxsize)
 
     # Turn W dataframes into np arrays for calculations
     matrix = np.zeros((len(unique_features), len(unique_factors)))
-    for i in tqdm(range(args['num_features'])):
+    for i in tqdm(range(args['num_features1'])):
         for j in range(args['factors']):
-            matrix[i][j] = W_omic1['value'].values[j * args['num_features'] + i]
+            matrix[i][j] = W_omic1['value'].values[j * args['num_features1'] + i]
 
     W_omic1 = matrix
 
-    unique_features = W_omic2['feature'].values[:args['num_features']]
+    unique_features = W_omic2['feature'].values[:args['num_features2']]
     matrix = np.zeros((len(unique_features), len(unique_factors)))
-    for i in tqdm(range(args['num_features'])):
+    for i in tqdm(range(args['num_features2'])):
         for j in range(args['factors']):
-            matrix[i][j] = W_omic2['value'].values[j * args['num_features'] + i]
+            matrix[i][j] = W_omic2['value'].values[j * args['num_features2'] + i]
 
     W_omic2 = matrix
 
@@ -376,7 +377,7 @@ def downstream_analysis(args: dict, save_dir: str) -> None:
         logger.info("Imputation loss {} from {} = {}".format(args['data1'], args['data2'], imputeY1_loss))
         logger.info("Imputation loss {} from {} = {}".format(args['data2'], args['data1'], imputeY2_loss))
 
-        test_labels = cancertypes[[labels[test_ind]]]
+        test_labels = labeltypes[[labels[test_ind]]]
 
         z1_plot = UMAPPlotter(Z_frompseudo1.transpose(),
                               test_labels,
