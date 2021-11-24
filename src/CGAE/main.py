@@ -68,7 +68,7 @@ def run(args: dict) -> None:
     decoder_layers = [args['latent_dim']]
 
     # Initialize network model
-    net = MultiOmicVAE(input_dim1, input_dim2, encoder_layers, decoder_layers, args['loss_function'],
+    net = CrossGeneratingVariationalAutoencoder(input_dim1, input_dim2, encoder_layers, decoder_layers, args['loss_function'],
                        args['loss_function'],
                        args['use_batch_norm'], args['dropout_probability'], args['optimizer'], args['enc1_lr'],
                        args['dec1_lr'], args['enc1_last_activation'], args['enc1_output_scale'], args['enc2_lr'],
@@ -78,7 +78,7 @@ def run(args: dict) -> None:
 
     # net = net.double()
 
-    logger.success("Initialized MultiOmicVAE model.")
+    logger.success("Initialized CrossGeneratingVariationalAutoencoder model.")
     logger.info(str(net))
     logger.info("Number of model parameters: ")
     num_params = sum(p.numel() for p in net.parameters() if p.requires_grad)
@@ -91,7 +91,7 @@ def run(args: dict) -> None:
     logs_dir = save_dir + '/logs'
 
     # Data loading
-    logger.info("Loading training and validation data into MultiOmicVAE...")
+    logger.info("Loading training and validation data into CrossGeneratingVariationalAutoencoder...")
 
     dataTrain1 = torch.tensor(omic1_train_file, device=device)
     dataTrain2 = torch.tensor(omic2_train_file, device=device)

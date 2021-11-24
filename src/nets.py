@@ -118,6 +118,10 @@ class ProbabilisticFullyConnectedModule(FullyConnectedModule):
 			self.D = torch.distributions.Beta
 		elif self.distribution == 'cbernoulli':
 			self.D = torch.distributions.ContinuousBernoulli
+		elif self.distribution == 'laplace':
+			self.p1Transform = identity
+			self.p2Transform = torch.exp
+			self.D = torch.distributions.Laplace
 		else:
 			raise NotImplementedError('Supported: \'normal\' or \'beta\'')
 
@@ -432,7 +436,7 @@ class VariationalAutoEncoder(RepresentationLearner):
 
 class CrossGeneratingAutoencoder(MultiOmicRepresentationLearner):
 	def __init__(self, input_dim1, input_dim2, enc_hidden_dim=[100], dec_hidden_dim=[], loss1='bce', loss2='bce', use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder1_lr=1e-4, decoder1_lr=1e-4, enc1_lastActivation='relu', enc1_outputScale=1., encoder2_lr=1e-4, decoder2_lr=1e-4, enc2_lastActivation='relu', enc2_outputScale=1., crossGenerationCoef=1., zconstraint='l2', zconstraintCoef=1.):
-		super(DoubleConstraintAutoEncoder, self).__init__(input_dim1, input_dim2, enc_hidden_dim, use_batch_norm, dropoutP, optimizer_name, False, encoder1_lr, enc1_lastActivation, enc1_outputScale, encoder2_lr, enc2_lastActivation, enc2_outputScale)
+		super(CrossGeneratingAutoencoder, self).__init__(input_dim1, input_dim2, enc_hidden_dim, use_batch_norm, dropoutP, optimizer_name, False, encoder1_lr, enc1_lastActivation, enc1_outputScale, encoder2_lr, enc2_lastActivation, enc2_outputScale)
 		if loss1 == 'bce':
 			self.decoder = FullyConnectedModule(self.z_dim, dec_hidden_dim + [input_dim1], self._use_batch_norm, self._dropoutP, lastActivation='none')
 			self.loss_fun = nn.BCEWithLogitsLoss(reduction='none')
@@ -589,7 +593,7 @@ class CrossGeneratingAutoencoder(MultiOmicRepresentationLearner):
 
 class CrossGeneratingVariationalAutoencoder(MultiOmicRepresentationLearner):
 	def __init__(self, input_dim1, input_dim2, enc_hidden_dim=[100], dec_hidden_dim=[], loss1='bce', loss2='bce', use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder1_lr=1e-4, decoder1_lr=1e-4, enc1_lastActivation='none', enc1_outputScale=1., encoder2_lr=1e-4, decoder2_lr=1e-4, enc2_lastActivation='none', enc2_outputScale=1., beta=1.0, zconstraintCoef=1.0, crossPenaltyCoef=1.0):
-		super(MultiOmicVAE, self).__init__(input_dim1, input_dim2, enc_hidden_dim, use_batch_norm, dropoutP, optimizer_name, True, encoder1_lr, enc1_lastActivation, enc1_outputScale, encoder2_lr, enc2_lastActivation, enc2_outputScale)
+		super(CrossGeneratingVariationalAutoencoder, self).__init__(input_dim1, input_dim2, enc_hidden_dim, use_batch_norm, dropoutP, optimizer_name, True, encoder1_lr, enc1_lastActivation, enc1_outputScale, encoder2_lr, enc2_lastActivation, enc2_outputScale)
 
 		if loss1 == 'bce':
 			self.decoder = FullyConnectedModule(self.z_dim, dec_hidden_dim + [input_dim1], self._use_batch_norm, self._dropoutP, lastActivation='none')
@@ -608,7 +612,7 @@ class CrossGeneratingVariationalAutoencoder(MultiOmicRepresentationLearner):
 			self.loss_fun2 = nn.BCEWithLogitsLoss(reduction='none')
 		elif loss2 == 'mse':
 			self.decoder2 = FullyConnectedModule(self.z_dim, dec_hidden_dim + [input_dim2], self._use_batch_norm, self._dropoutP, lastActivation='none')
-			self.loss_fun2 = nn.MSELoss(reduction='none')			
+			self.loss_fun2 = nn.MSELoss(reduction='none')
 		elif loss2 == 'cbernoulli':
 			self.decoder2 = ProbabilisticFullyConnectedModule(self.z_dim, dec_hidden_dim + [input_dim2], distribution='cbernoulli', use_batch_norm=self._use_batch_norm, dropoutP=self._dropoutP, lastActivation='sigmoid', outputScale=1.0)
 			self.loss_fun2 = 'nll'
