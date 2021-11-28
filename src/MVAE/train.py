@@ -6,6 +6,7 @@ import torch
 import torch.optim as optim
 import torch.nn.functional as F
 from tensorboardX import SummaryWriter
+import pickle
 
 from src.MVAE.model import MVAE
 import src.MVAE.datasets as datasets
@@ -13,6 +14,7 @@ from src.MVAE.evaluate import impute
 import src.util.logger as logger
 from src.util.early_stopping import EarlyStopping
 from src.util.umapplotter import UMAPPlotter
+from src.util.evaluate import evaluate_imputation
 
 import numpy as np
 from sklearn.metrics import mean_squared_error
@@ -188,6 +190,13 @@ def test(args, model, val_loader, optimizer, epoch, tf_logger):
 
     return validation_loss
 
+def load_checkpoint(args, use_cuda=False):
+    checkpoint = torch.load(args['pre_trained']) if use_cuda else \
+        torch.load(args['pre_trained'], map_location=lambda storage, location: storage)
+
+    trained_model = MVAE(args)
+    trained_model.load_state_dict(checkpoint['state_dict'])
+    return trained_model, checkpoint
 
 def run(args) -> None:
     args['cuda'] = args['cuda'] and torch.cuda.is_available()
@@ -215,8 +224,6 @@ def run(args) -> None:
 
     # Setup and log model
     model = MVAE(args)
-
-    model = model.double()
 
     # Log Data shape, input arguments and model
     model_file = open("{}/MVAE {} Model.txt".format(save_dir, 'MoE' if args['mixture'] else 'PoE'), "a")
@@ -340,11 +347,11 @@ def run(args) -> None:
             omic1_from_omic2, omic2_from_omic2 = impute(model, impute_loader)
 
             # Reconstruction losses
-            omic1_joint_reconstruction_loss = mean_squared_error(omic1_from_joint, impute_dataset.omic1_data)
-            omic1_reconstruction_loss = mean_squared_error(omic1_from_omic1, impute_dataset.omic1_data)
+            omic1_joint_reconstruction_loss = evaluate_imputation(omic1_from_joint, impute_dataset.omic1_data, 'mse')
+            omic1_reconstruction_loss = evaluate_imputation(omic1_from_omic1, impute_dataset.omic1_data, 'mse')
 
-            omic2_joint_reconstruction_loss = mean_squared_error(omic2_from_joint, impute_dataset.omic2_data)
-            omic2_reconstruction_loss = mean_squared_error(omic2_from_omic2, impute_dataset.omic2_data)
+            omic2_joint_reconstruction_loss = evaluate_imputation(omic2_from_joint, impute_dataset.omic2_data, 'mse')
+            omic2_reconstruction_loss = evaluate_imputation(omic2_from_omic2, impute_dataset.omic2_data, 'mse')
             logger.info("Reconstruction loss for {} from {} : {}".
                         format(args['data1'], "both omics", omic1_joint_reconstruction_loss))
             logger.info("Reconstruction loss for {} from {} : {}".
@@ -355,15 +362,29 @@ def run(args) -> None:
                         format(args['data2'], args['data2'], omic2_reconstruction_loss))
 
             # Imputation losses
-            omic1_imputation_loss = mean_squared_error(omic1_from_omic2, impute_dataset.omic1_data)
-            omic2_imputation_loss = mean_squared_error(omic2_from_omic1, impute_dataset.omic2_data)
+            NR_MODALITIES = 2
+
+            # mse[i,j]: performance of using modality i to predict modality j
+            mse = np.zeros((NR_MODALITIES, NR_MODALITIES), float)
+            rsquared = np.eye(NR_MODALITIES)
+
+            # From x to y
+            mse[0, 1], rsquared[0, 1] = evaluate_imputation(omic1_from_omic2, impute_dataset.omic1_data, 'mse'), evaluate_imputation(
+                omic1_from_omic2, impute_dataset.omic1_data, 'rsquared')
+            mse[1, 0], rsquared[1, 0] = evaluate_imputation(omic2_from_omic1, impute_dataset.omic2_data, 'mse'), evaluate_imputation(
+                omic2_from_omic1, impute_dataset.omic2_data, 'rsquared')
+
+            performance = {'mse': mse, 'rsquared': rsquared}
+            with open(save_dir + "/{} results_pickle".format('MoE' if args['mixture'] else 'PoE'), 'wb') as f:
+                pickle.dump(performance, f)
+
             logger.info("Imputation loss for {} from {} : {}".
-                        format(args['data1'], args['data2'], omic1_imputation_loss))
+                        format(args['data1'], args['data2'], mse[0, 1]))
             logger.info("Imputation loss for {} from {} : {}".
-                        format(args['data2'], args['data1'], omic2_imputation_loss))
+                        format(args['data2'], args['data1'], mse[1, 0]))
 
             # Get embeddings for UMAP
-            for omic1, omic2 in impute_loader: # Runs once since there is 1 batch
+            for omic1, omic2 in impute_loader:  # Runs once since there is 1 batch
                 z = model.extract(omic1, omic2)
                 z = z.detach().numpy()
                 np.save("{}/task1_z.npy".format(save_dir), z)
@@ -376,7 +397,7 @@ def run(args) -> None:
                 plot = UMAPPlotter(z, sample_labels, "{}: Task {} | {} & {} \n"
                                                      "Epochs: {}, Latent Dimension: {}, LR: {}, Batch size: {}"
                                    .format('MoE' if args['mixture'] else 'PoE', args['task'], args['data1'], args['data2'],
-                                           args['epochs'], args['latent_dim'], args['lr'], args['batch_size']),
+                                           29, args['latent_dim'], args['lr'], args['batch_size']),
                                    save_dir + "/{} UMAP.png".format('MoE' if args['mixture'] else 'PoE', 'MoE' if args['mixture'] else 'PoE'))
 
                 plot.plot()

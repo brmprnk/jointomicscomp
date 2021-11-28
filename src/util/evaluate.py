@@ -3,7 +3,6 @@ from sklearn.metrics import accuracy_score, mean_squared_error, r2_score, precis
 
 def evaluate_imputation(y_true, y_pred, criterion, aggregate='uniform_average'):
     # returns mse and r squared, by default averages over all features
-
     if criterion == 'mse':
         return mean_squared_error(y_true, y_pred, multioutput=aggregate)
     else:

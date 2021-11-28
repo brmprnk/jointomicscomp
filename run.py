@@ -80,6 +80,7 @@ def main() -> None:
             print("Incorrect config.yaml file!")
             print(exc)
 
+
     # Create directory to store all results in
     now = datetime.now()
     dt_string = now.strftime("%d-%m-%Y %H:%M:%S")
@@ -92,7 +93,9 @@ def main() -> None:
 
     # Setup save directory for output logging
     logger.output_file = save_dir
-    logger.success("Starting : {}".format(args.experiment))
+    logger.info("Running the JointOmicsComp software - A compilation of multi-omic integration models.")
+
+    logger.success("Starting Experiment : {}".format(args.experiment))
     logger.success("Saving to : {}".format(save_dir))
 
     # Check for utility arguments, run only these and exit program

@@ -3,7 +3,7 @@ GLOBAL_PARAMS:
   task: 1
   num_features1: 5000
   num_features2: 5000
-  cuda: false
+  cuda: true
   random_seed: 1
   log_save_interval: 5
   early_stopping_patience: 20 # If set to 0 or <0, early stopping is turned off.
@@ -20,15 +20,12 @@ GLOBAL_PARAMS:
   val_ind: "/home/bram/jointomicscomp/data/task1/validInd.npy"
   test_ind: "/home/bram/jointomicscomp/data/task1/testInd.npy"
 
-
 BASELINE:
   task: 'impute'               # whether to `impute` one datasource from the other, `classify` (cell type), or `rank` (stage prediction)
-  resultsFile: './res.pkl'
   baseline: false
 
 MOFA+:
   # Data options
-  mofa_data_path: "/home/bram/jointomicscomp/data/mofa_GE_ME_5000MAD.csv"           # MOFA requires different view of the input data
   scale_groups: false          # if groups have significantly different ranges, it is good practice to scale each group to unit variance
   scale_views: false           # if views have significantly different ranges, it is good practice to scale each view to unit variance
 
@@ -51,7 +48,6 @@ MOFA+:
   dropR2: null                 # minimum variance explained criteria to drop factors while training.
                                #     Default is null (None), inactive factors are not dropped during training
   verbose: false               # Verbose mode (will print, not log)
-
 
 MVAE:
   # Flags

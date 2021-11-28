@@ -5,8 +5,10 @@ from sklearn.linear_model import Ridge
 from sklearn.svm import LinearSVC
 from sklearn.decomposition import PCA
 from mord import OrdinalRidge
-from src.baseline.evaluate import *
+from src.util.evaluate import *
 import src.util.logger as logger
+from src.util.umapplotter import UMAPPlotter
+
 
 def impute(x_train, y_train, x_valid, y_valid, x_test, y_test, alphas, criterion='mse'):
 
@@ -114,17 +116,16 @@ def run_baseline(args: dict) -> None:
     @param args: Dictionary containing input parameters
     @return:
     """
+    logger.info("Running Baseline - Task {}".format(args['task']))
     save_dir = os.path.join(args['save_dir'], '{}'.format('baseline'))
     os.makedirs(save_dir)
 
     alphas = np.array([1e-4, 1e-3, 1e-2, 1e-1, 0.5, 1.0, 2.0, 5.0, 10., 20.])
     Cs = 1. / alphas
 
-    print(args['task'])
-
     # Load in data
-    omic1 = np.load(args['data_path1']).astype(np.float64)
-    omic2 = np.load(args['data_path2']).astype(np.float64)
+    omic1 = np.load(args['data_path1']).astype(np.float32)
+    omic2 = np.load(args['data_path2']).astype(np.float32)
 
     # Use predefined split
     train_ind = np.load(args['train_ind'])
@@ -140,6 +141,8 @@ def run_baseline(args: dict) -> None:
     omic2_train_file = omic2[train_ind]
     omic2_valid_file = omic2[val_ind]
     omic2_test_file = omic2[test_ind]
+
+    logger.info("Succesfully loaded in all data")
 
     if args['task'] == 'classify':
 
@@ -268,10 +271,10 @@ def run_baseline(args: dict) -> None:
         rsquared = np.eye(NR_MODALITIES)
 
         # From x to y
-        _, mse[0, 1], rsquared[0, 1] = impute(omic1_train_file, omic2_train_file, omic1_valid_file, omic2_valid_file, omic1_test_file, omic2_test_file, alphas, 'mse')
+        omic2_from_omic1, mse[0, 1], rsquared[0, 1] = impute(omic1_train_file, omic2_train_file, omic1_valid_file, omic2_valid_file, omic1_test_file, omic2_test_file, alphas, 'mse')
 
         # From y to x
-        _, mse[1, 0], rsquared[1, 0] = impute(omic2_train_file, omic1_train_file, omic2_valid_file, omic1_valid_file, omic2_test_file, omic1_test_file, alphas, 'mse')
+        omic1_from_omic2, mse[1, 0], rsquared[1, 0] = impute(omic2_train_file, omic1_train_file, omic2_valid_file, omic1_valid_file, omic2_test_file, omic1_test_file, alphas, 'mse')
 
         performance = {'mse': mse, 'rsquared': rsquared}
 
@@ -283,7 +286,6 @@ def run_baseline(args: dict) -> None:
         logger.info("R^2 regression score function: From {} to {} : {}".format(args['data2'], args['data1'], performance['rsquared'][1, 0]))
 
         print(performance)
-        print(type(performance))
 
-    with open(os.path.join(save_dir, args['name']), 'wb') as f:
+    with open(os.path.join(save_dir, args['name'] + 'results_pickle'), 'wb') as f:
         pickle.dump(performance, f)

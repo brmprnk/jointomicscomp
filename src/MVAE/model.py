@@ -34,6 +34,7 @@ class MVAE(nn.Module):
                                         use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam',
                                         encoder1_lr=args['lr'], decoder1_lr=args['lr'],
                                         encoder2_lr=args['lr'], decoder2_lr=args['lr'])
+
         self.use_mixture = args['mixture']
         if self.use_mixture:
             print("Using Mixture-of-Experts Model")
@@ -298,7 +299,6 @@ class MixtureOfExperts(MultiOmicVAE):
         qz_xs, px_zs, zss = self.forward(x, K)
         lws = []
         for r, qz_x in enumerate(qz_xs):
-
             lpz = torch.distributions.Laplace(*self.pz_params).log_prob(zss[r]).sum(-1)
             lqz_x = self.log_mean_exp(torch.stack([qz_x.log_prob(zss[r]).sum(-1) for qz_x in qz_xs]))
             lpx_z = [px_z.log_prob(x[d]).view(*px_z.batch_shape[:2], -1)

@@ -58,10 +58,10 @@ MVAE:
   plot: True     # Flag for plotting training and validation losses (loss, recon loss and KL loss)
 
   # Model optionsmain.yaml
-  pre_trained: "/home/bram/jointomicscomp/results/gcnme_moe_poe 13-09-2021 23_25_30/gcnme_moe_poe 13-09-2021 23:25:30/PoE/best_model.pth.tar"
+  pre_trained: "/home/bram/jointomicscomp/results/TRY_IT_ALL 22-11-2021 23:58:20/PoE/trained_model_epoch25.pth.tar"
   latent_dim: 128
   batch_size: 256
-  epochs: 1
+  epochs: 25
   lr: 0.0001
 
   # Other parameters
@@ -93,7 +93,7 @@ MVIB:
   overwrite: false  # When overwrite is false, this will resume training on a previous model
 
 CGAE:
-  epochs: 1
+  epochs: 1000
   latent_dim: 128
   batch_size: 256
   enc1_lr: 0.0001

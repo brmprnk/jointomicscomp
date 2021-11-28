@@ -17,9 +17,12 @@ import rpy2.robjects.packages as rpackages
 from sklearn.metrics import mean_squared_error
 from tqdm import tqdm
 import numpy as np
+import gc
+import pickle
 from mofapy2.run.entry_point import entry_point
 from src.util import logger
 from src.util.umapplotter import UMAPPlotter
+from src.util.evaluate import evaluate_imputation
 
 
 def run(args: dict) -> None:
@@ -91,26 +94,43 @@ def train_mofa(args: dict, save_file_path: str) -> None:
         logger.info("Running Task {} on omic {} and omic {}".format(args['task'], args['data1'], args['data2']))
 
         # Load in data
-        omic1 = np.load(args['data_path1'])
-        omic2 = np.load(args['data_path2'])
+        omic1 = np.load(args['data_path1']).astype(np.float32)
+        omic2 = np.load(args['data_path2']).astype(np.float32)
+        sample_names = np.load(args['sample_names']).astype(str)
 
         # Use predefined split
         train_ind = np.load(args['train_ind'])
         val_ind = np.load(args['val_ind'])
 
         # Train on training + validation set for fair comparison
-        data_mat = [[0], [None]]
 
-        data_mat[0][0] = np.vstack((omic1[train_ind], omic1[val_ind]))
-        data_mat[1][0] = np.vstack((omic2[train_ind], omic2[val_ind]))
+        omic1 = np.concatenate((omic1[train_ind], omic1[val_ind]))
+        omic2 = np.concatenate((omic2[train_ind], omic2[val_ind]))
+        sample_names = np.concatenate((sample_names[train_ind], sample_names[val_ind]))
+
+        print("rewrote omics")
+
+        data_mat = np.zeros((2, 1), dtype=object)
+
+        data_mat[0][0] = omic1
+        data_mat[1][0] = omic2
+        data_mat = list(data_mat)
+
+
+        # MOFA+ Wants all your memory.
+        # Clean this data loaded, as it has been stored in data_mat
+        del omic1
+        del omic2
+
+        gc.collect()
 
         try:
             ent.set_data_matrix(data_mat, likelihoods=["gaussian", "gaussian"], views_names=[args['data1'], args['data2']],
                                 features_names=[np.load(args['data_features1'], allow_pickle=True).astype(str).tolist(),
-                                                np.load(args['data_features2'], allow_pickle=True).astype(str).tolist()])
+                                                np.load(args['data_features2'], allow_pickle=True).astype(str).tolist()],
+                                samples_names=[sample_names])
         except AssertionError as e:
             print(e)
-            print("MOFA+ wants feature names to be unique :(. Suggest add the datatype in front of each feature.")
 
     logger.success("MOFA DATA : Loading Successful!")
 
@@ -300,10 +320,13 @@ def downstream_analysis(args: dict, save_dir: str) -> None:
     # Plot this total Z using UMAP
     np.save("{}/task1_z.npy".format(save_dir), z_matrix)
 
-    labels = np.load(args['labels'])
-    labeltypes = np.load(args['labelnames'])
+    labels = np.load(args['labels']).astype(int)
+    labeltypes = np.load(args['labelnames']).astype(str)
 
     # Get correct labels with names
+    print(labeltypes)
+    print("That was labeltypes")
+    print(labels)
     training_labels = np.concatenate((labeltypes[[labels[np.load(args['train_ind'])]]], labeltypes[[labels[np.load(args['val_ind'])]]]))
 
     training_data_plot = UMAPPlotter(Z.transpose(),
@@ -370,12 +393,20 @@ def downstream_analysis(args: dict, save_dir: str) -> None:
         # Now to impute Y1 from new Z
         Y1_impute = np.matmul(W_omic1, Z_frompseudo2)
 
-        # Imputation loss is
-        imputeY1_loss = mean_squared_error(Y1_impute, omic_data1.transpose())
-        imputeY2_loss = mean_squared_error(Y2_impute, omic_data2.transpose())
+        # mse[i,j]: performance of using modality i to predict modality j
+        mse = np.zeros((2, 2), float)
+        rsquared = np.eye(2)
 
-        logger.info("Imputation loss {} from {} = {}".format(args['data1'], args['data2'], imputeY1_loss))
-        logger.info("Imputation loss {} from {} = {}".format(args['data2'], args['data1'], imputeY2_loss))
+        mse[0, 1], rsquared[0, 1] = evaluate_imputation(omic_data2.transpose(), Y2_impute, 'mse'), evaluate_imputation(omic_data2.transpose(), Y2_impute, 'rsquared')
+        mse[1, 0], rsquared[1, 0] = evaluate_imputation(omic_data1.transpose(), Y1_impute, 'mse'), evaluate_imputation(omic_data1.transpose(), Y1_impute, 'rsquared')
+
+        performance = {'mse': mse, 'rsquared': rsquared}
+        logger.info("{}".format(performance))
+        with open(os.path.join(save_dir, args['name'] + 'results_pickle'), 'wb') as f:
+            pickle.dump(performance, f)
+
+        logger.info("Imputation loss {} from {} = {}".format(args['data1'], args['data2'], mse[0, 1]))
+        logger.info("Imputation loss {} from {} = {}".format(args['data2'], args['data1'], mse[1, 0]))
 
         test_labels = labeltypes[[labels[test_ind]]]
 
