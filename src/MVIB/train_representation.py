@@ -84,6 +84,8 @@ def run(args: dict) -> None:
                                'beta_start_iteration': args['beta_start_iteration'] 
                            })
 
+    trainer = trainer.double()
+
     # Resume the training if specified
     if resume_training:
         trainer.load(args['pre_trained'])

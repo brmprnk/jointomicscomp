@@ -69,7 +69,7 @@ MVIB:
   # Hyperparameters
   z_dim: 128
   batch_size: 256
-  epochs: 100
+  epochs: 20
   input_dim1: 5000
   input_dim2: 5000
 
@@ -91,7 +91,7 @@ MVIB:
   overwrite: false  # When overwrite is false, this will resume training on a previous model
 
 CGAE:
-  epochs: 60
+  epochs: 5
   batch_size: 256
   latent_dim: 128
   enc1_lr: 0.0001

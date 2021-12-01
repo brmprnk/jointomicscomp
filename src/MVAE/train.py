@@ -228,7 +228,8 @@ def run(args) -> None:
     # Log Data shape, input arguments and model
     model_file = open("{}/MVAE {} Model.txt".format(save_dir, 'MoE' if args['mixture'] else 'PoE'), "a")
     model_file.write("Running at {}\n".format(datetime.now().strftime("%d-%m-%Y %H:%M:%S")))
-    model_file.write("Input shape : {}, 5000\n".format(len(train_loader.dataset)))
+    model_file.write("Input shape 1 : {}, {}\n".format(len(train_loader.dataset), args['num_features1']))
+    model_file.write("Input shape 2 : {}, {}\n".format(len(train_loader.dataset), args['num_features2']))
     model_file.write("Input args : {}\n".format(args))
     model_file.write("PoE Model : {}".format(model))
     model_file.close()

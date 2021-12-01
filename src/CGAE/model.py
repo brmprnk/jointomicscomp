@@ -9,6 +9,7 @@ from tensorboardX import SummaryWriter
 import src.nets
 from sklearn.metrics import mean_squared_error
 from src.util import logger
+from src.util.evaluate import evaluate_imputation
 
 
 class MultiOmicsDataset():
@@ -153,23 +154,35 @@ def impute(net, model_file, loader, save_dir, multimodal=False):
                 raise NotImplementedError
 
             else:
-                ge_test = data[0][0]
-                me_test = data[1][0]
+                omic1_test = data[0][0]
+                omic2_test = data[1][0]
 
                 # Encode test set in same encoder
-                z1, z2 = net.encode(ge_test, me_test)
+                z1, z2 = net.encode(omic1_test, omic2_test)
 
                 # Now decode data in different decoder
-                ge_from_me = net.decoder(z2)
-                me_from_ge = net.decoder2(z1)
+                omic1_from_omic2 = net.decoder(z2)
+                omic2_from_omic1 = net.decoder2(z1)
 
-                imputation_loss_ge = mean_squared_error(ge_test, ge_from_me)
-                imputation_loss_me = mean_squared_error(me_test, me_from_ge)
+                # Imputation losses
+                NR_MODALITIES = 2
 
-                print("z1", imputation_loss_ge, "z2", imputation_loss_me)
+                # mse[i,j]: performance of using modality i to predict modality j
+                mse = np.zeros((NR_MODALITIES, NR_MODALITIES), float)
+                rsquared = np.eye(NR_MODALITIES)
 
-                logger.info("Imputation Loss for Gene Expression: ".format(imputation_loss_ge))
-                logger.info("Imputation Loss for Methylation: ".format(imputation_loss_me))
+                # From x to y
+                mse[0, 1], rsquared[0, 1] = evaluate_imputation(omic1_from_omic2, omic1_test, 'mse'), \
+                                            evaluate_imputation(omic1_from_omic2, omic1_test, 'rsquared')
+                mse[1, 0], rsquared[1, 0] = evaluate_imputation(omic2_from_omic1, omic2_test, 'mse'),\
+                                            evaluate_imputation(omic2_from_omic1, omic2_test, 'rsquared')
+
+                performance = {'mse': mse, 'rsquared': rsquared}
+                print(performance)
+                with open(save_dir + "/CGAE results_pickle", 'wb') as f:
+                    pickle.dump(performance, f)
+
+                logger.info("Performance: {}".format(performance))
                 np.save("{}/task1_z1.npy".format(save_dir), z1)
                 np.save("{}/task1_z2.npy".format(save_dir), z2)
 

@@ -76,7 +76,7 @@ def run(args: dict) -> None:
                        args['beta_start_value'],
                        args['zconstraintCoef'], args['crossPenaltyCoef']).to(device)
 
-    # net = net.double()
+    net = net.double()
 
     logger.success("Initialized CrossGeneratingVariationalAutoencoder model.")
     logger.info(str(net))
@@ -139,7 +139,7 @@ def run(args: dict) -> None:
 
         # Compute imputation loss
         z1, z2 = impute(net=net,
-                        model_file="/home/bram/jointomicscomp/results/cgae_task1_earlystop 12-10-2021 09:31:35/CGAE/checkpoint/model_epoch460.pth.tar",
+                        model_file=ckpt_dir + '/model_last.pth.tar',
                         loader=extract_loader, save_dir=save_dir, multimodal=True)
 
         labels = np.load(args['labels']).astype(int)
