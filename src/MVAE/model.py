@@ -9,7 +9,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
 
-from src.nets import MultiOmicVAE
+from src.nets import CrossGeneratingVariationalAutoencoder
 
 
 class MVAE(nn.Module):
@@ -212,7 +212,7 @@ class ProductOfExperts(nn.Module):
         return pd_mu, pd_logvar
 
 
-class MixtureOfExperts(MultiOmicVAE):
+class MixtureOfExperts(CrossGeneratingVariationalAutoencoder):
     """Return parameters for mixture of independent experts.
 
     https://arxiv.org/pdf/1911.03393.pdf
@@ -294,31 +294,44 @@ class MixtureOfExperts(MultiOmicVAE):
         assert (S > 0), "Cannot fit individual data in memory, consider smaller K"
         return min(B, S)
 
-    def _m_iwae(self, x, K=1):
-        """IWAE estimate for log p_\theta(x) for multi-modal vae -- fully vectorised"""
-        qz_xs, px_zs, zss = self.forward(x, K)
+
+    def _m_dreg_looser(model, x, K=1):
+        """DREG estimate for log p_\theta(x) for multi-modal vae -- fully vectorised
+        This version is the looser bound---with the average over modalities outside the log
+        """
+        qz_xs, px_zs, zss = model(x, K)
+        qz_xs_ = [vae.qz_x(*[p.detach() for p in vae.qz_x_params]) for vae in model.vaes]
         lws = []
-        for r, qz_x in enumerate(qz_xs):
-            lpz = torch.distributions.Laplace(*self.pz_params).log_prob(zss[r]).sum(-1)
-            lqz_x = self.log_mean_exp(torch.stack([qz_x.log_prob(zss[r]).sum(-1) for qz_x in qz_xs]))
+        for r, vae in enumerate(model.vaes):
+            lpz = model.pz(*model.pz_params).log_prob(zss[r]).sum(-1)
+            lqz_x = log_mean_exp(torch.stack([qz_x_.log_prob(zss[r]).sum(-1) for qz_x_ in qz_xs_]))
             lpx_z = [px_z.log_prob(x[d]).view(*px_z.batch_shape[:2], -1)
-                         .mul(1.0).sum(-1)  # The 1.0 represents llik_scaling for the vae
+                         .mul(model.vaes[d].llik_scaling).sum(-1)
                      for d, px_z in enumerate(px_zs[r])]
             lpx_z = torch.stack(lpx_z).sum(0)
             lw = lpz + lpx_z - lqz_x
             lws.append(lw)
-        return torch.cat(lws)  # (n_modality * n_samples) x batch_size, batch_size
+        return torch.stack(lws), torch.stack(zss)
 
-    def compute_loss(self, x, K=1):
-        """Computes iwae estimate for log p_\theta(x) for multi-modal vae
 
-        This function is called m_iwae in the MMVAE repo's objective.py
+    def compute_loss(model, x, K=1):
+        """Computes dreg estimate for log p_\theta(x) for multi-modal vae
+        This version is the looser bound---with the average over modalities outside the log
+
+        This function is called m_dreg_looser in the MMVAE repo's objective.py
+
         """
-        S = self.compute_microbatch_split(x, K)
+        S = compute_microbatch_split(x, K)
         x_split = zip(*[_x.split(S) for _x in x])
-        lw = [self._m_iwae(_x, K) for _x in x_split]
-        lw = torch.cat(lw, 1)  # concat on batch
-        return self.log_mean_exp(lw).sum()
+        lw, zss = zip(*[_m_dreg_looser(model, _x, K) for _x in x_split])
+        lw = torch.cat(lw, 2)  # concat on batch
+        zss = torch.cat(zss, 2)  # concat on batch
+        with torch.no_grad():
+            grad_wt = (lw - torch.logsumexp(lw, 1, keepdim=True)).exp()
+            if zss.requires_grad:
+                zss.register_hook(lambda grad: grad_wt.unsqueeze(-1) * grad)
+        return (grad_wt * lw).mean(0).sum()
+
 
 
 def prior_expert(size, use_cuda=False):
