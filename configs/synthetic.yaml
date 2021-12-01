@@ -1,24 +1,24 @@
 GLOBAL_PARAMS:
   name: "experiment"
   task: 1
-  num_features1: 5000
-  num_features2: 5000
+  num_features1: 3
+  num_features2: 3
   cuda: true
   random_seed: 1
   log_save_interval: 5
   early_stopping_patience: 20 # If set to 0 or <0, early stopping is turned off.
   data1: "GE"
   data2: "ME"
-  data_path1: "/home/bram/jointomicscomp/data/GE.npy"
-  data_path2: "/home/bram/jointomicscomp/data/ME.npy"
-  data_features1: "/home/bram/jointomicscomp/data/GE_featureNames.npy"
-  data_features2: "/home/bram/jointomicscomp/data/ME_featureNames.npy"
+  data_path1: "/home/bram/jointomicscomp/synthetic-data/dataset1/view1.npy"
+  data_path2: "/home/bram/jointomicscomp/synthetic-data/dataset1/view2.npy"
+  data_features1: "/home/bram/jointomicscomp/synthetic-data/dataset1/view1_features.npy"
+  data_features2: "/home/bram/jointomicscomp/synthetic-data/dataset1/view2_features.npy"
   sample_names: "/home/bram/jointomicscomp/data/sampleNames.npy"
-  labels: "/home/bram/jointomicscomp/data/cancerType.npy"
-  labelnames: "/home/bram/jointomicscomp/data/cancerTypes.npy"
-  train_ind: "/home/bram/jointomicscomp/data/task1/trainInd.npy"
-  val_ind: "/home/bram/jointomicscomp/data/task1/validInd.npy"
-  test_ind: "/home/bram/jointomicscomp/data/task1/testInd.npy"
+  labels: "/home/bram/jointomicscomp/synthetic-data/dataset1/labels.npy"
+  labelnames: "/home/bram/jointomicscomp/synthetic-data/dataset1/labelnames.npy"
+  train_ind: "/home/bram/jointomicscomp/synthetic-data/dataset1/trainInd.npy"
+  val_ind: "/home/bram/jointomicscomp/synthetic-data/dataset1/validInd.npy"
+  test_ind: "/home/bram/jointomicscomp/synthetic-data/dataset1/testInd.npy"
 
 BASELINE:
   task: 'impute'               # whether to `impute` one datasource from the other, `classify` (cell type), or `rank` (stage prediction)
@@ -31,7 +31,7 @@ MOFA+:
 
   # Model options
   pre_trained: ""              # Use a pre-trained model for downstream analysis
-  factors: 128
+  factors: 2
   likelihoods: None            # likelihoods per view (options are "gaussian","poisson","bernoulli").
                                #     Default is None, and they are infered automatically
   spikeslab_weights: false     # use spike-slab sparsity prior in the weights? (recommended TRUE)
@@ -57,21 +57,38 @@ MVAE:
   pre_trained: "/home/bram/jointomicscomp/results/geme_moe_poe_task1 13-09-2021 20:52:10/PoE/best_model.pth.tar"
   latent_dim: 128
   batch_size: 256
-  epochs: 1000
+  epochs: 30
   lr: 0.0001
 
   # Other parameters
   log_interval: 1
 
 MVIB:
+  trainer: OmicsMIBTrainer
+
   # Hyperparameters
-  latent_dim: 128
+  z_dim: 128
   batch_size: 256
-  epochs: 1
-  lr: 0.0001
+  epochs: 100
+  input_dim1: 5000
+  input_dim2: 5000
+
+  # Optimization parameters
+  optimizer_name: 'Adam'
+  encoder_lr: 0.0001
+  miest_lr: 0.0001
+
+  # Parameters for the beta-scheduler
+  beta_start_value: 0.001
+  beta_end_value: 1
+  beta_n_iterations: 100000
+  beta_start_iteration: 50000
 
   # Other parameters
+  no_logging: false
   log_interval: 5
+  pre_trained: ""   # Path to a previously trained model
+  overwrite: false  # When overwrite is false, this will resume training on a previous model
 
 CGAE:
   epochs: 60

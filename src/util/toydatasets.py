@@ -29,9 +29,9 @@ def easy(N1, N2, N3, save=False, saveDir=None, plot=False, rnd_seed=42):
 
 
     y = np.zeros(np.sum(Ns))
-    y[:Ns[0]] = 1
-    y[Ns[0]:Ns[0] + Ns[1]] = 2
-    y[-Ns[2]:] = 3
+    y[:Ns[0]] = 0
+    y[Ns[0]:Ns[0] + Ns[1]] = 1
+    y[-Ns[2]:] = 2
 
     # dimensionality of feature space
     d = 3
@@ -142,9 +142,9 @@ def hard(N1, N2, N3, save=False, saveDir=None, plot=False, rnd_seed=42):
 
 
     y = np.zeros(np.sum(Ns))
-    y[:Ns[0]] = 1
-    y[Ns[0]:Ns[0] + Ns[1]] = 2
-    y[-Ns[2]:] = 3
+    y[:Ns[0]] = 0
+    y[Ns[0]:Ns[0] + Ns[1]] = 1
+    y[-Ns[2]:] = 2
 
     # dimensionality of feature space
     d = 2

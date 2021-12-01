@@ -375,6 +375,7 @@ def run(args) -> None:
                 omic2_from_omic1, impute_dataset.omic2_data, 'rsquared')
 
             performance = {'mse': mse, 'rsquared': rsquared}
+            print(performance)
             with open(save_dir + "/{} results_pickle".format('MoE' if args['mixture'] else 'PoE'), 'wb') as f:
                 pickle.dump(performance, f)
 
