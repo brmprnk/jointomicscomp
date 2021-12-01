@@ -9,16 +9,16 @@ GLOBAL_PARAMS:
   early_stopping_patience: 20 # If set to 0 or <0, early stopping is turned off.
   data1: "GE"
   data2: "ME"
-  data_path1: "/home/bram/jointomicscomp/synthetic-data/dataset1/view1.npy"
-  data_path2: "/home/bram/jointomicscomp/synthetic-data/dataset1/view2.npy"
-  data_features1: "/home/bram/jointomicscomp/synthetic-data/dataset1/view1_features.npy"
-  data_features2: "/home/bram/jointomicscomp/synthetic-data/dataset1/view2_features.npy"
-  sample_names: "/home/bram/jointomicscomp/synthetic-data/dataset1/samples.npy"
-  labels: "/home/bram/jointomicscomp/synthetic-data/dataset1/labels.npy"
-  labelnames: "/home/bram/jointomicscomp/synthetic-data/dataset1/labelnames.npy"
-  train_ind: "/home/bram/jointomicscomp/synthetic-data/dataset1/trainInd.npy"
-  val_ind: "/home/bram/jointomicscomp/synthetic-data/dataset1/validInd.npy"
-  test_ind: "/home/bram/jointomicscomp/synthetic-data/dataset1/testInd.npy"
+  data_path1: "/home/bram/jointomicscomp/synthetic-data/dataset2/view1.npy"
+  data_path2: "/home/bram/jointomicscomp/synthetic-data/dataset2/view2.npy"
+  data_features1: "/home/bram/jointomicscomp/synthetic-data/dataset2/view1_features.npy"
+  data_features2: "/home/bram/jointomicscomp/synthetic-data/dataset2/view2_features.npy"
+  sample_names: "/home/bram/jointomicscomp/synthetic-data/dataset2/samples.npy"
+  labels: "/home/bram/jointomicscomp/synthetic-data/dataset2/labels.npy"
+  labelnames: "/home/bram/jointomicscomp/synthetic-data/dataset2/labelnames.npy"
+  train_ind: "/home/bram/jointomicscomp/synthetic-data/dataset2/trainInd.npy"
+  val_ind: "/home/bram/jointomicscomp/synthetic-data/dataset2/validInd.npy"
+  test_ind: "/home/bram/jointomicscomp/synthetic-data/dataset2/testInd.npy"
 
 BASELINE:
   task: 'impute'               # whether to `impute` one datasource from the other, `classify` (cell type), or `rank` (stage prediction)
