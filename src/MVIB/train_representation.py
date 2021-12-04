@@ -11,6 +11,7 @@ from src.util import logger
 from src.util.umapplotter import UMAPPlotter
 from tensorboardX import SummaryWriter
 from src.util.early_stopping import EarlyStopping
+from src.util.evaluate import save_factorizations_to_csv
 
 
 def run(args: dict) -> None:
@@ -159,6 +160,11 @@ def run(args: dict) -> None:
 
                 np.save("{}/task1_z1.npy".format(save_dir), z1)
                 np.save("{}/task1_z2.npy".format(save_dir), z2)
+
+                sample_names = np.load(args['sample_names']).astype(str)[test_ind]
+
+                save_factorizations_to_csv(z1, sample_names, save_dir, 'task1_z1')
+                save_factorizations_to_csv(z2, sample_names, save_dir, 'task1_z2')
 
                 labels = np.load(args['labels']).astype(int)
                 test_labels = labeltypes[[labels[test_ind]]]
