@@ -1,5 +1,6 @@
 import numpy as np
 import src.util.logger as logger
+import torch
 
 
 # from github Bjarten/early-stopping-pytorch
@@ -29,15 +30,26 @@ class EarlyStopping:
 
     def __call__(self, val_loss):
 
-        score = -val_loss
+        score = val_loss
 
         if self.best_score is None:
             self.best_score = score
-        elif score < (self.best_score + (self.best_score * self.delta)):
-            self.counter += 1
-            logger.info('EarlyStopping counter: {} out of {}'.format(self.counter, self.patience))
-            if self.counter >= self.patience:
-                self.early_stop = True
+
+        if isinstance(score, torch.Tensor):
+            if torch.gt(score, (self.best_score - (self.best_score * self.delta))):
+                self.counter += 1
+                logger.info('EarlyStopping counter: {} out of {}'.format(self.counter, self.patience))
+                if self.counter >= self.patience:
+                    self.early_stop = True
+            else:
+                self.best_score = score
+                self.counter = 0
         else:
-            self.best_score = score
-            self.counter = 0
+            if score > (self.best_score - (self.best_score * self.delta)):
+                self.counter += 1
+                logger.info('EarlyStopping counter: {} out of {}'.format(self.counter, self.patience))
+                if self.counter >= self.patience:
+                    self.early_stop = True
+            else:
+                self.best_score = score
+                self.counter = 0

@@ -5,8 +5,8 @@ GLOBAL_PARAMS:
   num_features2: 5000
   cuda: true
   random_seed: 1
-  log_save_interval: 5
-  early_stopping_patience: 20 # If set to 0 or <0, early stopping is turned off.
+  log_save_interval: 10
+  early_stopping_patience: 10 # If set to 0 or <0, early stopping is turned off.
   data1: "GE"
   data2: "ME"
   data_path1: "/home/bram/jointomicscomp/data/GE.npy"
@@ -64,14 +64,31 @@ MVAE:
   log_interval: 1
 
 MVIB:
+  trainer: OmicsMIBTrainer
+
   # Hyperparameters
-  latent_dim: 128
+  z_dim: 128
   batch_size: 256
-  epochs: 1
-  lr: 0.0001
+  epochs: 100
+  input_dim1: 5000
+  input_dim2: 5000
+
+  # Optimization parameters
+  optimizer_name: 'Adam'
+  encoder_lr: 0.0001
+  miest_lr: 0.0001
+
+  # Parameters for the beta-scheduler
+  beta_start_value: 0.001
+  beta_end_value: 1
+  beta_n_iterations: 100000
+  beta_start_iteration: 50000
 
   # Other parameters
+  no_logging: false
   log_interval: 5
+  pre_trained: ""   # Path to a previously trained model
+  overwrite: false  # When overwrite is false, this will resume training on a previous model
 
 CGAE:
   epochs: 1000

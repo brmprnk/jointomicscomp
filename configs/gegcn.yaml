@@ -6,7 +6,7 @@ GLOBAL_PARAMS:
   cuda: true
   random_seed: 1
   log_save_interval: 5
-  early_stopping_patience: 20 # If set to 0 or <0, early stopping is turned off.
+  early_stopping_patience: 10 # If set to 0 or <0, early stopping is turned off.
   data1: "GE"
   data2: "GCN"
   data_path1: "/home/bram/jointomicscomp/data/GE.npy"
