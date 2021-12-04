@@ -57,6 +57,16 @@ class TCGAData(object):
             MEvalidrest = np.load(args['y_valid_file'])
             self.omic2_val_file = np.float32(np.vstack((MEvalidctype, MEvalidrest)))
 
+    def get_data_splits(self, partition):
+        if partition == "train":
+            return self.train_ind
+        elif partition == "val":
+            return self.val_ind
+        elif partition == "test":
+            return self.test_ind
+        else:
+            print("Wanted data splits but no partition was given")
+
     def get_data_partition(self, partition):
         if partition == "train":
             return TCGADataset(self.omic1_train_file, self.omic2_train_file)

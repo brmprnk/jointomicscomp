@@ -9,7 +9,7 @@ from tensorboardX import SummaryWriter
 import src.nets
 from sklearn.metrics import mean_squared_error
 from src.util import logger
-from src.util.evaluate import evaluate_imputation
+from src.util.evaluate import evaluate_imputation, save_factorizations_to_csv
 
 
 class MultiOmicsDataset():
@@ -140,7 +140,7 @@ def train(device, net, num_epochs, train_loader, train_loader_eval, valid_loader
     print("[*] Finish training.")
 
 
-def impute(net, model_file, loader, save_dir, multimodal=False):
+def impute(net, model_file, loader, save_dir, sample_names, multimodal=False):
     checkpoint = torch.load(model_file)
     net.load_state_dict(checkpoint['state_dict'])
     net.opt.load_state_dict(checkpoint['optimizer'])
@@ -170,14 +170,22 @@ def impute(net, model_file, loader, save_dir, multimodal=False):
                 # mse[i,j]: performance of using modality i to predict modality j
                 mse = np.zeros((NR_MODALITIES, NR_MODALITIES), float)
                 rsquared = np.eye(NR_MODALITIES)
+                spearman = np.zeros((NR_MODALITIES, NR_MODALITIES), float)
+                spearman_p = np.zeros((NR_MODALITIES, NR_MODALITIES), float)
 
                 # From x to y
-                mse[0, 1], rsquared[0, 1] = evaluate_imputation(omic1_from_omic2, omic1_test, 'mse'), \
-                                            evaluate_imputation(omic1_from_omic2, omic1_test, 'rsquared')
-                mse[1, 0], rsquared[1, 0] = evaluate_imputation(omic2_from_omic1, omic2_test, 'mse'),\
-                                            evaluate_imputation(omic2_from_omic1, omic2_test, 'rsquared')
+                mse[0, 1], rsquared[0, 1], spearman[0, 1], spearman_p[0, 1] =\
+                    evaluate_imputation(omic2_from_omic1, omic2_test, 'mse'),\
+                    evaluate_imputation(omic2_from_omic1, omic2_test, 'rsquared'), \
+                    evaluate_imputation(omic2_from_omic1, omic2_test, 'spearman_corr'),\
+                    evaluate_imputation(omic2_from_omic1, omic2_test, 'spearman_p')
+                mse[1, 0], rsquared[1, 0], spearman[1, 0], spearman_p[1, 0] =\
+                    evaluate_imputation(omic1_from_omic2, omic1_test, 'mse'),\
+                    evaluate_imputation(omic1_from_omic2, omic1_test, 'rsquared'), \
+                    evaluate_imputation(omic1_from_omic2, omic1_test, 'spearman_corr'), \
+                    evaluate_imputation(omic1_from_omic2, omic1_test, 'spearman_p')
 
-                performance = {'mse': mse, 'rsquared': rsquared}
+                performance = {'mse': mse, 'rsquared': rsquared, 'spearman_corr': spearman, 'spearman_p': spearman_p}
                 print(performance)
                 with open(save_dir + "/CGAE results_pickle", 'wb') as f:
                     pickle.dump(performance, f)
@@ -185,6 +193,9 @@ def impute(net, model_file, loader, save_dir, multimodal=False):
                 logger.info("Performance: {}".format(performance))
                 np.save("{}/task1_z1.npy".format(save_dir), z1)
                 np.save("{}/task1_z2.npy".format(save_dir), z2)
+                save_factorizations_to_csv(z1.numpy(), sample_names, save_dir, 'task1_z1')
+                save_factorizations_to_csv(z2.numpy(), sample_names, save_dir, 'task1_z2')
+
 
     return z1, z2
 

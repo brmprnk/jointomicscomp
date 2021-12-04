@@ -11,7 +11,6 @@ from src.util.umapplotter import UMAPPlotter
 
 
 def impute(x_train, y_train, x_valid, y_valid, x_test, y_test, alphas, criterion='mse'):
-
     # returns imputed values as well as evaluation of the imputation based on mse and rsquared
 
     validationPerformance = np.zeros(alphas.shape[0])
@@ -35,7 +34,11 @@ def impute(x_train, y_train, x_valid, y_valid, x_test, y_test, alphas, criterion
 
     predictions = bestModel.predict(x_test)
 
-    return predictions, evaluate_imputation(y_test, predictions, 'mse'), evaluate_imputation(y_test, predictions, 'rsquared')
+    return predictions, \
+           evaluate_imputation(y_test, predictions, 'mse'), \
+           evaluate_imputation(y_test, predictions, 'rsquared'), \
+           evaluate_imputation(y_test, predictions, 'spearman_corr'), \
+           evaluate_imputation(y_test, predictions, 'spearman_p')
 
 
 def ordinal_regression(x_train, y_train, x_valid, y_valid, x_test, y_test, alphas, criterion='mcc'):
@@ -173,7 +176,8 @@ def run_baseline(args: dict) -> None:
                 assert x_train.shape[0] == x_test.shape[0]
                 assert x_train.shape[1] == 50 * len(omic1_train_file)
 
-                _, acc, pr, rc, f1, mcc, confMat = classification(omic1_train_file, omic2_train_file, omic1_valid_file, omic2_valid_file, omic1_test_file,
+                _, acc, pr, rc, f1, mcc, confMat = classification(omic1_train_file, omic2_train_file, omic1_valid_file,
+                                                                  omic2_valid_file, omic1_test_file,
                                                                   omic2_test_file, Cs, 'mcc')
 
             else:
@@ -189,14 +193,19 @@ def run_baseline(args: dict) -> None:
                 confMat = np.zeros(K, Nclasses, Nclasses)
 
                 for i in range(K):
-                    _, acc[i], pr[i], rc[i], f1[i], mcc[i], confMat[i] = classification(omic1_train_file, omic2_train_file, omic1_valid_file, omic2_valid_file, omic1_test_file,
-                                                                  omic2_test_file, Cs,
+                    _, acc[i], pr[i], rc[i], f1[i], mcc[i], confMat[i] = classification(omic1_train_file,
+                                                                                        omic2_train_file,
+                                                                                        omic1_valid_file,
+                                                                                        omic2_valid_file,
+                                                                                        omic1_test_file,
+                                                                                        omic2_test_file, Cs,
                                                                                         'mcc')
 
 
         else:
-            _, acc, pr, rc, f1, mcc, confMat = classification(omic1_train_file, omic2_train_file, omic1_valid_file, omic2_valid_file, omic1_test_file,
-                                                                  omic2_test_file,
+            _, acc, pr, rc, f1, mcc, confMat = classification(omic1_train_file, omic2_train_file, omic1_valid_file,
+                                                              omic2_valid_file, omic1_test_file,
+                                                              omic2_test_file,
                                                               Cs, 'mcc')
 
         performance = {'acc': acc, 'precision': pr, 'recall': rc, 'f1': f1, 'mcc': mcc, 'confMat': confMat}
@@ -232,8 +241,10 @@ def run_baseline(args: dict) -> None:
                 assert x_train.shape[0] == x_test.shape[0]
                 assert x_train.shape[1] == 50 * len(omic1_train_file)
 
-                _, acc, pr, rc, f1, mcc, confMat = ordinal_regression(omic1_train_file, omic2_train_file, omic1_valid_file, omic2_valid_file, omic1_test_file,
-                                                                  omic2_test_file, Cs, 'mcc')
+                _, acc, pr, rc, f1, mcc, confMat = ordinal_regression(omic1_train_file, omic2_train_file,
+                                                                      omic1_valid_file, omic2_valid_file,
+                                                                      omic1_test_file,
+                                                                      omic2_test_file, Cs, 'mcc')
 
             else:
                 K = len(omic1_train_file)
@@ -248,19 +259,25 @@ def run_baseline(args: dict) -> None:
                 confMat = np.zeros(K, Nclasses, Nclasses)
 
                 for i in range(K):
-                    _, acc[i], pr[i], rc[i], f1[i], mcc[i], confMat[i] = ordinal_regression(omic1_train_file, omic2_train_file, omic1_valid_file, omic2_valid_file, omic1_test_file,
-                                                                  omic2_test_file, Cs, 'mcc')
+                    _, acc[i], pr[i], rc[i], f1[i], mcc[i], confMat[i] = ordinal_regression(omic1_train_file,
+                                                                                            omic2_train_file,
+                                                                                            omic1_valid_file,
+                                                                                            omic2_valid_file,
+                                                                                            omic1_test_file,
+                                                                                            omic2_test_file, Cs, 'mcc')
 
 
         else:
-            _, acc, pr, rc, f1, mcc, confMat = ordinal_regression(omic1_train_file, omic2_train_file, omic1_valid_file, omic2_valid_file, omic1_test_file,
+            _, acc, pr, rc, f1, mcc, confMat = ordinal_regression(omic1_train_file, omic2_train_file, omic1_valid_file,
+                                                                  omic2_valid_file, omic1_test_file,
                                                                   omic2_test_file, Cs, 'mcc')
 
         performance = {'acc': acc, 'precision': pr, 'recall': rc, 'f1': f1, 'mcc': mcc, 'confMat': confMat}
 
     else:
         assert args['task'] == 'impute'
-        logger.success("Running baseline for task {} with data from 1: {} and 2: {}".format(args['task'], args['data1'], args['data2']))
+        logger.success("Running baseline for task {} with data from 1: {} and 2: {}".format(args['task'], args['data1'],
+                                                                                            args['data2']))
         # other methods should generate the imputations by themselves
         # # TODO: not sure what will happen with MVIB here (ignore it?)
 
@@ -269,21 +286,34 @@ def run_baseline(args: dict) -> None:
         # mse[i,j]: performance of using modality i to predict modality j
         mse = np.zeros((NR_MODALITIES, NR_MODALITIES), float)
         rsquared = np.eye(NR_MODALITIES)
+        spearman = np.zeros((NR_MODALITIES, NR_MODALITIES), float)
+        spearman_p = np.zeros((NR_MODALITIES, NR_MODALITIES), float)
 
         # From x to y
-        omic2_from_omic1, mse[0, 1], rsquared[0, 1] = impute(omic1_train_file, omic2_train_file, omic1_valid_file, omic2_valid_file, omic1_test_file, omic2_test_file, alphas, 'mse')
+        omic2_from_omic1, mse[0, 1], rsquared[0, 1], spearman[0, 1], spearman_p[0, 1] =\
+            impute(omic1_train_file, omic2_train_file, omic1_valid_file,
+                   omic2_valid_file, omic1_test_file, omic2_test_file, alphas, 'mse')
 
         # From y to x
-        omic1_from_omic2, mse[1, 0], rsquared[1, 0] = impute(omic2_train_file, omic1_train_file, omic2_valid_file, omic1_valid_file, omic2_test_file, omic1_test_file, alphas, 'mse')
+        omic1_from_omic2, mse[1, 0], rsquared[1, 0], spearman[1, 0], spearman_p[1, 0] = \
+            impute(omic2_train_file, omic1_train_file, omic2_valid_file,
+                   omic1_valid_file, omic2_test_file, omic1_test_file, alphas, 'mse')
 
-        performance = {'mse': mse, 'rsquared': rsquared}
+        performance = {'mse': mse, 'rsquared': rsquared, 'spearman_corr': spearman, 'spearman_p': spearman_p}
 
         logger.info("BASELINE RESULTS")
         logger.info("MSE: From {} to {} : {}".format(args['data1'], args['data2'], performance['mse'][0, 1]))
         logger.info("MSE: From {} to {} : {}".format(args['data2'], args['data1'], performance['mse'][1, 0]))
         logger.info("")
-        logger.info("R^2 regression score function: From {} to {} : {}".format(args['data1'], args['data2'], performance['rsquared'][0, 1]))
-        logger.info("R^2 regression score function: From {} to {} : {}".format(args['data2'], args['data1'], performance['rsquared'][1, 0]))
+        logger.info("R^2 regression score function: From {} to {} : {}".format(args['data1'], args['data2'],
+                                                                               performance['rsquared'][0, 1]))
+        logger.info("R^2 regression score function: From {} to {} : {}".format(args['data2'], args['data1'],
+                                                                               performance['rsquared'][1, 0]))
+        logger.info("")
+        logger.info("SPEARMAN CORR: From {} to {} : {}".format(args['data1'], args['data2'], performance['spearman_corr'][0, 1]))
+        logger.info("SPEARMAN CORR: From {} to {} : {}".format(args['data2'], args['data1'], performance['spearman_corr'][1, 0]))
+        logger.info("SPEARMAN P-value: From {} to {} : {}".format(args['data1'], args['data2'], performance['spearman_p'][0, 1]))
+        logger.info("SPEARMAN P-value: From {} to {} : {}".format(args['data2'], args['data1'], performance['spearman_p'][1, 0]))
 
         print(performance)
 

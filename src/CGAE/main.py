@@ -138,9 +138,10 @@ def run(args: dict) -> None:
                                     drop_last=False)
 
         # Compute imputation loss
+        sample_names = np.load(args['sample_names']).astype(str)[test_ind]
         z1, z2 = impute(net=net,
                         model_file=ckpt_dir + '/model_last.pth.tar',
-                        loader=extract_loader, save_dir=save_dir, multimodal=True)
+                        loader=extract_loader, save_dir=save_dir, sample_names=sample_names, multimodal=True)
 
         labels = np.load(args['labels']).astype(int)
         labeltypes = np.load(args['labelnames'])

@@ -22,7 +22,7 @@ import pickle
 from mofapy2.run.entry_point import entry_point
 from src.util import logger
 from src.util.umapplotter import UMAPPlotter
-from src.util.evaluate import evaluate_imputation
+from src.util.evaluate import evaluate_imputation, save_factorizations_to_csv
 
 
 def run(args: dict) -> None:
@@ -107,8 +107,6 @@ def train_mofa(args: dict, save_file_path: str) -> None:
         omic1 = np.concatenate((omic1[train_ind], omic1[val_ind]))
         omic2 = np.concatenate((omic2[train_ind], omic2[val_ind]))
         sample_names = np.concatenate((sample_names[train_ind], sample_names[val_ind]))
-
-        print("rewrote omics")
 
         data_mat = np.zeros((2, 1), dtype=object)
 
@@ -324,9 +322,6 @@ def downstream_analysis(args: dict, save_dir: str) -> None:
     labeltypes = np.load(args['labelnames']).astype(str)
 
     # Get correct labels with names
-    print(labeltypes)
-    print("That was labeltypes")
-    print(labels)
     training_labels = np.concatenate((labeltypes[[labels[np.load(args['train_ind'])]]], labeltypes[[labels[np.load(args['val_ind'])]]]))
 
     training_data_plot = UMAPPlotter(Z.transpose(),
@@ -367,6 +362,7 @@ def downstream_analysis(args: dict, save_dir: str) -> None:
     # Imputation
     if args['task'] == 1:
         logger.info("Now do imputations using pseudo-inverse of W")
+        sample_names = np.load(args['sample_names']).astype(str)[test_ind]
 
         # Imputation from Y1 to Y2
         W_pseudo1 = np.linalg.pinv(W_omic1)  # Shape (factors, features)
@@ -379,6 +375,7 @@ def downstream_analysis(args: dict, save_dir: str) -> None:
 
         print("Z from W^+ * Y1: ", Z_frompseudo1.shape)
         np.save("{}/task1_z_from_pseudoinv_w1.npy".format(save_dir), Z_frompseudo1)
+        save_factorizations_to_csv(Z_frompseudo1, sample_names, save_dir, 'task1_z_from_pseudoinv_w1')
 
         # Now to impute Y2 from new Z
         Y2_impute = np.matmul(W_omic2, Z_frompseudo1)
@@ -389,18 +386,30 @@ def downstream_analysis(args: dict, save_dir: str) -> None:
         Y2 = omic_data2.transpose()
         Z_frompseudo2 = np.matmul(W_pseudo2, Y2)
         np.save("{}/task1_z_from_pseudoinv_w2.npy".format(save_dir), Z_frompseudo2)
+        save_factorizations_to_csv(Z_frompseudo2, sample_names, save_dir, 'task1_z_from_pseudoinv_w2')
 
         # Now to impute Y1 from new Z
         Y1_impute = np.matmul(W_omic1, Z_frompseudo2)
 
         # mse[i,j]: performance of using modality i to predict modality j
-        mse = np.zeros((2, 2), float)
-        rsquared = np.eye(2)
+        NR_MODALITIES = 2
+        mse = np.zeros((NR_MODALITIES, NR_MODALITIES), float)
+        rsquared = np.eye(NR_MODALITIES)
+        spearman = np.zeros((NR_MODALITIES, NR_MODALITIES), float)
+        spearman_p = np.zeros((NR_MODALITIES, NR_MODALITIES), float)
 
-        mse[0, 1], rsquared[0, 1] = evaluate_imputation(omic_data2.transpose(), Y2_impute, 'mse'), evaluate_imputation(omic_data2.transpose(), Y2_impute, 'rsquared')
-        mse[1, 0], rsquared[1, 0] = evaluate_imputation(omic_data1.transpose(), Y1_impute, 'mse'), evaluate_imputation(omic_data1.transpose(), Y1_impute, 'rsquared')
+        mse[0, 1], rsquared[0, 1], spearman[0, 1], spearman_p[0, 1] =\
+            evaluate_imputation(omic_data2.transpose(), Y2_impute, 'mse'),\
+            evaluate_imputation(omic_data2.transpose(), Y2_impute, 'rsquared'),\
+            evaluate_imputation(omic_data2.transpose(), Y2_impute, 'spearman_corr'),\
+            evaluate_imputation(omic_data2.transpose(), Y2_impute, 'spearman_p')
+        mse[1, 0], rsquared[1, 0], spearman[1, 0], spearman_p[1, 0] =\
+            evaluate_imputation(omic_data1.transpose(), Y1_impute, 'mse'),\
+            evaluate_imputation(omic_data1.transpose(), Y1_impute, 'rsquared'),\
+            evaluate_imputation(omic_data1.transpose(), Y1_impute, 'spearman_corr'), \
+            evaluate_imputation(omic_data1.transpose(), Y1_impute, 'spearman_p')
 
-        performance = {'mse': mse, 'rsquared': rsquared}
+        performance = {'mse': mse, 'rsquared': rsquared, 'spearman_corr': spearman, 'spearman_p': spearman_p}
         logger.info("{}".format(performance))
         with open(os.path.join(save_dir, args['name'] + 'results_pickle'), 'wb') as f:
             pickle.dump(performance, f)

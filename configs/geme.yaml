@@ -74,14 +74,14 @@ MVIB:
   log_interval: 5
 
 CGAE:
-  epochs: 60
+  epochs: 1000
   batch_size: 256
   latent_dim: 128
   enc1_lr: 0.0001
   dec1_lr: 0.0001
   enc2_lr: 0.0001
   dec2_lr: 0.0001
-  loss_function: 'bce'
+  loss_function: 'mse'
   use_batch_norm: True
   dropout_probability: 0.0
   optimizer: 'Adam'

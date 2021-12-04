@@ -14,7 +14,7 @@ from src.MVAE.evaluate import impute
 import src.util.logger as logger
 from src.util.early_stopping import EarlyStopping
 from src.util.umapplotter import UMAPPlotter
-from src.util.evaluate import evaluate_imputation
+from src.util.evaluate import evaluate_imputation, save_factorizations_to_csv
 
 import numpy as np
 from sklearn.metrics import mean_squared_error
@@ -368,14 +368,22 @@ def run(args) -> None:
             # mse[i,j]: performance of using modality i to predict modality j
             mse = np.zeros((NR_MODALITIES, NR_MODALITIES), float)
             rsquared = np.eye(NR_MODALITIES)
+            spearman = np.zeros((NR_MODALITIES, NR_MODALITIES), float)
+            spearman_p = np.zeros((NR_MODALITIES, NR_MODALITIES), float)
 
             # From x to y
-            mse[0, 1], rsquared[0, 1] = evaluate_imputation(omic1_from_omic2, impute_dataset.omic1_data, 'mse'), evaluate_imputation(
-                omic1_from_omic2, impute_dataset.omic1_data, 'rsquared')
-            mse[1, 0], rsquared[1, 0] = evaluate_imputation(omic2_from_omic1, impute_dataset.omic2_data, 'mse'), evaluate_imputation(
-                omic2_from_omic1, impute_dataset.omic2_data, 'rsquared')
+            mse[0, 1], rsquared[0, 1], spearman[0, 1], spearman_p[0, 1] =\
+                evaluate_imputation(impute_dataset.omic2_data, omic2_from_omic1, 'mse'),\
+                evaluate_imputation(impute_dataset.omic2_data, omic2_from_omic1, 'rsquared'),\
+                evaluate_imputation(impute_dataset.omic2_data, omic2_from_omic1, 'spearman_corr'), \
+                evaluate_imputation(impute_dataset.omic2_data, omic2_from_omic1, 'spearman_p')
+            mse[1, 0], rsquared[1, 0], spearman[1, 0], spearman_p[1, 0] = \
+                evaluate_imputation(impute_dataset.omic1_data, omic1_from_omic2, 'mse'),\
+                evaluate_imputation(impute_dataset.omic1_data, omic1_from_omic2, 'rsquared'),\
+                evaluate_imputation(impute_dataset.omic1_data, omic1_from_omic2, 'spearman_corr'), \
+                evaluate_imputation(impute_dataset.omic1_data, omic1_from_omic2, 'spearman_p')
 
-            performance = {'mse': mse, 'rsquared': rsquared}
+            performance = {'mse': mse, 'rsquared': rsquared, 'spearman_corr': spearman, 'spearman_p': spearman_p}
             print(performance)
             with open(save_dir + "/{} results_pickle".format('MoE' if args['mixture'] else 'PoE'), 'wb') as f:
                 pickle.dump(performance, f)
@@ -390,6 +398,8 @@ def run(args) -> None:
                 z = model.extract(omic1, omic2)
                 z = z.detach().numpy()
                 np.save("{}/task1_z.npy".format(save_dir), z)
+                sample_names = np.load(args['sample_names']).astype(str)
+                save_factorizations_to_csv(z, sample_names[tcga_data.get_data_splits('test')], save_dir, 'task1_z')
 
                 labels, label_types, test_ind = tcga_data.get_labels_partition("test")
 
