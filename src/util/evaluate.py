@@ -5,28 +5,67 @@ import numpy as np
 import pandas as pd
 
 
-def evaluate_imputation(y_true, y_pred, criterion, aggregate='uniform_average'):
-    # returns mse and r squared, by default averages over all features
+def evaluate_imputation(y_true, y_pred, num_features, criterion, aggregate='uniform_average'):
+    """
+    returns mse r squared or spearman, by default averages over all features
+
+    @param y_true:        Input data
+    @param y_pred:        Predicted data
+    @param num_features   Required to ensure the input shapes have the features on the columns!
+                          Easier than num_samples, since num_features is a required field in the config files.
+    @param criterion:     Measure between input and predicted data, mse, pearson or spearman_corr / spearman_p\
+    @param aggregate:     For sklearn default value
+    :
+    @return:
+    """
+    # Ensure features are on the columns (do feature-wise computations)
+    # y_pred and y_true have to be of shape (n_samples, n_observations)
+    if y_true.shape[1] != num_features:
+        y_true = y_true.T
+    if y_pred.shape[1] != num_features:
+        y_pred = y_pred.T
+
+    assert y_true.shape[1] == num_features, "Features are not on the rows for y_true in {} evaluation.".format(criterion)
+    assert y_pred.shape[1] == num_features, "Features are not on the rows for y_pred in {} evaluation.".format(criterion)
+
     if criterion == 'mse':
+        # For MSE feature-or-sample-wise does not matter
         return mean_squared_error(y_true, y_pred, multioutput=aggregate)
+
     elif criterion == 'spearman_corr':
-        # correlation, p-value
-        spear = stats.spearmanr(y_true, y_pred)
-        correlation = spear[0]
-        if isinstance(correlation, np.float64):
-            return correlation
-        else:
-            return np.mean(correlation)
+        # Spearman Correlation gives NaN values, or will simply require >20GB memory on large datasets.
+        # Therefore, do manual column wise (feature) correlation.
+        correlations = np.zeros(num_features)
+
+        # Above it has been assured that the inputs are of shape (n_samples, n_observations)
+        for i in range(y_true.shape[1]):
+            corr = stats.spearmanr(y_true[:, i], y_pred[:, i])[0]  # [0] is correlation
+            correlations[i] = corr
+
+        return np.mean(correlations)
+
     elif criterion == 'spearman_p':
-        # correlation, p-value
-        spear = stats.spearmanr(y_true, y_pred)
-        p_value = spear[1]
-        if isinstance(p_value, np.float64):
-            return p_value
-        else:
-            return np.mean(p_value)
+        # Spearman Correlation gives NaN values, or will simply require >20GB memory on large datasets.
+        # Therefore, do manual column wise (feature) correlation.
+        p_values = np.zeros(num_features)
+
+        # Above it has been assured that the inputs are of shape (n_samples, n_observations)
+        for i in range(y_true.shape[1]):
+            corr = stats.spearmanr(y_true[:, i], y_pred[:, i])[1]  # [1] is p_value
+            p_values[i] = corr
+
+        return np.mean(p_values)
+
     else:
-        return r2_score(y_true, y_pred, multioutput=aggregate)
+        # Do feature-wise Pearson correlation
+        pearson_corrs = np.zeros(num_features)
+
+        # Above it has been assured that the inputs are of shape (n_samples, n_observations)
+        for i in range(y_true.shape[1]):
+            corr = r2_score(y_true[:, i], y_pred[:, i], multioutput=aggregate)
+            pearson_corrs[i] = corr
+
+        return np.mean(pearson_corrs)
 
 
 def evaluate_classification(y_true, y_pred):

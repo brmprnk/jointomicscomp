@@ -10,13 +10,13 @@ import src.util.logger as logger
 from src.util.umapplotter import UMAPPlotter
 
 
-def impute(x_train, y_train, x_valid, y_valid, x_test, y_test, alphas, criterion='mse'):
+def impute(x_train, y_train, x_valid, y_valid, x_test, y_test, alphas, num_features, criterion='mse'):
     # returns imputed values as well as evaluation of the imputation based on mse and rsquared
 
     validationPerformance = np.zeros(alphas.shape[0])
     models = []
     for i, a in enumerate(alphas):
-        model = Ridge(alpha=a, fit_intercept=True, normalize=False, random_state=1)
+        model = Ridge(alpha=a, fit_intercept=True, random_state=1)
 
         # train
         model.fit(x_train, y_train)
@@ -25,7 +25,7 @@ def impute(x_train, y_train, x_valid, y_valid, x_test, y_test, alphas, criterion
         models.append(model)
 
         # evaluate using user-specified criterion
-        validationPerformance[i] = evaluate_imputation(y_valid, model.predict(x_valid), criterion)
+        validationPerformance[i] = evaluate_imputation(y_valid, model.predict(x_valid), num_features, criterion)
 
     if criterion == 'mse':
         bestModel = models[np.argmin(validationPerformance)]
@@ -35,10 +35,10 @@ def impute(x_train, y_train, x_valid, y_valid, x_test, y_test, alphas, criterion
     predictions = bestModel.predict(x_test)
 
     return predictions, \
-           evaluate_imputation(y_test, predictions, 'mse'), \
-           evaluate_imputation(y_test, predictions, 'rsquared'), \
-           evaluate_imputation(y_test, predictions, 'spearman_corr'), \
-           evaluate_imputation(y_test, predictions, 'spearman_p')
+           evaluate_imputation(y_test, predictions, num_features, 'mse'), \
+           evaluate_imputation(y_test, predictions, num_features, 'rsquared'), \
+           evaluate_imputation(y_test, predictions, num_features, 'spearman_corr'), \
+           evaluate_imputation(y_test, predictions, num_features, 'spearman_p')
 
 
 def ordinal_regression(x_train, y_train, x_valid, y_valid, x_test, y_test, alphas, criterion='mcc'):
@@ -59,7 +59,7 @@ def ordinal_regression(x_train, y_train, x_valid, y_valid, x_test, y_test, alpha
     validationPerformance = np.zeros(alphas.shape[0])
     models = []
     for i, a in enumerate(alphas):
-        model = OrdinalRidge(alpha=a, fit_intercept=True, normalize=False, random_state=1)
+        model = OrdinalRidge(alpha=a, fit_intercept=True, random_state=1)
 
         # train
         model.fit(x_train, y_train)
@@ -292,12 +292,12 @@ def run_baseline(args: dict) -> None:
         # From x to y
         omic2_from_omic1, mse[0, 1], rsquared[0, 1], spearman[0, 1], spearman_p[0, 1] =\
             impute(omic1_train_file, omic2_train_file, omic1_valid_file,
-                   omic2_valid_file, omic1_test_file, omic2_test_file, alphas, 'mse')
+                   omic2_valid_file, omic1_test_file, omic2_test_file, alphas, args['num_features2'], 'mse')
 
         # From y to x
         omic1_from_omic2, mse[1, 0], rsquared[1, 0], spearman[1, 0], spearman_p[1, 0] = \
             impute(omic2_train_file, omic1_train_file, omic2_valid_file,
-                   omic1_valid_file, omic2_test_file, omic1_test_file, alphas, 'mse')
+                   omic1_valid_file, omic2_test_file, omic1_test_file, alphas, args['num_features1'], 'mse')
 
         performance = {'mse': mse, 'rsquared': rsquared, 'spearman_corr': spearman, 'spearman_p': spearman_p}
 

@@ -200,6 +200,9 @@ def load_checkpoint(args, use_cuda=False):
 
 def run(args) -> None:
     args['cuda'] = args['cuda'] and torch.cuda.is_available()
+    args['cuda'] = False
+
+    print("cuda available", torch.cuda.is_available())
 
     # random seed
     # https://pytorch.org/docs/stable/notes/randomness.html
@@ -221,53 +224,62 @@ def run(args) -> None:
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args['batch_size'], shuffle=False)
     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=len(val_dataset), shuffle=False)  # (1 batch)
 
+    if args['pre_trained'] != "":
+        logger.info("Using Pre-Trained MVAE found at {}".format(args['pre_trained']))
 
-    # Setup and log model
-    model = MVAE(args)
+        save_dir = os.path.dirname(args['pre_trained'])
 
-    # Log Data shape, input arguments and model
-    model_file = open("{}/MVAE {} Model.txt".format(save_dir, 'MoE' if args['mixture'] else 'PoE'), "a")
-    model_file.write("Running at {}\n".format(datetime.now().strftime("%d-%m-%Y %H:%M:%S")))
-    model_file.write("Input shape 1 : {}, {}\n".format(len(train_loader.dataset), args['num_features1']))
-    model_file.write("Input shape 2 : {}, {}\n".format(len(train_loader.dataset), args['num_features2']))
-    model_file.write("Input args : {}\n".format(args))
-    model_file.write("PoE Model : {}".format(model))
-    model_file.close()
+        print("-----   Loading Trained Model   -----")
+        model, checkpoint = load_checkpoint(args['pre_trained'])
+        model.eval()
 
-    # Preparation for training
-    optimizer = optim.Adam(model.parameters(), lr=args['lr'])
+    else:
+        # Setup and log model
+        model = MVAE(args)
 
-    # Setup early stopping, terminates training when validation loss does not improve for early_stopping_patience epochs
-    early_stopping = EarlyStopping(patience=args['early_stopping_patience'], verbose=True)
+        # Log Data shape, input arguments and model
+        model_file = open("{}/MVAE {} Model.txt".format(save_dir, 'MoE' if args['mixture'] else 'PoE'), "a")
+        model_file.write("Running at {}\n".format(datetime.now().strftime("%d-%m-%Y %H:%M:%S")))
+        model_file.write("Input shape 1 : {}, {}\n".format(len(train_loader.dataset), args['num_features1']))
+        model_file.write("Input shape 2 : {}, {}\n".format(len(train_loader.dataset), args['num_features2']))
+        model_file.write("Input args : {}\n".format(args))
+        model_file.write("PoE Model : {}".format(model))
+        model_file.close()
 
-    if args['cuda']:
-        model.cuda()
+        # Preparation for training
+        optimizer = optim.Adam(model.parameters(), lr=args['lr'])
 
-    for epoch in range(1, args['epochs'] + 1):
-        train(args, model, train_loader, optimizer, epoch, tf_logger)
-        validation_loss = test(args, model, val_loader, optimizer, epoch, tf_logger)
+        # Setup early stopping, terminates training when validation loss does not improve for early_stopping_patience epochs
+        early_stopping = EarlyStopping(patience=args['early_stopping_patience'], verbose=True)
 
-        # Save the last model
-        if epoch == args['epochs'] or epoch % args['log_save_interval'] == 0:
-            save_checkpoint({
-                'state_dict': model.state_dict(),
-                'best_loss': validation_loss,
-                'latent_dim': args['latent_dim'],
-                'epochs': args['epochs'],
-                'lr': args['lr'],
-                'batch_size': args['batch_size'],
-                'use_mixture': args['mixture'],
-                'optimizer': optimizer.state_dict(),
-            }, epoch, save_dir)
+        if args['cuda']:
+            model.cuda()
 
-        early_stopping(validation_loss)
+        for epoch in range(1, args['epochs'] + 1):
+            train(args, model, train_loader, optimizer, epoch, tf_logger)
+            validation_loss = test(args, model, val_loader, optimizer, epoch, tf_logger)
 
-        # Stop training when not improving
-        if early_stopping.early_stop:
-            logger.info('Early stopping training since loss did not improve for {} epochs.'
-                        .format(args['early_stopping_patience']))
-            args['epochs'] = epoch  # Update nr of epochs for plots
-            break
+            # Save the last model
+            if epoch == args['epochs'] or epoch % args['log_save_interval'] == 0:
+                save_checkpoint({
+                    'state_dict': model.state_dict(),
+                    'best_loss': validation_loss,
+                    'latent_dim': args['latent_dim'],
+                    'epochs': args['epochs'],
+                    'lr': args['lr'],
+                    'batch_size': args['batch_size'],
+                    'use_mixture': args['mixture'],
+                    'optimizer': optimizer.state_dict(),
+                }, epoch, save_dir)
+
+            early_stopping(validation_loss)
+
+            # Stop training when not improving
+            if early_stopping.early_stop:
+                logger.info('Early stopping training since loss did not improve for {} epochs.'
+                            .format(args['early_stopping_patience']))
+                args['epochs'] = epoch  # Update nr of epochs for plots
+                break
 
     # Extract Phase #
     logger.success("Finished training MVAE model. Now calculating task results.")
@@ -348,11 +360,11 @@ def run(args) -> None:
             omic1_from_omic2, omic2_from_omic2 = impute(model, impute_loader)
 
             # Reconstruction losses
-            omic1_joint_reconstruction_loss = evaluate_imputation(omic1_from_joint, impute_dataset.omic1_data, 'mse')
-            omic1_reconstruction_loss = evaluate_imputation(omic1_from_omic1, impute_dataset.omic1_data, 'mse')
+            omic1_joint_reconstruction_loss = evaluate_imputation(omic1_from_joint, impute_dataset.omic1_data, args['num_features1'], 'mse')
+            omic1_reconstruction_loss = evaluate_imputation(omic1_from_omic1, impute_dataset.omic1_data, args['num_features1'], 'mse')
 
-            omic2_joint_reconstruction_loss = evaluate_imputation(omic2_from_joint, impute_dataset.omic2_data, 'mse')
-            omic2_reconstruction_loss = evaluate_imputation(omic2_from_omic2, impute_dataset.omic2_data, 'mse')
+            omic2_joint_reconstruction_loss = evaluate_imputation(omic2_from_joint, impute_dataset.omic2_data, args['num_features2'], 'mse')
+            omic2_reconstruction_loss = evaluate_imputation(omic2_from_omic2, impute_dataset.omic2_data, args['num_features2'], 'mse')
             logger.info("Reconstruction loss for {} from {} : {}".
                         format(args['data1'], "both omics", omic1_joint_reconstruction_loss))
             logger.info("Reconstruction loss for {} from {} : {}".
@@ -373,15 +385,15 @@ def run(args) -> None:
 
             # From x to y
             mse[0, 1], rsquared[0, 1], spearman[0, 1], spearman_p[0, 1] =\
-                evaluate_imputation(impute_dataset.omic2_data, omic2_from_omic1, 'mse'),\
-                evaluate_imputation(impute_dataset.omic2_data, omic2_from_omic1, 'rsquared'),\
-                evaluate_imputation(impute_dataset.omic2_data, omic2_from_omic1, 'spearman_corr'), \
-                evaluate_imputation(impute_dataset.omic2_data, omic2_from_omic1, 'spearman_p')
+                evaluate_imputation(impute_dataset.omic2_data, omic2_from_omic1, args['num_features2'], 'mse'),\
+                evaluate_imputation(impute_dataset.omic2_data, omic2_from_omic1, args['num_features2'], 'rsquared'),\
+                evaluate_imputation(impute_dataset.omic2_data, omic2_from_omic1, args['num_features2'], 'spearman_corr'), \
+                evaluate_imputation(impute_dataset.omic2_data, omic2_from_omic1, args['num_features2'], 'spearman_p')
             mse[1, 0], rsquared[1, 0], spearman[1, 0], spearman_p[1, 0] = \
-                evaluate_imputation(impute_dataset.omic1_data, omic1_from_omic2, 'mse'),\
-                evaluate_imputation(impute_dataset.omic1_data, omic1_from_omic2, 'rsquared'),\
-                evaluate_imputation(impute_dataset.omic1_data, omic1_from_omic2, 'spearman_corr'), \
-                evaluate_imputation(impute_dataset.omic1_data, omic1_from_omic2, 'spearman_p')
+                evaluate_imputation(impute_dataset.omic1_data, omic1_from_omic2, args['num_features1'], 'mse'),\
+                evaluate_imputation(impute_dataset.omic1_data, omic1_from_omic2, args['num_features1'], 'rsquared'),\
+                evaluate_imputation(impute_dataset.omic1_data, omic1_from_omic2, args['num_features1'], 'spearman_corr'), \
+                evaluate_imputation(impute_dataset.omic1_data, omic1_from_omic2, args['num_features1'], 'spearman_p')
 
             performance = {'mse': mse, 'rsquared': rsquared, 'spearman_corr': spearman, 'spearman_p': spearman_p}
             print(performance)
@@ -398,7 +410,7 @@ def run(args) -> None:
                 z = model.extract(omic1, omic2)
                 z = z.detach().numpy()
                 np.save("{}/task1_z.npy".format(save_dir), z)
-                sample_names = np.load(args['sample_names']).astype(str)
+                sample_names = np.load(args['sample_names'], allow_pickle=True).astype(str)
                 save_factorizations_to_csv(z, sample_names[tcga_data.get_data_splits('test')], save_dir, 'task1_z')
 
                 labels, label_types, test_ind = tcga_data.get_labels_partition("test")

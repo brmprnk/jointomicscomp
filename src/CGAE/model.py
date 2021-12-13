@@ -140,7 +140,7 @@ def train(device, net, num_epochs, train_loader, train_loader_eval, valid_loader
     print("[*] Finish training.")
 
 
-def impute(net, model_file, loader, save_dir, sample_names, multimodal=False):
+def impute(net, model_file, loader, save_dir, sample_names, num_features1, num_features2, multimodal=False):
     checkpoint = torch.load(model_file)
     net.load_state_dict(checkpoint['state_dict'])
     net.opt.load_state_dict(checkpoint['optimizer'])
@@ -175,18 +175,17 @@ def impute(net, model_file, loader, save_dir, sample_names, multimodal=False):
 
                 # From x to y
                 mse[0, 1], rsquared[0, 1], spearman[0, 1], spearman_p[0, 1] =\
-                    evaluate_imputation(omic2_from_omic1, omic2_test, 'mse'),\
-                    evaluate_imputation(omic2_from_omic1, omic2_test, 'rsquared'), \
-                    evaluate_imputation(omic2_from_omic1, omic2_test, 'spearman_corr'),\
-                    evaluate_imputation(omic2_from_omic1, omic2_test, 'spearman_p')
+                    evaluate_imputation(omic2_from_omic1, omic2_test, num_features2, 'mse'),\
+                    evaluate_imputation(omic2_from_omic1, omic2_test, num_features2, 'rsquared'), \
+                    evaluate_imputation(omic2_from_omic1, omic2_test, num_features2, 'spearman_corr'),\
+                    evaluate_imputation(omic2_from_omic1, omic2_test, num_features2, 'spearman_p')
                 mse[1, 0], rsquared[1, 0], spearman[1, 0], spearman_p[1, 0] =\
-                    evaluate_imputation(omic1_from_omic2, omic1_test, 'mse'),\
-                    evaluate_imputation(omic1_from_omic2, omic1_test, 'rsquared'), \
-                    evaluate_imputation(omic1_from_omic2, omic1_test, 'spearman_corr'), \
-                    evaluate_imputation(omic1_from_omic2, omic1_test, 'spearman_p')
+                    evaluate_imputation(omic1_from_omic2, omic1_test, num_features1, 'mse'),\
+                    evaluate_imputation(omic1_from_omic2, omic1_test, num_features1, 'rsquared'), \
+                    evaluate_imputation(omic1_from_omic2, omic1_test, num_features1, 'spearman_corr'), \
+                    evaluate_imputation(omic1_from_omic2, omic1_test, num_features1, 'spearman_p')
 
                 performance = {'mse': mse, 'rsquared': rsquared, 'spearman_corr': spearman, 'spearman_p': spearman_p}
-                print(performance)
                 with open(save_dir + "/CGAE results_pickle", 'wb') as f:
                     pickle.dump(performance, f)
 

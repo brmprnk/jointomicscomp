@@ -96,7 +96,7 @@ def train_mofa(args: dict, save_file_path: str) -> None:
         # Load in data
         omic1 = np.load(args['data_path1']).astype(np.float32)
         omic2 = np.load(args['data_path2']).astype(np.float32)
-        sample_names = np.load(args['sample_names']).astype(str)
+        sample_names = np.load(args['sample_names'], allow_pickle=True).astype(str)
 
         # Use predefined split
         train_ind = np.load(args['train_ind'])
@@ -173,7 +173,7 @@ def train_mofa(args: dict, save_file_path: str) -> None:
         startELBO=args['startELBO'],
         freqELBO=args['freqELBO'],
         dropR2=args['dropR2'],
-        gpu_mode=args['cuda'],
+        gpu_mode=False,
         verbose=args['verbose'],
         seed=args['random_seed']
     )
@@ -283,12 +283,7 @@ def downstream_analysis(args: dict, save_dir: str) -> None:
 
         logger.info("Omic data 1 test set shape {}".format(omic_data1.shape))
         logger.info("Omic data 2 test set shape {}".format(omic_data2.shape))
-    else:
-        omic_data1 = np.load(args['x_ctype_test_file'])
-        omic_data2 = np.load(args['y_ctype_test_file'])
 
-        logger.info("Omic data 1 test set {} shape {}".format(args['ctype'], omic_data1.shape))
-        logger.info("Omic data 2 test set {} shape {}".format(args['ctype'], omic_data2.shape))
 
     logger.success("Finished reading original data, now calculate reconstruction losses")
 
@@ -318,8 +313,8 @@ def downstream_analysis(args: dict, save_dir: str) -> None:
     # Plot this total Z using UMAP
     np.save("{}/task1_z.npy".format(save_dir), z_matrix)
 
-    labels = np.load(args['labels']).astype(int)
-    labeltypes = np.load(args['labelnames']).astype(str)
+    labels = np.load(args['labels'], allow_pickle=True).astype(int)
+    labeltypes = np.load(args['labelnames'], allow_pickle=True).astype(str)
 
     # Get correct labels with names
     training_labels = np.concatenate((labeltypes[[labels[np.load(args['train_ind'])]]], labeltypes[[labels[np.load(args['val_ind'])]]]))
@@ -362,7 +357,7 @@ def downstream_analysis(args: dict, save_dir: str) -> None:
     # Imputation
     if args['task'] == 1:
         logger.info("Now do imputations using pseudo-inverse of W")
-        sample_names = np.load(args['sample_names']).astype(str)[test_ind]
+        sample_names = np.load(args['sample_names'], allow_pickle=True).astype(str)[test_ind]
 
         # Imputation from Y1 to Y2
         W_pseudo1 = np.linalg.pinv(W_omic1)  # Shape (factors, features)
@@ -399,15 +394,16 @@ def downstream_analysis(args: dict, save_dir: str) -> None:
         spearman_p = np.zeros((NR_MODALITIES, NR_MODALITIES), float)
 
         mse[0, 1], rsquared[0, 1], spearman[0, 1], spearman_p[0, 1] =\
-            evaluate_imputation(omic_data2.transpose(), Y2_impute, 'mse'),\
-            evaluate_imputation(omic_data2.transpose(), Y2_impute, 'rsquared'),\
-            evaluate_imputation(omic_data2.transpose(), Y2_impute, 'spearman_corr'),\
-            evaluate_imputation(omic_data2.transpose(), Y2_impute, 'spearman_p')
+            evaluate_imputation(omic_data2, Y2_impute, args['num_features2'], 'mse'),\
+            evaluate_imputation(omic_data2, Y2_impute, args['num_features2'], 'rsquared'),\
+            evaluate_imputation(omic_data2, Y2_impute, args['num_features2'], 'spearman_corr'),\
+            evaluate_imputation(omic_data2, Y2_impute, args['num_features2'], 'spearman_p')
+
         mse[1, 0], rsquared[1, 0], spearman[1, 0], spearman_p[1, 0] =\
-            evaluate_imputation(omic_data1.transpose(), Y1_impute, 'mse'),\
-            evaluate_imputation(omic_data1.transpose(), Y1_impute, 'rsquared'),\
-            evaluate_imputation(omic_data1.transpose(), Y1_impute, 'spearman_corr'), \
-            evaluate_imputation(omic_data1.transpose(), Y1_impute, 'spearman_p')
+            evaluate_imputation(omic_data1, Y1_impute, args['num_features1'], 'mse'),\
+            evaluate_imputation(omic_data1, Y1_impute, args['num_features1'], 'rsquared'),\
+            evaluate_imputation(omic_data1, Y1_impute, args['num_features1'], 'spearman_corr'), \
+            evaluate_imputation(omic_data1, Y1_impute, args['num_features1'], 'spearman_p')
 
         performance = {'mse': mse, 'rsquared': rsquared, 'spearman_corr': spearman, 'spearman_p': spearman_p}
         logger.info("{}".format(performance))
