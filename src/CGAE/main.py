@@ -10,8 +10,7 @@ from src.util.umapplotter import UMAPPlotter
 
 def run(args: dict) -> None:
     # Check cuda availability
-    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    device = torch.device('cpu')
+    device = torch.device('cuda') if torch.cuda.is_available() and args['cuda'] else torch.device('cpu')
     logger.info("Selected device: {}".format(device))
     torch.manual_seed(args['random_seed'])
 
@@ -142,7 +141,7 @@ def run(args: dict) -> None:
         sample_names = np.load(args['sample_names']).astype(str)[test_ind]
         z1, z2 = impute(net=net,
                         model_file=ckpt_dir + '/model_last.pth.tar',
-                        loader=extract_loader, save_dir=save_dir, sample_names=sample_names,
+                        loader=extract_loader, device=device, save_dir=save_dir, sample_names=sample_names,
                         num_features1=args['num_features1'], num_features2=args['num_features2'], multimodal=True)
 
         labels = np.load(args['labels']).astype(int)

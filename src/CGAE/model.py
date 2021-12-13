@@ -140,7 +140,7 @@ def train(device, net, num_epochs, train_loader, train_loader_eval, valid_loader
     print("[*] Finish training.")
 
 
-def impute(net, model_file, loader, save_dir, sample_names, num_features1, num_features2, multimodal=False):
+def impute(net, model_file, loader, device, save_dir, sample_names, num_features1, num_features2, multimodal=False):
     checkpoint = torch.load(model_file)
     net.load_state_dict(checkpoint['state_dict'])
     net.opt.load_state_dict(checkpoint['optimizer'])
@@ -163,6 +163,22 @@ def impute(net, model_file, loader, save_dir, sample_names, num_features1, num_f
                 # Now decode data in different decoder
                 omic1_from_omic2 = net.decoder(z2)
                 omic2_from_omic1 = net.decoder2(z1)
+
+                # Convert Tensors to numpy for evaluation
+                if device != "cpu":
+                    z1 = z1.cpu().numpy()
+                    z2 = z2.cpu().numpy()
+                    omic1_from_omic2 = omic1_from_omic2.cpu().numpy()
+                    omic2_from_omic1 = omic2_from_omic1.cpu().numpy()
+                    omic1_test = omic1_test.cpu().numpy()
+                    omic2_test = omic2_test.cpu().numpy()
+                else:
+                    z1 = z1.numpy()
+                    z2 = z2.numpy()
+                    omic1_from_omic2 = omic1_from_omic2.numpy()
+                    omic2_from_omic1 = omic2_from_omic1.numpy()
+                    omic1_test = omic1_test.numpy()
+                    omic2_test = omic2_test.numpy()
 
                 # Imputation losses
                 NR_MODALITIES = 2
@@ -192,8 +208,8 @@ def impute(net, model_file, loader, save_dir, sample_names, num_features1, num_f
                 logger.info("Performance: {}".format(performance))
                 np.save("{}/task1_z1.npy".format(save_dir), z1)
                 np.save("{}/task1_z2.npy".format(save_dir), z2)
-                save_factorizations_to_csv(z1.numpy(), sample_names, save_dir, 'task1_z1')
-                save_factorizations_to_csv(z2.numpy(), sample_names, save_dir, 'task1_z2')
+                save_factorizations_to_csv(z1, sample_names, save_dir, 'task1_z1')
+                save_factorizations_to_csv(z2, sample_names, save_dir, 'task1_z2')
 
 
     return z1, z2
