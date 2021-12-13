@@ -16,14 +16,17 @@ class MVAE(nn.Module):
     def __init__(self, args):
         super(MVAE, self).__init__()
 
+        device = torch.device('cuda') if torch.cuda.is_available() and args['cuda'] else torch.device('cpu')
+        self.to(device)
+
         latent_dim = args['latent_dim']
         # define q(z|x_i) for i = 1...2
-        self.omic1_encoder = Encoder(latent_dim, args['num_features1'])
-        self.omic2_encoder = Encoder(latent_dim, args['num_features2'])
+        self.omic1_encoder = Encoder(latent_dim, args['num_features1'], device)
+        self.omic2_encoder = Encoder(latent_dim, args['num_features2'], device)
 
         # define p(x_i|z) for i = 1...2
-        self.omic1_decoder = Decoder(latent_dim, args['num_features1'])
-        self.omic2_decoder = Decoder(latent_dim, args['num_features2'])
+        self.omic1_decoder = Decoder(latent_dim, args['num_features1'], device)
+        self.omic2_decoder = Decoder(latent_dim, args['num_features2'], device)
 
         # define q(z|x) = q(z|x_1)...q(z|x_6)
         self.experts = ProductOfExperts()
@@ -84,8 +87,9 @@ class MVAE(nn.Module):
     def get_product_params(self, omic1=None, omic2=None):
         # define universal expert
         batch_size = get_batch_size(omic1, omic2)
+        use_cuda   = next(self.parameters()).is_cuda  # check if CUDA
         # initialize the universal prior expert
-        mu, logvar = prior_expert((1, batch_size, self.latent_dim))
+        mu, logvar = prior_expert((1, batch_size, self.latent_dim), use_cuda=use_cuda)
 
         if omic1 is not None:
             omic1_mu, omic1_logvar = self.omic1_encoder(omic1)
@@ -121,8 +125,10 @@ class Encoder(nn.Module):
                       number of latent dimensions
     """
 
-    def __init__(self, latent_dim, num_features):
+    def __init__(self, latent_dim, num_features, device):
         super(Encoder, self).__init__()
+
+        self.to(device)
 
         input_size = num_features
         hidden_dims = [latent_dim]
@@ -168,8 +174,9 @@ class Decoder(nn.Module):
                       number of latent dimension
     """
 
-    def __init__(self, latent_dim, num_features):
+    def __init__(self, latent_dim, num_features, device):
         super(Decoder, self).__init__()
+        self.to(device)
 
         input_size = num_features
         hidden_dims = [latent_dim]

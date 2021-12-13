@@ -72,6 +72,11 @@ def train(args, model, train_loader, optimizer, epoch, tf_logger):
 
         b_loss = 0
         for batch_idx, (omic1, omic2) in enumerate(train_loader):
+
+            if args['cuda']:
+                omic1 = omic1.cuda()
+                omic2 = omic2.cuda()
+
             # refresh the optimizer
             optimizer.zero_grad()
 
@@ -85,6 +90,11 @@ def train(args, model, train_loader, optimizer, epoch, tf_logger):
 
     else:
         for batch_idx, (omic1, omic2) in enumerate(train_loader):
+
+            if args['cuda']:
+                omic1 = omic1.cuda()
+                omic2 = omic2.cuda()
+
             # refresh the optimizer
             optimizer.zero_grad()
 
@@ -150,13 +160,23 @@ def test(args, model, val_loader, optimizer, epoch, tf_logger):
 
     if model.use_mixture:
         with torch.no_grad():
-            for batch_idx, (omic1, omic2)in enumerate(val_loader):
+            for batch_idx, (omic1, omic2) in enumerate(val_loader):
+
+                if args['cuda']:
+                    omic1 = omic1.cuda()
+                    omic2 = omic2.cuda()
+
                 loss = -model.forward(omic1, omic2)
 
                 validation_loss += loss.item()
 
     else:
         for batch_idx, (omic1, omic2) in enumerate(val_loader):
+
+            if args['cuda']:
+                omic1 = omic1.cuda()
+                omic2 = omic2.cuda()
+
             # for ease, only compute the joint loss in validation
             (joint_recon_omic1, joint_recon_omic2, joint_mu, joint_logvar) = model.forward(omic1, omic2)
 
@@ -190,6 +210,7 @@ def test(args, model, val_loader, optimizer, epoch, tf_logger):
 
     return validation_loss
 
+
 def load_checkpoint(args, use_cuda=False):
     checkpoint = torch.load(args['pre_trained']) if use_cuda else \
         torch.load(args['pre_trained'], map_location=lambda storage, location: storage)
@@ -198,17 +219,13 @@ def load_checkpoint(args, use_cuda=False):
     trained_model.load_state_dict(checkpoint['state_dict'])
     return trained_model, checkpoint
 
+
 def run(args) -> None:
-    args['cuda'] = args['cuda'] and torch.cuda.is_available()
-    args['cuda'] = False
-
-    print("cuda available", torch.cuda.is_available())
-
-    # random seed
-    # https://pytorch.org/docs/stable/notes/randomness.html
-    torch.backends.cudnn.benchmark = True
-    torch.manual_seed(args['random_seed'])
-    np.random.seed(args['random_seed'])
+    # # random seed
+    # # https://pytorch.org/docs/stable/notes/randomness.html
+    # torch.backends.cudnn.benchmark = True
+    # torch.manual_seed(args['random_seed'])
+    # np.random.seed(args['random_seed'])
 
     save_dir = os.path.join(args['save_dir'], '{}'.format('MoE' if args['mixture'] else 'PoE'))
     os.makedirs(save_dir)
@@ -230,12 +247,18 @@ def run(args) -> None:
         save_dir = os.path.dirname(args['pre_trained'])
 
         print("-----   Loading Trained Model   -----")
-        model, checkpoint = load_checkpoint(args['pre_trained'])
+        model, checkpoint = load_checkpoint(args, args['cuda'])
         model.eval()
 
     else:
         # Setup and log model
+        device = torch.device('cuda') if torch.cuda.is_available() and args['cuda'] else torch.device('cpu')
+
         model = MVAE(args)
+        if device == torch.device('cuda'):
+            model.cuda()
+        else:
+            args['cuda'] = False
 
         # Log Data shape, input arguments and model
         model_file = open("{}/MVAE {} Model.txt".format(save_dir, 'MoE' if args['mixture'] else 'PoE'), "a")
@@ -251,9 +274,6 @@ def run(args) -> None:
 
         # Setup early stopping, terminates training when validation loss does not improve for early_stopping_patience epochs
         early_stopping = EarlyStopping(patience=args['early_stopping_patience'], verbose=True)
-
-        if args['cuda']:
-            model.cuda()
 
         for epoch in range(1, args['epochs'] + 1):
             train(args, model, train_loader, optimizer, epoch, tf_logger)
@@ -288,6 +308,7 @@ def run(args) -> None:
     if args['task'] == 1:
         # Correct me if I'm wrong, but we can just get the x1_cross_hat and x2_cross_hat
         # from the model.forward
+
         if model.use_mixture:
             logger.info("Task 1 Imputation: Extracting Z using test set")
 
@@ -298,6 +319,11 @@ def run(args) -> None:
 
             # Will run only once, since batch size = len(impute_dataset)
             for batch_idx, (omic1, omic2) in enumerate(impute_loader):
+
+                if args['cuda']:
+                    omic1 = omic1.cuda()
+                    omic2 = omic2.cuda()
+
                 qz_xs, px_zs, zss = model.mixture.forward([omic1, omic2], K=1)
 
                 print(px_zs)
@@ -357,7 +383,7 @@ def run(args) -> None:
 
             omic1_from_joint, omic2_from_joint, \
             omic1_from_omic1, omic2_from_omic1, \
-            omic1_from_omic2, omic2_from_omic2 = impute(model, impute_loader)
+            omic1_from_omic2, omic2_from_omic2 = impute(model, impute_loader, use_cuda=args['cuda'])
 
             # Reconstruction losses
             omic1_joint_reconstruction_loss = evaluate_imputation(omic1_from_joint, impute_dataset.omic1_data, args['num_features1'], 'mse')
@@ -407,8 +433,18 @@ def run(args) -> None:
 
             # Get embeddings for UMAP
             for omic1, omic2 in impute_loader:  # Runs once since there is 1 batch
+
+                if args['cuda']:
+                    omic1 = omic1.cuda()
+                    omic2 = omic2.cuda()
+
                 z = model.extract(omic1, omic2)
-                z = z.detach().numpy()
+
+                if args['cuda']:
+                    z = z.detach().cpu().numpy()
+                else:
+                    z = z.detach().numpy()
+
                 np.save("{}/task1_z.npy".format(save_dir), z)
                 sample_names = np.load(args['sample_names'], allow_pickle=True).astype(str)
                 save_factorizations_to_csv(z, sample_names[tcga_data.get_data_splits('test')], save_dir, 'task1_z')

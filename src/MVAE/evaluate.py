@@ -56,27 +56,55 @@ def predict(args: dict) -> None:
     print("ME from ME (unimodal) ||| {}\n".format(predict_loss(omic2_from_omic2, impute_dataset.omic2_data)))
 
 
-def impute(model, data_loader):
+def impute(model, data_loader, use_cuda=False):
     # From both omics
     for batch_idx, (omic1, omic2) in enumerate(data_loader):
+
+        if use_cuda:
+            omic1 = omic1.cuda()
+            omic2 = omic2.cuda()
+
         (omic1_recon_joint, omic2_recon_joint, joint_mu, joint_logvar) = model(omic1=omic1, omic2=omic2)
 
-        omic1_from_joint = omic1_recon_joint.detach().numpy()
-        omic2_from_joint = omic2_recon_joint.detach().numpy()
+        if use_cuda:
+            omic1_from_joint = omic1_recon_joint.detach().cpu().numpy()
+            omic2_from_joint = omic2_recon_joint.detach().cpu().numpy()
+        else:
+            omic1_from_joint = omic1_recon_joint.detach().numpy()
+            omic2_from_joint = omic2_recon_joint.detach().numpy()
+
 
     # From omic1 only
     for batch_idx, (omic1, omic2) in enumerate(data_loader):
+
+        if use_cuda:
+            omic1 = omic1.cuda()
+            omic2 = omic2.cuda()
+
         (omic1_recon_ge, omic1_recon_me, omic1_mu, omic1_logvar) = model(omic1=omic1)
 
-        omic1_from_omic1 = omic1_recon_ge.detach().numpy()
-        omic2_from_omic1 = omic1_recon_me.detach().numpy()
+        if use_cuda:
+            omic1_from_omic1 = omic1_recon_ge.detach().cpu().numpy()
+            omic2_from_omic1 = omic1_recon_me.detach().cpu().numpy()
+        else:
+            omic1_from_omic1 = omic1_recon_ge.detach().numpy()
+            omic2_from_omic1 = omic1_recon_me.detach().numpy()
 
     # From omic2 only
     for batch_idx, (omic1, omic2) in enumerate(data_loader):
+
+        if use_cuda:
+            omic1 = omic1.cuda()
+            omic2 = omic2.cuda()
+
         (omic2_recon_ge, omic2_recon_me, omic2_mu, omic2_logvar) = model(omic2=omic2)
 
-        omic1_from_omic2 = omic2_recon_ge.detach().numpy()
-        omic2_from_omic2 = omic2_recon_me.detach().numpy()
+        if use_cuda:
+            omic1_from_omic2 = omic2_recon_ge.detach().cpu().numpy()
+            omic2_from_omic2 = omic2_recon_me.detach().cpu().numpy()
+        else:
+            omic1_from_omic2 = omic2_recon_ge.detach().numpy()
+            omic2_from_omic2 = omic2_recon_me.detach().numpy()
 
     return omic1_from_joint, omic2_from_joint, omic1_from_omic1, omic2_from_omic1, omic1_from_omic2, omic2_from_omic2
 
