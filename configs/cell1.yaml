@@ -1,22 +1,21 @@
 GLOBAL_PARAMS:
   name: "cell task 1"
   task: 1
-  data1: "RNA"
-  data2: "PROTEIN"
-  data_path1: "/home/bram/jointomicscomp/data/CELL/pbmc_multimodal_RNA_5000MAD.npy"
-  data_path2: "/home/bram/jointomicscomp/data/CELL/pbmc_multimodal_ADT_5000MAD.npy"
-  data_features1: "/home/bram/jointomicscomp/data/CELL/pbmc_multimodal_RNA_5000MAD_featureNames.npy"
-  data_features2: "/home/bram/jointomicscomp/data/CELL/pbmc_multimodal_ADT_5000MAD_featureNames_UNIQUE.npy"
-  sample_names: "/home/bram/jointomicscomp/data/CELL/pbmc_multimodal_ADT_5000MAD_sampleNames.npy"
-  labels: "/home/bram/jointomicscomp/data/CELL/pbmc_multimodal_ADT_5000MAD_cellType.npy"
-  labelnames: "/home/bram/jointomicscomp/data/CELL/pbmc_multimodal_ADT_5000MAD_cellTypes.npy"
   num_features1: 5000
   num_features2: 224
   cuda: true
   random_seed: 1
-  log_save_interval: 5
-  early_stopping_patience: 20 # If set to 0 or <0, early stopping is turned off.
-  validation_fraction: 0.1
+  log_save_interval: 10
+  early_stopping_patience: 10 # If set to 0 or <0, early stopping is turned off.
+  data1: "RNA"
+  data2: "ADT"
+  data_path1: "/home/bram/jointomicscomp/data/CELL/pbmc_multimodal_RNA_5000MAD.npy"
+  data_path2: "/home/bram/jointomicscomp/data/CELL/pbmc_multimodal_ADT_5000MAD.npy"
+  data_features1: "/home/bram/jointomicscomp/data/CELL/pbmc_multimodal_RNA_5000MAD_featureNames.npy"
+  data_features2: "/home/bram/jointomicscomp/data/CELL/pbmc_multimodal_ADT_5000MAD_featureNames.npy"
+  sample_names: "/home/bram/jointomicscomp/data/CELL/cell_sampleNames.npy"
+  labels: "/home/bram/jointomicscomp/data/CELL/celltype.l2cellType.npy"
+  labelnames: "/home/bram/jointomicscomp/data/CELL/celltype.l2cellTypes.npy"
   train_ind: "/home/bram/jointomicscomp/data/CELL/trainInd.npy"
   val_ind: "/home/bram/jointomicscomp/data/CELL/validInd.npy"
   test_ind: "/home/bram/jointomicscomp/data/CELL/testInd.npy"
@@ -33,7 +32,7 @@ MOFA+:
 
   # Model options
   pre_trained: ""              # Use a pre-trained model for downstream analysis
-  factors: 10
+  factors: 128
   likelihoods: None            # likelihoods per view (options are "gaussian","poisson","bernoulli").
                                #     Default is None, and they are infered automatically
   spikeslab_weights: false     # use spike-slab sparsity prior in the weights? (recommended TRUE)
@@ -58,10 +57,10 @@ MVAE:
   plot: True     # Flag for plotting training and validation losses (loss, recon loss and KL loss)
 
   # Model optionsmain.yaml
-  pre_trained: "/home/bram/jointomicscomp/results/TRY_IT_ALL 22-11-2021 23:58:20/PoE/trained_model_epoch25.pth.tar"
+  pre_trained: ""
   latent_dim: 128
   batch_size: 256
-  epochs: 25
+  epochs: 1000
   lr: 0.0001
 
   # Other parameters
@@ -73,7 +72,7 @@ MVIB:
   # Hyperparameters
   z_dim: 128
   batch_size: 256
-  epochs: 1
+  epochs: 1000
 
   # Optimization parameters
   optimizer_name: 'Adam'
@@ -100,7 +99,7 @@ CGAE:
   dec1_lr: 0.0001
   enc2_lr: 0.0001
   dec2_lr: 0.0001
-  loss_function: 'bce'
+  loss_function: 'mse'
   use_batch_norm: True
   dropout_probability: 0.0
   optimizer: 'Adam'
