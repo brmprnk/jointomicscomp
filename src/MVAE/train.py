@@ -406,7 +406,7 @@ def run(args) -> None:
             # mse[i,j]: performance of using modality i to predict modality j
             mse = np.zeros((NR_MODALITIES, NR_MODALITIES), float)
             rsquared = np.eye(NR_MODALITIES)
-            spearman = np.zeros((NR_MODALITIES, NR_MODALITIES), float)
+            spearman = np.zeros((NR_MODALITIES, NR_MODALITIES, 2), float) # ,2 since we report mean and median
             spearman_p = np.zeros((NR_MODALITIES, NR_MODALITIES), float)
 
             # From x to y

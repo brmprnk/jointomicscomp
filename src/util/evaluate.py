@@ -3,6 +3,7 @@ from sklearn.metrics import accuracy_score, mean_squared_error, r2_score, precis
 from scipy.stats import stats
 import numpy as np
 import pandas as pd
+import math
 
 
 def evaluate_imputation(y_true, y_pred, num_features, criterion, aggregate='uniform_average'):
@@ -40,9 +41,12 @@ def evaluate_imputation(y_true, y_pred, num_features, criterion, aggregate='unif
         # Above it has been assured that the inputs are of shape (n_samples, n_observations)
         for i in range(y_true.shape[1]):
             corr = stats.spearmanr(y_true[:, i], y_pred[:, i])[0]  # [0] is correlation
+            if math.isnan(corr):
+                corr = 0
             correlations[i] = corr
 
-        return np.mean(correlations)
+        # To see the influence of NaN on the correlation, report mean and median
+        return [np.mean(correlations), np.median(correlations)]
 
     elif criterion == 'spearman_p':
         # Spearman Correlation gives NaN values, or will simply require >20GB memory on large datasets.
@@ -52,6 +56,8 @@ def evaluate_imputation(y_true, y_pred, num_features, criterion, aggregate='unif
         # Above it has been assured that the inputs are of shape (n_samples, n_observations)
         for i in range(y_true.shape[1]):
             corr = stats.spearmanr(y_true[:, i], y_pred[:, i])[1]  # [1] is p_value
+            if math.isnan(corr):
+                corr = 0
             p_values[i] = corr
 
         return np.mean(p_values)
