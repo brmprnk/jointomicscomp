@@ -122,10 +122,20 @@ def train_mofa(args: dict, save_file_path: str) -> None:
 
         gc.collect()
 
+        # MOFA+ has a constraint: Duplicated entries found in features_names.
+        # Make sure that feature names are not duplicated across different views
+        # This piece of logic makes them unique
+        features1 = np.load(args['data_features1'])
+        features2 = np.load(args['data_features2'])
+
+        for i, feature in enumerate(features1):
+            features1[i] = args['data1'] + feature
+        for i, feature in enumerate(features2):
+            features2[i] = args['data2'] + feature
+
         try:
             ent.set_data_matrix(data_mat, likelihoods=["gaussian", "gaussian"], views_names=[args['data1'], args['data2']],
-                                features_names=[np.load(args['data_features1'], allow_pickle=True).astype(str).tolist(),
-                                                np.load(args['data_features2'], allow_pickle=True).astype(str).tolist()],
+                                features_names=[features1, features2],
                                 samples_names=[sample_names])
         except AssertionError as e:
             print(e)
@@ -390,7 +400,7 @@ def downstream_analysis(args: dict, save_dir: str) -> None:
         NR_MODALITIES = 2
         mse = np.zeros((NR_MODALITIES, NR_MODALITIES), float)
         rsquared = np.eye(NR_MODALITIES)
-        spearman = np.zeros((NR_MODALITIES, NR_MODALITIES), float)
+        spearman = np.zeros((NR_MODALITIES, NR_MODALITIES, 2), float)  # ,2 since we report mean and median
         spearman_p = np.zeros((NR_MODALITIES, NR_MODALITIES), float)
 
         mse[0, 1], rsquared[0, 1], spearman[0, 1], spearman_p[0, 1] =\
