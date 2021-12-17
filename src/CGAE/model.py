@@ -70,6 +70,8 @@ def train(device, net, num_epochs, train_loader, train_loader_eval, valid_loader
 
         assert 'loss' in metrics
         print("--- Validation loss:\t%.4f" % metrics['loss'])
+        checkpoint_loss = [metrics['loss']]
+
 
     # Start training phase
     print("[*] Start training...")
@@ -102,10 +104,6 @@ def train(device, net, num_epochs, train_loader, train_loader_eval, valid_loader
         state = {'epoch': epoch + 1, 'state_dict': net.state_dict(), 'optimizer': net.opt.state_dict()}
         torch.save(state, ckpt_dir + '/model_last.pth.tar')
 
-        # Save model at epoch
-        if (epoch + 1) % save_step == 0:
-            print("[*] Saving model epoch %d..." % (epoch + 1))
-            torch.save(state, ckpt_dir + '/model_epoch%d.pth.tar' % (epoch + 1))
 
         # Evaluate all training set and validation set at epoch
         print("[*] Evaluating epoch %d..." % (epoch + 1))
@@ -125,6 +123,12 @@ def train(device, net, num_epochs, train_loader, train_loader_eval, valid_loader
         print("--- Training loss:\t%.4f" % metricsTrain['loss'])
         print("--- Validation loss:\t%.4f" % metricsValidation['loss'])
 
+        # Save model at epoch, and record loss at that checkpoint
+        if (epoch + 1) % save_step == 0:
+            print("[*] Saving model epoch %d..." % (epoch + 1))
+            torch.save(state, ckpt_dir + '/model_epoch%d.pth.tar' % (epoch + 1))
+            checkpoint_loss.append(metricsValidation['loss'])
+
         early_stopping(metricsValidation['loss'])
 
         for m in metricsTrain:
@@ -138,6 +142,7 @@ def train(device, net, num_epochs, train_loader, train_loader_eval, valid_loader
             break
 
     print("[*] Finish training.")
+    return checkpoint_loss
 
 
 def impute(net, model_file, loader, device, save_dir, sample_names, num_features1, num_features2, multimodal=False):
@@ -202,7 +207,7 @@ def impute(net, model_file, loader, device, save_dir, sample_names, num_features
                     evaluate_imputation(omic1_from_omic2, omic1_test, num_features1, 'spearman_p')
 
                 performance = {'mse': mse, 'rsquared': rsquared, 'spearman_corr': spearman, 'spearman_p': spearman_p}
-                with open(save_dir + "/CGAE results_pickle", 'wb') as f:
+                with open(save_dir + "/CGAE_task1_results.pkl", 'wb') as f:
                     pickle.dump(performance, f)
 
                 logger.info("Performance: {}".format(performance))
@@ -216,6 +221,8 @@ def impute(net, model_file, loader, device, save_dir, sample_names, num_features
 
 
 def extract(net, model_file, loader, save_dir, multimodal=False):
+    ## not 100% happy with the way embeddings are saved now
+    ## we need separate directories for train/validation/test data
     checkpoint = torch.load(model_file)
     net.load_state_dict(checkpoint['state_dict'])
     net.opt.load_state_dict(checkpoint['optimizer'])

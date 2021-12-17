@@ -6,7 +6,8 @@ from src.CGAE.model import train, impute, extract, MultiOmicsDataset
 from src.util import logger
 from src.util.early_stopping import EarlyStopping
 from src.util.umapplotter import UMAPPlotter
-
+from src.baseline.baseline import classification
+import pickle
 
 def run(args: dict) -> None:
     # Check cuda availability
@@ -17,52 +18,41 @@ def run(args: dict) -> None:
     save_dir = os.path.join(args['save_dir'], '{}'.format('CGAE'))
     os.makedirs(save_dir)
 
-    # Load in data, depending on task
-    # Task 1 : Imputation
-    if args['task'] == 1:
-        logger.info("Running Task {} on omic {} and omic {}".format(args['task'], args['data1'], args['data2']))
+    # task 2 is now either survival analysis (to be done in R), cell type prediction or simple classification on synthetic data
+    # therefore all cancer-specific things are not required anymore, the R script can do that
+    # and then here we can keep the nice and clean format of task 1
 
-        # Load in data
-        omic1 = np.load(args['data_path1'])
-        omic2 = np.load(args['data_path2'])
-        labels = np.load(args['labels'])
-        labeltypes = np.load(args['labelnames'])
 
-        # Use predefined split
-        train_ind = np.load(args['train_ind'])
-        val_ind = np.load(args['val_ind'])
-        test_ind = np.load(args['test_ind'])
+    # Load in data
+    omic1 = np.load(args['data_path1'])
+    omic2 = np.load(args['data_path2'])
+    labels = np.load(args['labels'])
+    labeltypes = np.load(args['labelnames'])
 
-        omic1_train_file = omic1[train_ind]
-        omic1_val_file = omic1[val_ind]
-        omic1_test_file = omic1[test_ind]
-        omic2_train_file = omic2[train_ind]
-        omic2_val_file = omic2[val_ind]
-        omic2_test_file = omic2[test_ind]
+    assert omic1.shape[0] == omic2.shape[0]
 
-    if args['task'] == 2:
-        logger.success("Running Task 2: {} classification.".format(args['ctype']))
-        # NOTE
-        # For testing purposes, this code uses predefined splits, later this should be done everytime the model is run
-        Xtrainctype = np.load(args['x_ctype_train_file'])
-        Xtrainrest = np.load(args['x_train_file'])
-        Xtrain = np.vstack((Xtrainctype, Xtrainrest))
+    # Use predefined split
+    train_ind = np.load(args['train_ind'])
+    val_ind = np.load(args['val_ind'])
+    test_ind = np.load(args['test_ind'])
 
-        Xvalctype = np.load(args['x_ctype_val_file'])
-        Xvalrest = np.load(args['x_val_file'])
-        Xval = np.vstack((Xvalctype, Xvalrest))
+    omic1_train_file = omic1[train_ind]
+    omic1_val_file = omic1[val_ind]
+    omic1_test_file = omic1[test_ind]
+    omic2_train_file = omic2[train_ind]
+    omic2_val_file = omic2[val_ind]
+    omic2_test_file = omic2[test_ind]
 
-        Ytrainctype = np.load(args['y_ctype_train_file'])
-        Ytrainrest = np.load(args['y_train_file'])
-        Ytrain = np.vstack((Ytrainctype, Ytrainrest))
-
-        Yvalctype = np.load(args['y_ctype_val_file'])
-        Yvalrest = np.load(args['y_val_file'])
-        Yval = np.vstack((Yvalctype, Yvalrest))
+    ytrain = labels[train_ind]
+    yvalid = labels[val_ind]
+    ytest = labels[test_ind]
 
     # Number of features
     input_dim1 = args['num_features1']
     input_dim2 = args['num_features2']
+
+    assert input_dim1 == omic1.shape[1]
+    assert input_dim2 == omic2.shape[1]
 
     encoder_layers = [args['latent_dim']]
     decoder_layers = [args['latent_dim']]
@@ -116,85 +106,118 @@ def run(args: dict) -> None:
 
     # Training and validation
 
-    train(device=device, net=net, num_epochs=args['epochs'], train_loader=train_loader,
+    cploss = train(device=device, net=net, num_epochs=args['epochs'], train_loader=train_loader,
           train_loader_eval=train_loader_eval, valid_loader=valid_loader,
-          ckpt_dir=ckpt_dir, logs_dir=logs_dir, early_stopping=early_stopping, save_step=10, multimodal=True)
+          ckpt_dir=ckpt_dir, logs_dir=logs_dir, early_stopping=early_stopping, save_step=args['log_save_interval'], multimodal=True)
 
-    # Extract Phase #
+    # find best checkpoint based on the validation loss
+    bestEpoch = args['log_save_interval'] * np.argmin(cploss)
+
+    logger.info("Using model from epoch %d" % bestEpoch)
+    modelCheckpoint = ckpt_dir + '/model_epoch%d.pth.tar' % (bestEpoch)
+    assert os.path.exists(modelCheckpoint)
+
+
 
     # Imputation
     if args['task'] == 1:
         logger.info("Imputation: Extracting Z1 and Z2 using test set")
 
-        dataExtract1 = omic1_test_file
-        dataExtract2 = omic2_test_file
+        dataTest1 = omic1_test_file
+        dataTest2 = omic2_test_file
 
-        dataExtract1 = torch.tensor(dataExtract1, device=device)
-        dataExtract2 = torch.tensor(dataExtract2, device=device)
+        dataTest1 = torch.tensor(dataTest1, device=device)
+        dataTest2 = torch.tensor(dataTest2, device=device)
 
-        datasetExtract = MultiOmicsDataset(dataExtract1, dataExtract2)
+        # datasetTrain = MultiOmicsDataset(dataTrain1, dataTrain2)
 
-        extract_loader = DataLoader(datasetExtract, batch_size=dataExtract1.shape[0], shuffle=False, num_workers=0,
+        datasetTest = MultiOmicsDataset(dataTest1, dataTest2)
+
+        extract_loader = DataLoader(datasetTest, batch_size=dataTest1.shape[0], shuffle=False, num_workers=0,
                                     drop_last=False)
 
         # Compute imputation loss
         sample_names = np.load(args['sample_names']).astype(str)[test_ind]
         z1, z2 = impute(net=net,
-                        model_file=ckpt_dir + '/model_last.pth.tar',
+                        model_file=modelCheckpoint,
                         loader=extract_loader, device=device, save_dir=save_dir, sample_names=sample_names,
                         num_features1=args['num_features1'], num_features2=args['num_features2'], multimodal=True)
 
-        labels = np.load(args['labels']).astype(int)
-        labeltypes = np.load(args['labelnames'])
 
-        test_labels = labeltypes[[labels[test_ind]]]
+        # not really needed for now
+        # labels = np.load(args['labels']).astype(int)
+        # labeltypes = np.load(args['labelnames'])
+        #
+        # test_labels = labeltypes[[labels[test_ind]]]
+        #
+        # z1_plot = UMAPPlotter(z1, test_labels, "CGAE Z1: Task {} | {} & {} \n"
+        #                                        "Epochs: {}, Latent Dimension: {}, LR: {}, Batch size: {}"
+        #                       .format(args['task'], args['data1'], args['data2'],
+        #                               args['epochs'], args['latent_dim'], args['enc1_lr'], args['batch_size']),
+        #                       save_dir + "/{} UMAP_Z1.png".format('CGAE'))
+        # z1_plot.plot()
+        #
+        # z2_plot = UMAPPlotter(z2, test_labels, "CGAE Z2: Task {} | {} & {} \n"
+        #                                        "Epochs: {}, Latent Dimension: {}, LR: {}, Batch size: {}"
+        #                       .format(args['task'], args['data1'], args['data2'],
+        #                               args['epochs'], args['latent_dim'], args['enc1_lr'], args['batch_size']),
+        #                       save_dir + "/{} UMAP_Z2.png".format('CGAE'))
+        # z2_plot.plot()
 
-        z1_plot = UMAPPlotter(z1, test_labels, "CGAE Z1: Task {} | {} & {} \n"
-                                               "Epochs: {}, Latent Dimension: {}, LR: {}, Batch size: {}"
-                              .format(args['task'], args['data1'], args['data2'],
-                                      args['epochs'], args['latent_dim'], args['enc1_lr'], args['batch_size']),
-                              save_dir + "/{} UMAP_Z1.png".format('CGAE'))
-        z1_plot.plot()
-
-        z2_plot = UMAPPlotter(z2, test_labels, "CGAE Z2: Task {} | {} & {} \n"
-                                               "Epochs: {}, Latent Dimension: {}, LR: {}, Batch size: {}"
-                              .format(args['task'], args['data1'], args['data2'],
-                                      args['epochs'], args['latent_dim'], args['enc1_lr'], args['batch_size']),
-                              save_dir + "/{} UMAP_Z2.png".format('CGAE'))
-        z2_plot.plot()
-
-    # Cancer stage prediction
+    # supervised task for SC and synthetic data
+    # for TCGA we still need to figure out a solution here (maybe call this task 3 and have another if in which we just save the embeddings (or call r2py)?)
     if args['task'] == 2:
-        logger.info("Cancer Type Classification: Extracting Z1 and Z2 using {} set".format(args['ctype']))
-        # Test sets are stratified data from cancer type into stages
-        dataExtract1 = np.vstack((Xtrainctype, Xvalctype, np.load(args['x_ctype_test_file'])))
-        dataExtract2 = np.vstack((Ytrainctype, Yvalctype, np.load(args['y_ctype_test_file'])))
+        logger.info("Classification")
 
-        dataExtract1 = torch.tensor(dataExtract1, device=device)
-        dataExtract2 = torch.tensor(dataExtract2, device=device)
+        dataTest1 = torch.tensor(omic1_test_file, device=device)
+        dataTest2 = torch.tensor(omic2_test_file, device=device)
 
-        datasetExtract = MultiOmicsDataset(dataExtract1, dataExtract2)
+        datasetTest = MultiOmicsDataset(dataTest1, dataTest2)
 
-        extract_loader = DataLoader(datasetExtract, batch_size=dataExtract1.shape[0], shuffle=False, num_workers=0,
-                                    drop_last=False)
 
-        # Extract Z from all data from the chosen cancer type
-        # Do predictions separately
-        z1, z2 = extract(net=net, model_file=os.path.join(ckpt_dir, "model_last.pth.tar".format(args['epochs'])),
-                         loader=extract_loader, save_dir=save_dir, multimodal=True)
+        train_loader = DataLoader(datasetTrain, batch_size=dataTrain1.shape[0], shuffle=False, num_workers=0,
+                                       drop_last=False)
+        valid_loader = DataLoader(datasetValidation, batch_size=dataValidation1.shape[0], shuffle=False, num_workers=0,
+                                  drop_last=False)
+        test_loader = DataLoader(datasetTest, batch_size=dataTest1.shape[0], shuffle=False, num_workers=0,
+                          drop_last=False)
 
-        prediction_test_labels = np.load(args['ctype_test_file_labels'])
 
-        z1_plot = UMAPPlotter(z1, prediction_test_labels, "CGAE Z1: Task {} on {} | {} & {} \n"
-                                                          "Epochs: {}, Latent Dimension: {}, LR: {}, Batch size: {}"
-                              .format(args['task'], args['ctype'], args['data1'], args['data2'],
-                                      args['epochs'], args['latent_dim'], args['lr'], args['batch_size']),
-                              save_dir + "/{} UMAP.png".format('CGAE'))
-        z1_plot.plot()
+        z1train, z2train = extract(net, modelCheckpoint, train_loader, save_dir, multimodal=True)
+        z1valid, z2valid = extract(net, modelCheckpoint, valid_loader, save_dir, multimodal=True)
+        z1test, z2test = extract(net, modelCheckpoint, test_loader, save_dir, multimodal=True)
 
-        z2_plot = UMAPPlotter(z2, prediction_test_labels, "CGAE Z2: Task {} on {} | {} & {} \n"
-                                                          "Epochs: {}, Latent Dimension: {}, LR: {}, Batch size: {}"
-                              .format(args['task'], args['ctype'], args['data1'], args['data2'],
-                                      args['epochs'], args['latent_dim'], args['lr'], args['batch_size']),
-                              save_dir + "/{} UMAP.png".format('CGAE'))
-        z2_plot.plot()
+        logger.info("Using omic 1")
+        predictions1, performance1 = classification(z1train, ytrain, z1valid, yvalid, z1test, ytest, np.array([1e-5, 1e-3, 1e-2, 0.1, 0.5, 1.0, 2.0, 5.0, 10., 20.]), args['clf_criterion'])
+
+        pr1 = {'acc': performance1[0], 'pr': performance1[1], 'rc': performance1[2], 'f1': performance1[3], 'mcc': performance1[4], 'confmat': performance1[5], 'pred': predictions1}
+
+        logger.info("Using omic 2")
+        predictions2, performance2 = classification(z2train, ytrain, z2valid, yvalid, z2test, ytest, np.array([1e-5, 1e-3, 1e-2, 0.1, 0.5, 1.0, 2.0, 5.0, 10., 20.]), args['clf_criterion'])
+        pr2 = {'acc': performance2[0], 'pr': performance2[1], 'rc': performance2[2], 'f1': performance2[3], 'mcc': performance2[4], 'confmat': performance2[5], 'pred': predictions2}
+
+
+        logger.info("Saving results")
+        with open(save_dir + "/CGAE_task2_results.pkl", 'wb') as f:
+            pickle.dump({'omic1': pr1, 'omic2': pr2}, f)
+
+
+        # plots not needed for now
+        # z1, z2 = extract(net=net, model_file=modelCheckpoint,
+        #                  loader=extract_loader, save_dir=save_dir, multimodal=True)
+        #
+        # prediction_test_labels = np.load(args['ctype_test_file_labels'])
+        #
+        # z1_plot = UMAPPlotter(z1, prediction_test_labels, "CGAE Z1: Task {} on {} | {} & {} \n"
+        #                                                   "Epochs: {}, Latent Dimension: {}, LR: {}, Batch size: {}"
+        #                       .format(args['task'], args['ctype'], args['data1'], args['data2'],
+        #                               args['epochs'], args['latent_dim'], args['lr'], args['batch_size']),
+        #                       save_dir + "/{} UMAP.png".format('CGAE'))
+        # z1_plot.plot()
+        #
+        # z2_plot = UMAPPlotter(z2, prediction_test_labels, "CGAE Z2: Task {} on {} | {} & {} \n"
+        #                                                   "Epochs: {}, Latent Dimension: {}, LR: {}, Batch size: {}"
+        #                       .format(args['task'], args['ctype'], args['data1'], args['data2'],
+        #                               args['epochs'], args['latent_dim'], args['lr'], args['batch_size']),
+        #                       save_dir + "/{} UMAP.png".format('CGAE'))
+        # z2_plot.plot()
