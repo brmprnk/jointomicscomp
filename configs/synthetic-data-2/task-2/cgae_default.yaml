@@ -1,24 +1,24 @@
 GLOBAL_PARAMS:
   name: "experiment"
-  task: 1
-  num_features1: 3
-  num_features2: 3
+  task: 2
+  num_features1: 2
+  num_features2: 2
   cuda: true
   random_seed: 1
   log_save_interval: 5
   early_stopping_patience: 10 # If set to 0 or <0, early stopping is turned off.
   data1: "v1"
   data2: "v2"
-  data_path1: "synthetic-data/dataset1/view1.npy"
-  data_path2: "synthetic-data/dataset1/view2.npy"
-  data_features1: "synthetic-data/dataset1/view1_features.npy"
-  data_features2: "synthetic-data/dataset1/view2_features.npy"
-  sample_names: "synthetic-data/dataset1/samples.npy"
-  labels: "synthetic-data/dataset1/labels.npy"
-  labelnames: "synthetic-data/dataset1/labelnames.npy"
-  train_ind: "synthetic-data/dataset1/trainInd.npy"
-  val_ind: "synthetic-data/dataset1/validInd.npy"
-  test_ind: "synthetic-data/dataset1/testInd.npy"
+  data_path1: "synthetic-data/dataset2/view1.npy"
+  data_path2: "synthetic-data/dataset2/view2.npy"
+  data_features1: "synthetic-data/dataset2/view1_features.npy"
+  data_features2: "synthetic-data/dataset2/view2_features.npy"
+  sample_names: "synthetic-data/dataset2/samples.npy"
+  labels: "synthetic-data/dataset2/labels.npy"
+  labelnames: "synthetic-data/dataset2/labelnames.npy"
+  train_ind: "synthetic-data/dataset2/trainInd.npy"
+  val_ind: "synthetic-data/dataset2/validInd.npy"
+  test_ind: "synthetic-data/dataset2/testInd.npy"
 
 
 CGAE:
