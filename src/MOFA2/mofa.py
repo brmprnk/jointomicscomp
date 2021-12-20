@@ -94,8 +94,8 @@ def train_mofa(args: dict, save_file_path: str) -> None:
         logger.info("Running Task {} on omic {} and omic {}".format(args['task'], args['data1'], args['data2']))
 
         # Load in data
-        omic1 = np.load(args['data_path1']).astype(np.float32)
-        omic2 = np.load(args['data_path2']).astype(np.float32)
+        omic1 = np.load(args['data_path1'])
+        omic2 = np.load(args['data_path2'])
         sample_names = np.load(args['sample_names'], allow_pickle=True).astype(str)
 
         # Use predefined split
@@ -327,7 +327,7 @@ def downstream_analysis(args: dict, save_dir: str) -> None:
     labeltypes = np.load(args['labelnames'], allow_pickle=True).astype(str)
 
     # Get correct labels with names
-    training_labels = np.concatenate((labeltypes[[labels[np.load(args['train_ind'])]]], labeltypes[[labels[np.load(args['val_ind'])]]]))
+    training_labels = np.concatenate((labeltypes[tuple([labels[np.load(args['train_ind'])]])], labeltypes[tuple([labels[np.load(args['val_ind'])]])]))
 
     training_data_plot = UMAPPlotter(Z.transpose(),
                                      training_labels,
@@ -423,7 +423,7 @@ def downstream_analysis(args: dict, save_dir: str) -> None:
         logger.info("Imputation loss {} from {} = {}".format(args['data1'], args['data2'], mse[0, 1]))
         logger.info("Imputation loss {} from {} = {}".format(args['data2'], args['data1'], mse[1, 0]))
 
-        test_labels = labeltypes[[labels[test_ind]]]
+        test_labels = labeltypes[tuple([labels[test_ind]])]
 
         z1_plot = UMAPPlotter(Z_frompseudo1.transpose(),
                               test_labels,

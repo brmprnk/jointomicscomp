@@ -1,4 +1,5 @@
 import os
+import sys
 from datetime import datetime
 
 from tqdm import tqdm
@@ -275,9 +276,16 @@ def run(args) -> None:
         # Setup early stopping, terminates training when validation loss does not improve for early_stopping_patience epochs
         early_stopping = EarlyStopping(patience=args['early_stopping_patience'], verbose=True)
 
+        bestEpoch = 0
+        lowestLoss = sys.maxsize
         for epoch in range(1, args['epochs'] + 1):
             train(args, model, train_loader, optimizer, epoch, tf_logger)
             validation_loss = test(args, model, val_loader, optimizer, epoch, tf_logger)
+
+            # Keep track of lowest loss to find best epoch
+            if validation_loss < lowestLoss:
+                bestEpoch = epoch
+                lowestLoss = validation_loss
 
             # Save the last model
             if epoch == args['epochs'] or epoch % args['log_save_interval'] == 0:
@@ -361,7 +369,7 @@ def run(args) -> None:
                 #     labels, label_types, test_ind = tcga_data.get_labels_partition("test")
                 #
                 #     labels = labels[test_ind].astype(int)
-                #     sample_labels = label_types[[labels]]
+                #     sample_labels = label_types[tuple([labels])]
                 #
                 #     plot = UMAPPlotter(z, sample_labels, "{}: Task {} | {} & {} \n"
                 #                                          "Epochs: {}, Latent Dimension: {}, LR: {}, Batch size: {}"
@@ -375,6 +383,10 @@ def run(args) -> None:
 
         else:
             logger.info("Task 1 Imputation: Extracting Z using test set")
+
+            # Deallocate tensors still on GPU from training
+            if args['cuda']:
+                torch.cuda.empty_cache()
 
             impute_dataset = tcga_data.get_data_partition("test")
 
@@ -452,12 +464,17 @@ def run(args) -> None:
                 labels, label_types, test_ind = tcga_data.get_labels_partition("test")
 
                 labels = labels[test_ind].astype(int)
-                sample_labels = label_types[[labels]]
+                sample_labels = label_types[tuple([labels])]
+
+                try:
+                    umap_epoch = bestEpoch
+                except Exception:
+                    umap_epoch = args['epochs']
 
                 plot = UMAPPlotter(z, sample_labels, "{}: Task {} | {} & {} \n"
                                                      "Epochs: {}, Latent Dimension: {}, LR: {}, Batch size: {}"
                                    .format('MoE' if args['mixture'] else 'PoE', args['task'], args['data1'], args['data2'],
-                                           29, args['latent_dim'], args['lr'], args['batch_size']),
+                                           umap_epoch, args['latent_dim'], args['lr'], args['batch_size']),
                                    save_dir + "/{} UMAP.png".format('MoE' if args['mixture'] else 'PoE', 'MoE' if args['mixture'] else 'PoE'))
 
                 plot.plot()
