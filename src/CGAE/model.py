@@ -34,25 +34,25 @@ def multiomic_collate(batch):
 
     return torch.from_numpy(np.array(d1)), torch.from_numpy(np.array(d2))
 
-def evaluateUsingBatches(net, dataloader, multimodal=False):
+def evaluateUsingBatches(net, device, dataloader, multimodal=False):
     for i, trd in enumerate(dataloader):
         if i == 0:
             if not multimodal:
-                x = trd[0]
+                x = trd[0].to(device)
                 metrics = net.evaluate(x) * x.shape[0]
             else:
-                x1 = trd[0][0]
-                x2 = trd[1][0]
+                x1 = trd[0][0].to(device)
+                x2 = trd[1][0].to(device)
                 # evaluate method averages across samples, multiply with #samples to get total
                 metrics = net.evaluate(x1, x2) * x1.shape[0]
         else:
             # add intermediate metrics to total
             if not multimodal:
-                x = trd[0]
+                x = trd[0].to(device)
                 tmpmetrics = net.evaluate(x) * x.shape[0]
             else:
-                x1 = trd[0][0]
-                x2 = trd[1][0]
+                x1 = trd[0][0].to(device)
+                x2 = trd[1][0].to(device)
                 tmpmetrics = net.evaluate(x1, x2) * x1.shape[0]
 
             for kk in metrics:
@@ -75,14 +75,14 @@ def train(device, net, num_epochs, train_loader, train_loader_eval, valid_loader
 
     # Evaluate validation set before start training
     print("[*] Evaluating epoch %d..." % start_epoch)
-    metrics = evaluateUsingBatches(net, train_loader_eval, multimodal)
+    metrics = evaluateUsingBatches(net, device, train_loader_eval, multimodal)
 
     print(metrics.keys())
     assert 'loss' in metrics
     print("--- Training loss:\t%.4f" % metrics['loss'])
 
 
-    metrics = evaluateUsingBatches(net, valid_loader, multimodal)
+    metrics = evaluateUsingBatches(net, device, valid_loader, multimodal)
 
     assert 'loss' in metrics
     print("--- Validation loss:\t%.4f" % metrics['loss'])
@@ -108,9 +108,9 @@ def train(device, net, num_epochs, train_loader, train_loader_eval, valid_loader
                 net.opt.zero_grad()
 
                 if not multimodal:
-                    current_loss = net.compute_loss(data[0])
+                    current_loss = net.compute_loss(data[0].to(device))
                 else:
-                    current_loss = net.compute_loss(data[0][0], data[1][0])
+                    current_loss = net.compute_loss(data[0][0].to(device), data[1][0].to(device))
 
                 # Backward pass and optimize
                 current_loss.backward()
@@ -124,8 +124,8 @@ def train(device, net, num_epochs, train_loader, train_loader_eval, valid_loader
         # Evaluate all training set and validation set at epoch
         print("[*] Evaluating epoch %d..." % (epoch + 1))
 
-        metricsTrain = evaluateUsingBatches(net, train_loader_eval, multimodal)
-        metricsValidation = evaluateUsingBatches(net, valid_loader, multimodal)
+        metricsTrain = evaluateUsingBatches(net, device, train_loader_eval, multimodal)
+        metricsValidation = evaluateUsingBatches(net, device, valid_loader, multimodal)
 
 
         print("--- Training loss:\t%.4f" % metricsTrain['loss'])

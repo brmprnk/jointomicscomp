@@ -10,7 +10,8 @@ import pickle
 
 from src.MoE.model import MixtureOfExperts
 import src.PoE.datasets as datasets
-from src.Moe.evaluate import impute
+from src.PoE.evaluate import impute
+from src.CGAE.model import train
 import src.util.logger as logger
 from src.util.early_stopping import EarlyStopping
 from src.util.umapplotter import UMAPPlotter
@@ -57,46 +58,46 @@ def save_checkpoint(state, epoch, save_dir):
     torch.save(state, os.path.join(save_dir, 'trained_model_epoch{}.pth.tar'.format(epoch)))
 
 
-def train(args, model, train_loader, optimizer, epoch, tf_logger):
-    model.training = True
-    model = model.double()
-    model.train()
-
-    progress_bar = tqdm(total=len(train_loader))
-    train_loss_per_batch = np.zeros(len(train_loader))
-    train_recon_loss_per_batch = np.zeros(len(train_loader))
-    train_kl_loss_per_batch = np.zeros(len(train_loader))
-
-    # Incorporate MMVAE training function
-    b_loss = 0
-    for batch_idx, (omic1, omic2) in enumerate(train_loader):
-
-        if args['cuda']:
-            omic1 = omic1.cuda()
-            omic2 = omic2.cuda()
-
-        # refresh the optimizer
-        optimizer.zero_grad()
-
-        loss = -model.forward(omic1, omic2)
-        loss.backward()
-        optimizer.step()
-        b_loss += loss.item()
-
-        progress_bar.update()
-        train_loss_per_batch[batch_idx] = loss.item()
-
-
-
-    progress_bar.close()
-    if epoch % args['log_interval'] == 0:
-        tf_logger.add_scalar("train loss", train_loss_per_batch.mean(), epoch)
-        tf_logger.add_scalar("train reconstruction loss", train_recon_loss_per_batch.mean(), epoch)
-        tf_logger.add_scalar("train KL loss", train_kl_loss_per_batch.mean(), epoch)
-
-        print('====> Epoch: {}\tLoss: {:.4f}'.format(epoch, train_loss_per_batch.mean()))
-        print('====> Epoch: {}\tReconstruction Loss: {:.4f}'.format(epoch, train_recon_loss_per_batch.mean()))
-        print('====> Epoch: {}\tKLD Loss: {:.4f}'.format(epoch, train_kl_loss_per_batch.mean()))
+# def train(args, model, train_loader, optimizer, epoch, tf_logger):
+#     model.training = True
+#     model = model.double()
+#     model.train()
+#
+#     progress_bar = tqdm(total=len(train_loader))
+#     train_loss_per_batch = np.zeros(len(train_loader))
+#     train_recon_loss_per_batch = np.zeros(len(train_loader))
+#     train_kl_loss_per_batch = np.zeros(len(train_loader))
+#
+#     # Incorporate MMVAE training function
+#     b_loss = 0
+#     for batch_idx, (omic1, omic2) in enumerate(train_loader):
+#
+#         if args['cuda']:
+#             omic1 = omic1.cuda()
+#             omic2 = omic2.cuda()
+#
+#         # refresh the optimizer
+#         optimizer.zero_grad()
+#
+#         loss = -model.forward(omic1, omic2)
+#         loss.backward()
+#         optimizer.step()
+#         b_loss += loss.item()
+#
+#         progress_bar.update()
+#         train_loss_per_batch[batch_idx] = loss.item()
+#
+#
+#
+#     progress_bar.close()
+#     if epoch % args['log_interval'] == 0:
+#         tf_logger.add_scalar("train loss", train_loss_per_batch.mean(), epoch)
+#         tf_logger.add_scalar("train reconstruction loss", train_recon_loss_per_batch.mean(), epoch)
+#         tf_logger.add_scalar("train KL loss", train_kl_loss_per_batch.mean(), epoch)
+#
+#         print('====> Epoch: {}\tLoss: {:.4f}'.format(epoch, train_loss_per_batch.mean()))
+#         print('====> Epoch: {}\tReconstruction Loss: {:.4f}'.format(epoch, train_recon_loss_per_batch.mean()))
+#         print('====> Epoch: {}\tKLD Loss: {:.4f}'.format(epoch, train_kl_loss_per_batch.mean()))
 
 
 def test(args, model, val_loader, optimizer, epoch, tf_logger):
@@ -160,19 +161,27 @@ def run(args) -> None:
     # torch.manual_seed(args['random_seed'])
     # np.random.seed(args['random_seed'])
 
-    save_dir = os.path.join(args['save_dir'], '{}'.format('MoE' if args['mixture'] else 'PoE'))
+    save_dir = os.path.join(args['save_dir'], 'MoE')
     os.makedirs(save_dir)
 
+    device = torch.device('cuda') if torch.cuda.is_available() and args['cuda'] else torch.device('cpu')
     # Define tensorboard logger
-    tf_logger = SummaryWriter(save_dir)
+    # tf_logger = SummaryWriter(save_dir)
 
     # Fetch Datasets
     tcga_data = datasets.TCGAData(args, save_dir=save_dir)
     train_dataset = tcga_data.get_data_partition("train")
     val_dataset = tcga_data.get_data_partition("val")
 
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args['batch_size'], shuffle=False)
+
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args['batch_size'], shuffle=True)
     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=len(val_dataset), shuffle=False)  # (1 batch)
+    if args['train_loader_eval_batch_size'] > 0:
+        trnEvalBatchSize = args['train_loader_eval_batch_size']
+    else:
+        trnEvalBatchSize = len(train_dataset)
+
+    train_loader_eval = torch.utils.data.DataLoader(train_dataset, batch_size=trnEvalBatchSize, shuffle=False)
 
     if args['pre_trained'] != "":
         logger.info("Using Pre-Trained MVAE found at {}".format(args['pre_trained']))
@@ -185,7 +194,7 @@ def run(args) -> None:
 
     else:
         # Setup and log model
-        device = torch.device('cuda') if torch.cuda.is_available() and args['cuda'] else torch.device('cpu')
+
 
         # Number of features
         input_dim1 = args['num_features1']
@@ -194,22 +203,21 @@ def run(args) -> None:
         encoder_layers = [args['latent_dim']]
         decoder_layers = [args['latent_dim']]
 
-        model = MixtureOfExperts(input_dim1, input_dim2, encoder_layers, decoder_layers)
+        model = MixtureOfExperts(input_dim1, input_dim2, encoder_layers, decoder_layers,
+         args['loss_function'], args['loss_function'], args['use_batch_norm'],
+         args['dropout_probability'], args['optimizer'], args['enc1_lr'], args['dec1_lr'],
+         args['enc1_last_activation'], args['enc1_output_scale'],
+         args['enc2_lr'], args['dec2_lr'], args['enc2_last_activation'],
+         args['enc1_output_scale'], args['beta_start_value'])
 
-
-input_dim1, input_dim2, enc_hidden_dim=[100], dec_hidden_dim=[], loss1='bce', loss2='bce',
-             use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder1_lr=1e-4, decoder1_lr=1e-4,
-             enc1_lastActivation='none', enc1_outputScale=1., encoder2_lr=1e-4, decoder2_lr=1e-4,
-             enc2_lastActivation='none', enc2_outputScale=1., beta=1.0
-
-
+        model.double()
         if device == torch.device('cuda'):
             model.cuda()
         else:
             args['cuda'] = False
 
         # Log Data shape, input arguments and model
-        model_file = open("{}/MVAE {} Model.txt".format(save_dir, 'MoE' if args['mixture'] else 'PoE'), "a")
+        model_file = open("{}/MoE_Model.txt".format(save_dir), "a")
         model_file.write("Running at {}\n".format(datetime.now().strftime("%d-%m-%Y %H:%M:%S")))
         model_file.write("Input shape 1 : {}, {}\n".format(len(train_loader.dataset), args['num_features1']))
         model_file.write("Input shape 2 : {}, {}\n".format(len(train_loader.dataset), args['num_features2']))
@@ -217,37 +225,39 @@ input_dim1, input_dim2, enc_hidden_dim=[100], dec_hidden_dim=[], loss1='bce', lo
         model_file.write("PoE Model : {}".format(model))
         model_file.close()
 
-        # Preparation for training
-        optimizer = optim.Adam(model.parameters(), lr=args['lr'])
-
         # Setup early stopping, terminates training when validation loss does not improve for early_stopping_patience epochs
         early_stopping = EarlyStopping(patience=args['early_stopping_patience'], verbose=True)
 
-        for epoch in range(1, args['epochs'] + 1):
-            train(args, model, train_loader, optimizer, epoch, tf_logger)
-            validation_loss = test(args, model, val_loader, optimizer, epoch, tf_logger)
+        cploss = train(device=device, net=model, num_epochs=args['epochs'], train_loader=train_loader,
+              train_loader_eval=train_loader_eval, valid_loader=val_loader,
+              ckpt_dir=save_dir, logs_dir=save_dir, early_stopping=early_stopping, save_step=args['log_save_interval'], multimodal=True)
 
-            # Save the last model
-            if epoch == args['epochs'] or epoch % args['log_save_interval'] == 0:
-                save_checkpoint({
-                    'state_dict': model.state_dict(),
-                    'best_loss': validation_loss,
-                    'latent_dim': args['latent_dim'],
-                    'epochs': args['epochs'],
-                    'lr': args['lr'],
-                    'batch_size': args['batch_size'],
-                    'use_mixture': args['mixture'],
-                    'optimizer': optimizer.state_dict(),
-                }, epoch, save_dir)
-
-            early_stopping(validation_loss)
-
-            # Stop training when not improving
-            if early_stopping.early_stop:
-                logger.info('Early stopping training since loss did not improve for {} epochs.'
-                            .format(args['early_stopping_patience']))
-                args['epochs'] = epoch  # Update nr of epochs for plots
-                break
+        #
+        # for epoch in range(1, args['epochs'] + 1):
+        #     train(args, model, train_loader, optimizer, epoch, tf_logger)
+        #     validation_loss = test(args, model, val_loader, optimizer, epoch, tf_logger)
+        #
+        #     # Save the last model
+        #     if epoch == args['epochs'] or epoch % args['log_save_interval'] == 0:
+        #         save_checkpoint({
+        #             'state_dict': model.state_dict(),
+        #             'best_loss': validation_loss,
+        #             'latent_dim': args['latent_dim'],
+        #             'epochs': args['epochs'],
+        #             'lr': args['lr'],
+        #             'batch_size': args['batch_size'],
+        #             'use_mixture': args['mixture'],
+        #             'optimizer': optimizer.state_dict(),
+        #         }, epoch, save_dir)
+        #
+        #     early_stopping(validation_loss)
+        #
+        #     # Stop training when not improving
+        #     if early_stopping.early_stop:
+        #         logger.info('Early stopping training since loss did not improve for {} epochs.'
+        #                     .format(args['early_stopping_patience']))
+        #         args['epochs'] = epoch  # Update nr of epochs for plots
+        #         break
 
     # Extract Phase #
     logger.success("Finished training MVAE model. Now calculating task results.")
@@ -306,7 +316,7 @@ input_dim1, input_dim2, enc_hidden_dim=[100], dec_hidden_dim=[], loss1='bce', lo
 
         performance = {'mse': mse, 'rsquared': rsquared, 'spearman_corr': spearman, 'spearman_p': spearman_p}
         print(performance)
-        with open(save_dir + "/{} results_pickle".format('MoE' if args['mixture'] else 'PoE'), 'wb') as f:
+        with open(save_dir + "/MoE_task1_results.pkl", 'wb') as f:
             pickle.dump(performance, f)
 
         logger.info("Imputation loss for {} from {} : {}".
@@ -337,13 +347,13 @@ input_dim1, input_dim2, enc_hidden_dim=[100], dec_hidden_dim=[], loss1='bce', lo
             labels = labels[test_ind].astype(int)
             sample_labels = label_types[[labels]]
 
-            plot = UMAPPlotter(z, sample_labels, "{}: Task {} | {} & {} \n"
-                                                 "Epochs: {}, Latent Dimension: {}, LR: {}, Batch size: {}"
-                               .format('MoE' if args['mixture'] else 'PoE', args['task'], args['data1'], args['data2'],
-                                       29, args['latent_dim'], args['lr'], args['batch_size']),
-                               save_dir + "/{} UMAP.png".format('MoE' if args['mixture'] else 'PoE', 'MoE' if args['mixture'] else 'PoE'))
-
-            plot.plot()
+            # plot = UMAPPlotter(z, sample_labels, "{}: Task {} | {} & {} \n"
+            #                                      "Epochs: {}, Latent Dimension: {}, LR: {}, Batch size: {}"
+            #                    .format('MoE' if args['mixture'] else 'PoE', args['task'], args['data1'], args['data2'],
+            #                            29, args['latent_dim'], args['lr'], args['batch_size']),
+            #                    save_dir + "/{} UMAP.png".format('MoE' if args['mixture'] else 'PoE', 'MoE' if args['mixture'] else 'PoE'))
+            #
+            # plot.plot()
 
     if args['task'] == 2:
         print(model)

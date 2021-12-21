@@ -2851,3 +2851,148 @@ Saving results
 [1;32mSUCCESS: Finished running Product-of-Experts MVAE Model[0;0m
 ##########
 
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 21-12-2021 13:14:23[0;0m
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 21-12-2021 13:14:49[0;0m
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 21-12-2021 13:15:09[0;0m
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 21-12-2021 13:15:34[0;0m
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 21-12-2021 13:16:27[0;0m
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 21-12-2021 13:17:21[0;0m
+
+##########
+[1;32mSUCCESS: Running Mixture-of-Experts MVAE Model[0;0m
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 21-12-2021 13:18:29[0;0m
+
+##########
+[1;32mSUCCESS: Running Mixture-of-Experts MVAE Model[0;0m
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 21-12-2021 13:18:54[0;0m
+
+##########
+[1;32mSUCCESS: Running Mixture-of-Experts MVAE Model[0;0m
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 21-12-2021 13:20:54[0;0m
+
+##########
+[1;32mSUCCESS: Running Mixture-of-Experts MVAE Model[0;0m
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 21-12-2021 13:23:02[0;0m
+
+##########
+[1;32mSUCCESS: Running Mixture-of-Experts MVAE Model[0;0m
+!
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 21-12-2021 13:23:45[0;0m
+
+##########
+[1;32mSUCCESS: Running Mixture-of-Experts MVAE Model[0;0m
+!
+!
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 21-12-2021 13:25:54[0;0m
+
+##########
+[1;32mSUCCESS: Running Mixture-of-Experts MVAE Model[0;0m
+!
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 21-12-2021 13:28:44[0;0m
+
+##########
+[1;32mSUCCESS: Running Mixture-of-Experts MVAE Model[0;0m
+test
+[!] No checkpoint found, start epoch 0
+[*] Evaluating epoch 0...
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 21-12-2021 13:29:41[0;0m
+
+##########
+[1;32mSUCCESS: Running Mixture-of-Experts MVAE Model[0;0m
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 21-12-2021 13:30:31[0;0m
+
+##########
+[1;32mSUCCESS: Running Mixture-of-Experts MVAE Model[0;0m
+test
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 21-12-2021 13:37:27[0;0m
+
+##########
+[1;32mSUCCESS: Running Mixture-of-Experts MVAE Model[0;0m
+[!] No checkpoint found, start epoch 0
+[*] Evaluating epoch 0...
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 21-12-2021 13:44:06[0;0m
+
+##########
+[1;32mSUCCESS: Running Mixture-of-Experts MVAE Model[0;0m
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 21-12-2021 15:29:19[0;0m
+
+##########
+[1;32mSUCCESS: Running Mixture-of-Experts MVAE Model[0;0m
+[!] No checkpoint found, start epoch 0
+[*] Evaluating epoch 0...
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 21-12-2021 15:30:39[0;0m
+
+##########
+[1;32mSUCCESS: Running Mixture-of-Experts MVAE Model[0;0m
+[!] No checkpoint found, start epoch 0
+[*] Evaluating epoch 0...
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 21-12-2021 15:31:44[0;0m
+
+##########
+[1;32mSUCCESS: Running Mixture-of-Experts MVAE Model[0;0m
+[!] No checkpoint found, start epoch 0
+[*] Evaluating epoch 0...
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 21-12-2021 15:35:41[0;0m
+
+##########
+[1;32mSUCCESS: Running Mixture-of-Experts MVAE Model[0;0m
+[!] No checkpoint found, start epoch 0
+[*] Evaluating epoch 0...
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 21-12-2021 15:45:37[0;0m
+
+##########
+[1;32mSUCCESS: Running Mixture-of-Experts MVAE Model[0;0m
+[!] No checkpoint found, start epoch 0
+[*] Evaluating epoch 0...
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 21-12-2021 15:57:13[0;0m
+
+##########
+[1;32mSUCCESS: Running Mixture-of-Experts MVAE Model[0;0m
+[!] No checkpoint found, start epoch 0
+[*] Evaluating epoch 0...

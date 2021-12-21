@@ -273,6 +273,11 @@ def run(args) -> None:
 
         impute_dataset = tcga_data.get_data_partition("test")
 
+        # Deallocate tensors still on GPU from training
+        if args['cuda']:
+            torch.cuda.empty_cache()
+
+
         # 1 batch (whole test set)
         impute_loader = torch.utils.data.DataLoader(impute_dataset, batch_size=len(impute_dataset), shuffle=False)
 
@@ -347,7 +352,7 @@ def run(args) -> None:
             labels, label_types, test_ind = tcga_data.get_labels_partition("test")
 
             labels = labels[test_ind].astype(int)
-            sample_labels = label_types[[labels]]
+            sample_labels = label_types[tuple([labels])]
 
             plot = UMAPPlotter(z, sample_labels, "PoE: Task {} | {} & {} \n"
                                                  "Epochs: {}, Latent Dimension: {}, LR: {}, Batch size: {}"

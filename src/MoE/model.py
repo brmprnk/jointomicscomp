@@ -34,7 +34,7 @@ class MixtureOfExperts(CrossGeneratingVariationalAutoencoder):
         grad = {'requires_grad': False}
         self._pz_params = nn.ParameterList([
             nn.Parameter(torch.zeros(1, enc_hidden_dim[-1]), requires_grad=False),  # mu
-            nn.Parameter(torch.zeros(1, dec_hidden_dim[-1]), **grad)  # logvar
+            nn.Parameter(torch.zeros(1, enc_hidden_dim[-1]), requires_grad=False)  # logvar
         ])
 
         # Using this, loss is ignored

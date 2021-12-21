@@ -208,8 +208,8 @@ def run_moe(config: dict) -> None:
     logger.info("\n##########")
     logger.success("Running Mixture-of-Experts MVAE Model")
 
-    config['MVAE']['mixture'] = True
-    mvae_model({**config['GLOBAL_PARAMS'], **config['MVAE']})
+    
+    mvae_model({**config['GLOBAL_PARAMS'], **config['MoE']})
     logger.success("Finished running Mixture-of-Experts MVAE Model")
     logger.info("##########\n")
 
