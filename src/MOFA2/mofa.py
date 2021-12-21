@@ -1,6 +1,5 @@
 """
 Main file for running Multi-omics Factor Analysis V2.
-
 Additional documentation found in https://biofam.github.io/MOFA2/tutorials.html
 Model can be trained in Python, but as of this moment downstream analysis can only be done in R.
 This file will therefore also run an R script, since the Z matrix needs to be fetched in order to calculate
@@ -28,7 +27,6 @@ from src.util.evaluate import evaluate_imputation, save_factorizations_to_csv
 def run(args: dict) -> None:
     """
     Setup before running MOFA+
-
     @param args: Dictionary containing input parameters
     @return: None
     """
@@ -64,7 +62,6 @@ def run(args: dict) -> None:
 def train_mofa(args: dict, save_file_path: str) -> None:
     """
     Run Multi-omics Factor Analysis V2
-
     @param args:           Dictionary containing input parameters
     @param save_file_path: Name of trained model that can be saved in /results dir
     @return: None
@@ -94,8 +91,8 @@ def train_mofa(args: dict, save_file_path: str) -> None:
         logger.info("Running Task {} on omic {} and omic {}".format(args['task'], args['data1'], args['data2']))
 
         # Load in data
-        omic1 = np.load(args['data_path1']).astype(np.float32)
-        omic2 = np.load(args['data_path2']).astype(np.float32)
+        omic1 = np.load(args['data_path1'])
+        omic2 = np.load(args['data_path2'])
         sample_names = np.load(args['sample_names'], allow_pickle=True).astype(str)
 
         # Use predefined split
@@ -225,10 +222,8 @@ def get_W_and_Z(save_dir: str, model_file: str) -> None:
     """
     Perform R based code here in Python.
     Documentation: https://rpy2.github.io/doc/v2.9.x/html/introduction.html
-
     @param save_dir:   path to directory where factors and weights should be saved
     @param model_file: path to trained model
-
     @return: None
     """
     # import R's "base" package
@@ -257,9 +252,8 @@ def get_W_and_Z(save_dir: str, model_file: str) -> None:
             # create a function `f` that saves model factors and weights
             save_z <- function(save_dir, model_path, verbose=FALSE) {
                 trained_model <- (model_path)
-
                 model <- load_model(trained_model, remove_inactive_factors = F)
-                
+
                 Z = get_expectations(model, "Z", as.data.frame = TRUE)
                 W = get_expectations(model, "W", as.data.frame = TRUE)
                 write.csv(Z, paste(save_dir, "Z.csv", sep="/"), row.names = FALSE)
@@ -276,10 +270,8 @@ def get_W_and_Z(save_dir: str, model_file: str) -> None:
 def downstream_analysis(args: dict, save_dir: str) -> None:
     """
     Calculating the reconstruction loss using the trained model and input data
-
     @param args:         Dictionary containing input parameters
     @param save_dir:     path to directory where factors and weights should be saved
-
     @return: None
     """
     logger.info("Reading original data...")
@@ -327,7 +319,7 @@ def downstream_analysis(args: dict, save_dir: str) -> None:
     labeltypes = np.load(args['labelnames'], allow_pickle=True).astype(str)
 
     # Get correct labels with names
-    training_labels = np.concatenate((labeltypes[[labels[np.load(args['train_ind'])]]], labeltypes[[labels[np.load(args['val_ind'])]]]))
+    training_labels = np.concatenate((labeltypes[tuple([labels[np.load(args['train_ind'])]])], labeltypes[tuple([labels[np.load(args['val_ind'])]])]))
 
     training_data_plot = UMAPPlotter(Z.transpose(),
                                      training_labels,
@@ -423,7 +415,7 @@ def downstream_analysis(args: dict, save_dir: str) -> None:
         logger.info("Imputation loss {} from {} = {}".format(args['data1'], args['data2'], mse[0, 1]))
         logger.info("Imputation loss {} from {} = {}".format(args['data2'], args['data1'], mse[1, 0]))
 
-        test_labels = labeltypes[[labels[test_ind]]]
+        test_labels = labeltypes[tuple([labels[test_ind]])]
 
         z1_plot = UMAPPlotter(Z_frompseudo1.transpose(),
                               test_labels,
@@ -464,6 +456,3 @@ def downstream_analysis(args: dict, save_dir: str) -> None:
         np.save("{}/task2_z_from_pseudoinv_w2.npy".format(save_dir), Z_frompseudo2)
 
         logger.info("Z's are saved for later predictions.")
-
-
-
