@@ -1,0 +1,2853 @@
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 15-12-2021 11:10:46[0;0m
+
+##########
+Selected device: cuda
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 15-12-2021 11:35:44[0;0m
+
+##########
+Selected device: cuda
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 17-12-2021 11:19:08[0;0m
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 17-12-2021 11:20:26[0;0m
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 17-12-2021 11:22:45[0;0m
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 17-12-2021 11:25:19[0;0m
+
+##########
+Selected device: cuda
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 17-12-2021 11:26:01[0;0m
+
+##########
+Selected device: cuda
+[1;32mSUCCESS: Initialized CrossGeneratingVariationalAutoencoder model.[0;0m
+CrossGeneratingVariationalAutoencoder(
+  (encoder): ProbabilisticFullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Sequential(
+        (0): Linear(in_features=3, out_features=4, bias=True)
+        (1): BatchNorm1d(4, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      )
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (encoder2): ProbabilisticFullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Sequential(
+        (0): Linear(in_features=3, out_features=4, bias=True)
+        (1): BatchNorm1d(4, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      )
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (decoder): FullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Sequential(
+        (0): Linear(in_features=2, out_features=2, bias=True)
+        (1): BatchNorm1d(2, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      )
+      (1): Sequential(
+        (0): Linear(in_features=2, out_features=3, bias=True)
+        (1): BatchNorm1d(3, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      )
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (loss_fun): MSELoss()
+  (decoder2): FullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Sequential(
+        (0): Linear(in_features=2, out_features=2, bias=True)
+        (1): BatchNorm1d(2, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      )
+      (1): Sequential(
+        (0): Linear(in_features=2, out_features=3, bias=True)
+        (1): BatchNorm1d(3, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      )
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (loss_fun2): MSELoss()
+)
+Number of model parameters: 
+98
+Loading training and validation data into CrossGeneratingVariationalAutoencoder...
+[!] No checkpoint found, start epoch 0
+[*] Evaluating epoch 0...
+dict_keys(['z-L2', 'z-L1', 'z-cos', 'z-W2', 'mse/1', 'mse/2', 'bce/1', 'bce/2', 'cross-mse/1', 'cross-mse/2', 'cross-bce/1', 'cross-bce/2', 'loss'])
+--- Training loss:	241.3761
+--- Validation loss:	240.2496
+[*] Start training...
+[*] Epoch 1...
+[*] Evaluating epoch 1...
+--- Training loss:	238.9315
+--- Validation loss:	235.1560
+EarlyStopping counter: 1 out of 10
+[*] Epoch 2...
+[*] Evaluating epoch 2...
+--- Training loss:	236.5359
+--- Validation loss:	235.2869
+EarlyStopping counter: 2 out of 10
+[*] Epoch 3...
+[*] Evaluating epoch 3...
+--- Training loss:	234.0494
+--- Validation loss:	231.7291
+[*] Finish training.
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 17-12-2021 11:28:07[0;0m
+
+##########
+Selected device: cuda
+[1;32mSUCCESS: Initialized CrossGeneratingVariationalAutoencoder model.[0;0m
+CrossGeneratingVariationalAutoencoder(
+  (encoder): ProbabilisticFullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Sequential(
+        (0): Linear(in_features=3, out_features=4, bias=True)
+        (1): BatchNorm1d(4, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      )
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (encoder2): ProbabilisticFullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Sequential(
+        (0): Linear(in_features=3, out_features=4, bias=True)
+        (1): BatchNorm1d(4, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      )
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (decoder): FullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Sequential(
+        (0): Linear(in_features=2, out_features=2, bias=True)
+        (1): BatchNorm1d(2, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      )
+      (1): Sequential(
+        (0): Linear(in_features=2, out_features=3, bias=True)
+        (1): BatchNorm1d(3, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      )
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (loss_fun): MSELoss()
+  (decoder2): FullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Sequential(
+        (0): Linear(in_features=2, out_features=2, bias=True)
+        (1): BatchNorm1d(2, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      )
+      (1): Sequential(
+        (0): Linear(in_features=2, out_features=3, bias=True)
+        (1): BatchNorm1d(3, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      )
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (loss_fun2): MSELoss()
+)
+Number of model parameters: 
+98
+Loading training and validation data into CrossGeneratingVariationalAutoencoder...
+[!] No checkpoint found, start epoch 0
+[*] Evaluating epoch 0...
+dict_keys(['z-L2', 'z-L1', 'z-cos', 'z-W2', 'mse/1', 'mse/2', 'bce/1', 'bce/2', 'cross-mse/1', 'cross-mse/2', 'cross-bce/1', 'cross-bce/2', 'loss'])
+--- Training loss:	241.3761
+--- Validation loss:	240.2496
+[*] Start training...
+[*] Epoch 1...
+[*] Evaluating epoch 1...
+--- Training loss:	238.9315
+--- Validation loss:	235.1560
+EarlyStopping counter: 1 out of 10
+[*] Epoch 2...
+[*] Evaluating epoch 2...
+--- Training loss:	236.5359
+--- Validation loss:	235.2869
+EarlyStopping counter: 2 out of 10
+[*] Epoch 3...
+[*] Evaluating epoch 3...
+--- Training loss:	234.0494
+--- Validation loss:	231.7291
+[*] Finish training.
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 17-12-2021 11:29:43[0;0m
+
+##########
+Selected device: cuda
+[1;32mSUCCESS: Initialized CrossGeneratingVariationalAutoencoder model.[0;0m
+CrossGeneratingVariationalAutoencoder(
+  (encoder): ProbabilisticFullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=3, out_features=4, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (encoder2): ProbabilisticFullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=3, out_features=4, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (decoder): FullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): Linear(in_features=2, out_features=3, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (loss_fun): MSELoss()
+  (decoder2): FullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): Linear(in_features=2, out_features=3, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (loss_fun2): MSELoss()
+)
+Number of model parameters: 
+62
+Loading training and validation data into CrossGeneratingVariationalAutoencoder...
+[!] No checkpoint found, start epoch 0
+[*] Evaluating epoch 0...
+dict_keys(['z-L2', 'z-L1', 'z-cos', 'z-W2', 'mse/1', 'mse/2', 'bce/1', 'bce/2', 'cross-mse/1', 'cross-mse/2', 'cross-bce/1', 'cross-bce/2', 'loss'])
+--- Training loss:	4902.5116
+--- Validation loss:	4978.1176
+[*] Start training...
+[*] Epoch 1...
+[*] Evaluating epoch 1...
+--- Training loss:	3834.7802
+--- Validation loss:	3901.9924
+EarlyStopping counter: 1 out of 10
+[*] Epoch 2...
+[*] Evaluating epoch 2...
+--- Training loss:	3151.3074
+--- Validation loss:	3067.4800
+[*] Epoch 3...
+[*] Evaluating epoch 3...
+--- Training loss:	2513.0115
+--- Validation loss:	2642.8782
+[*] Epoch 4...
+[*] Evaluating epoch 4...
+--- Training loss:	2142.2249
+--- Validation loss:	2153.2656
+[*] Epoch 5...
+[*] Evaluating epoch 5...
+--- Training loss:	1828.3507
+--- Validation loss:	1811.3133
+[*] Saving model epoch 5...
+[*] Epoch 6...
+[*] Evaluating epoch 6...
+--- Training loss:	1601.2834
+--- Validation loss:	1636.5588
+[*] Epoch 7...
+[*] Evaluating epoch 7...
+--- Training loss:	1391.9476
+--- Validation loss:	1413.5868
+[*] Epoch 8...
+[*] Evaluating epoch 8...
+--- Training loss:	1226.7471
+--- Validation loss:	1254.8360
+[*] Epoch 9...
+[*] Evaluating epoch 9...
+--- Training loss:	1109.5710
+--- Validation loss:	1135.3840
+[*] Epoch 10...
+[*] Evaluating epoch 10...
+--- Training loss:	999.8775
+--- Validation loss:	1024.2124
+[*] Saving model epoch 10...
+[*] Epoch 11...
+[*] Evaluating epoch 11...
+--- Training loss:	907.0276
+--- Validation loss:	930.8072
+[*] Finish training.
+Classification
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 17-12-2021 13:18:22[0;0m
+
+##########
+Selected device: cuda
+[1;32mSUCCESS: Initialized CrossGeneratingVariationalAutoencoder model.[0;0m
+CrossGeneratingVariationalAutoencoder(
+  (encoder): ProbabilisticFullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=3, out_features=4, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (encoder2): ProbabilisticFullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=3, out_features=4, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (decoder): FullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): Linear(in_features=2, out_features=3, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (loss_fun): MSELoss()
+  (decoder2): FullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): Linear(in_features=2, out_features=3, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (loss_fun2): MSELoss()
+)
+Number of model parameters: 
+62
+Loading training and validation data into CrossGeneratingVariationalAutoencoder...
+[!] No checkpoint found, start epoch 0
+[*] Evaluating epoch 0...
+dict_keys(['z-L2', 'z-L1', 'z-cos', 'z-W2', 'mse/1', 'mse/2', 'bce/1', 'bce/2', 'cross-mse/1', 'cross-mse/2', 'cross-bce/1', 'cross-bce/2', 'loss'])
+--- Training loss:	4902.5116
+--- Validation loss:	4978.1176
+[*] Start training...
+[*] Epoch 1...
+[*] Evaluating epoch 1...
+--- Training loss:	3834.7802
+--- Validation loss:	3901.9924
+EarlyStopping counter: 1 out of 10
+[*] Epoch 2...
+[*] Evaluating epoch 2...
+--- Training loss:	3151.3074
+--- Validation loss:	3067.4800
+[*] Epoch 3...
+[*] Evaluating epoch 3...
+--- Training loss:	2513.0115
+--- Validation loss:	2642.8782
+[*] Epoch 4...
+[*] Evaluating epoch 4...
+--- Training loss:	2142.2249
+--- Validation loss:	2153.2656
+[*] Epoch 5...
+[*] Evaluating epoch 5...
+--- Training loss:	1828.3507
+--- Validation loss:	1811.3133
+[*] Saving model epoch 5...
+[*] Epoch 6...
+[*] Evaluating epoch 6...
+--- Training loss:	1601.2834
+--- Validation loss:	1636.5588
+[*] Epoch 7...
+[*] Evaluating epoch 7...
+--- Training loss:	1391.9476
+--- Validation loss:	1413.5868
+[*] Epoch 8...
+[*] Evaluating epoch 8...
+--- Training loss:	1226.7471
+--- Validation loss:	1254.8360
+[*] Epoch 9...
+[*] Evaluating epoch 9...
+--- Training loss:	1109.5710
+--- Validation loss:	1135.3840
+[*] Epoch 10...
+[*] Evaluating epoch 10...
+--- Training loss:	999.8775
+--- Validation loss:	1024.2124
+[*] Saving model epoch 10...
+[*] Epoch 11...
+[*] Evaluating epoch 11...
+--- Training loss:	907.0276
+--- Validation loss:	930.8072
+[*] Finish training.
+Using model from epoch 10
+Classification
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 17-12-2021 13:19:59[0;0m
+
+##########
+Selected device: cuda
+[1;32mSUCCESS: Initialized CrossGeneratingVariationalAutoencoder model.[0;0m
+CrossGeneratingVariationalAutoencoder(
+  (encoder): ProbabilisticFullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=3, out_features=4, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (encoder2): ProbabilisticFullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=3, out_features=4, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (decoder): FullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): Linear(in_features=2, out_features=3, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (loss_fun): MSELoss()
+  (decoder2): FullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): Linear(in_features=2, out_features=3, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (loss_fun2): MSELoss()
+)
+Number of model parameters: 
+62
+Loading training and validation data into CrossGeneratingVariationalAutoencoder...
+[!] No checkpoint found, start epoch 0
+[*] Evaluating epoch 0...
+dict_keys(['z-L2', 'z-L1', 'z-cos', 'z-W2', 'mse/1', 'mse/2', 'bce/1', 'bce/2', 'cross-mse/1', 'cross-mse/2', 'cross-bce/1', 'cross-bce/2', 'loss'])
+--- Training loss:	4902.5116
+--- Validation loss:	4978.1176
+[*] Start training...
+[*] Epoch 1...
+[*] Evaluating epoch 1...
+--- Training loss:	3834.7802
+--- Validation loss:	3901.9924
+EarlyStopping counter: 1 out of 10
+[*] Epoch 2...
+[*] Evaluating epoch 2...
+--- Training loss:	3151.3074
+--- Validation loss:	3067.4800
+[*] Epoch 3...
+[*] Evaluating epoch 3...
+--- Training loss:	2513.0115
+--- Validation loss:	2642.8782
+[*] Epoch 4...
+[*] Evaluating epoch 4...
+--- Training loss:	2142.2249
+--- Validation loss:	2153.2656
+[*] Epoch 5...
+[*] Evaluating epoch 5...
+--- Training loss:	1828.3507
+--- Validation loss:	1811.3133
+[*] Saving model epoch 5...
+[*] Epoch 6...
+[*] Evaluating epoch 6...
+--- Training loss:	1601.2834
+--- Validation loss:	1636.5588
+[*] Epoch 7...
+[*] Evaluating epoch 7...
+--- Training loss:	1391.9476
+--- Validation loss:	1413.5868
+[*] Epoch 8...
+[*] Evaluating epoch 8...
+--- Training loss:	1226.7471
+--- Validation loss:	1254.8360
+[*] Epoch 9...
+[*] Evaluating epoch 9...
+--- Training loss:	1109.5710
+--- Validation loss:	1135.3840
+[*] Epoch 10...
+[*] Evaluating epoch 10...
+--- Training loss:	999.8775
+--- Validation loss:	1024.2124
+[*] Saving model epoch 10...
+[*] Epoch 11...
+[*] Evaluating epoch 11...
+--- Training loss:	907.0276
+--- Validation loss:	930.8072
+[*] Finish training.
+Using model from epoch 10
+Classification
+##########
+
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 17-12-2021 13:20:54[0;0m
+
+##########
+Selected device: cuda
+[1;32mSUCCESS: Initialized CrossGeneratingVariationalAutoencoder model.[0;0m
+CrossGeneratingVariationalAutoencoder(
+  (encoder): ProbabilisticFullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=3, out_features=4, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (encoder2): ProbabilisticFullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=3, out_features=4, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (decoder): FullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): Linear(in_features=2, out_features=3, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (loss_fun): MSELoss()
+  (decoder2): FullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): Linear(in_features=2, out_features=3, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (loss_fun2): MSELoss()
+)
+Number of model parameters: 
+62
+Loading training and validation data into CrossGeneratingVariationalAutoencoder...
+[!] No checkpoint found, start epoch 0
+[*] Evaluating epoch 0...
+dict_keys(['z-L2', 'z-L1', 'z-cos', 'z-W2', 'mse/1', 'mse/2', 'bce/1', 'bce/2', 'cross-mse/1', 'cross-mse/2', 'cross-bce/1', 'cross-bce/2', 'loss'])
+--- Training loss:	4902.5116
+--- Validation loss:	4978.1176
+[*] Start training...
+[*] Epoch 1...
+[*] Evaluating epoch 1...
+--- Training loss:	3834.7802
+--- Validation loss:	3901.9924
+EarlyStopping counter: 1 out of 10
+[*] Epoch 2...
+[*] Evaluating epoch 2...
+--- Training loss:	3151.3074
+--- Validation loss:	3067.4800
+[*] Epoch 3...
+[*] Evaluating epoch 3...
+--- Training loss:	2513.0115
+--- Validation loss:	2642.8782
+[*] Epoch 4...
+[*] Evaluating epoch 4...
+--- Training loss:	2142.2249
+--- Validation loss:	2153.2656
+[*] Epoch 5...
+[*] Evaluating epoch 5...
+--- Training loss:	1828.3507
+--- Validation loss:	1811.3133
+[*] Saving model epoch 5...
+[*] Epoch 6...
+[*] Evaluating epoch 6...
+--- Training loss:	1601.2834
+--- Validation loss:	1636.5588
+[*] Epoch 7...
+[*] Evaluating epoch 7...
+--- Training loss:	1391.9476
+--- Validation loss:	1413.5868
+[*] Epoch 8...
+[*] Evaluating epoch 8...
+--- Training loss:	1226.7471
+--- Validation loss:	1254.8360
+[*] Epoch 9...
+[*] Evaluating epoch 9...
+--- Training loss:	1109.5710
+--- Validation loss:	1135.3840
+[*] Epoch 10...
+[*] Evaluating epoch 10...
+--- Training loss:	999.8775
+--- Validation loss:	1024.2124
+[*] Saving model epoch 10...
+[*] Epoch 11...
+[*] Evaluating epoch 11...
+--- Training loss:	907.0276
+--- Validation loss:	930.8072
+[*] Finish training.
+Using model from epoch 10
+Classification
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 17-12-2021 13:24:07[0;0m
+
+##########
+Selected device: cuda
+[1;32mSUCCESS: Initialized CrossGeneratingVariationalAutoencoder model.[0;0m
+CrossGeneratingVariationalAutoencoder(
+  (encoder): ProbabilisticFullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=3, out_features=4, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (encoder2): ProbabilisticFullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=3, out_features=4, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (decoder): FullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): Linear(in_features=2, out_features=3, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (loss_fun): MSELoss()
+  (decoder2): FullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): Linear(in_features=2, out_features=3, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (loss_fun2): MSELoss()
+)
+Number of model parameters: 
+62
+Loading training and validation data into CrossGeneratingVariationalAutoencoder...
+[!] No checkpoint found, start epoch 0
+[*] Evaluating epoch 0...
+dict_keys(['z-L2', 'z-L1', 'z-cos', 'z-W2', 'mse/1', 'mse/2', 'bce/1', 'bce/2', 'cross-mse/1', 'cross-mse/2', 'cross-bce/1', 'cross-bce/2', 'loss'])
+--- Training loss:	4902.5116
+--- Validation loss:	4978.1176
+[*] Start training...
+[*] Epoch 1...
+[*] Evaluating epoch 1...
+--- Training loss:	3834.7802
+--- Validation loss:	3901.9924
+EarlyStopping counter: 1 out of 10
+[*] Epoch 2...
+[*] Evaluating epoch 2...
+--- Training loss:	3151.3074
+--- Validation loss:	3067.4800
+[*] Epoch 3...
+[*] Evaluating epoch 3...
+--- Training loss:	2513.0115
+--- Validation loss:	2642.8782
+[*] Epoch 4...
+[*] Evaluating epoch 4...
+--- Training loss:	2142.2249
+--- Validation loss:	2153.2656
+[*] Epoch 5...
+[*] Evaluating epoch 5...
+--- Training loss:	1828.3507
+--- Validation loss:	1811.3133
+[*] Saving model epoch 5...
+[*] Epoch 6...
+[*] Evaluating epoch 6...
+--- Training loss:	1601.2834
+--- Validation loss:	1636.5588
+[*] Epoch 7...
+[*] Evaluating epoch 7...
+--- Training loss:	1391.9476
+--- Validation loss:	1413.5868
+[*] Epoch 8...
+[*] Evaluating epoch 8...
+--- Training loss:	1226.7471
+--- Validation loss:	1254.8360
+[*] Epoch 9...
+[*] Evaluating epoch 9...
+--- Training loss:	1109.5710
+--- Validation loss:	1135.3840
+[*] Epoch 10...
+[*] Evaluating epoch 10...
+--- Training loss:	999.8775
+--- Validation loss:	1024.2124
+[*] Saving model epoch 10...
+[*] Epoch 11...
+[*] Evaluating epoch 11...
+--- Training loss:	907.0276
+--- Validation loss:	930.8072
+[*] Finish training.
+Using model from epoch 10
+Classification
+acc	0.54
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 17-12-2021 13:27:45[0;0m
+
+##########
+Selected device: cuda
+[1;32mSUCCESS: Initialized CrossGeneratingVariationalAutoencoder model.[0;0m
+CrossGeneratingVariationalAutoencoder(
+  (encoder): ProbabilisticFullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=3, out_features=4, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (encoder2): ProbabilisticFullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=3, out_features=4, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (decoder): FullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): Linear(in_features=2, out_features=3, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (loss_fun): MSELoss()
+  (decoder2): FullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): Linear(in_features=2, out_features=3, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (loss_fun2): MSELoss()
+)
+Number of model parameters: 
+62
+Loading training and validation data into CrossGeneratingVariationalAutoencoder...
+[!] No checkpoint found, start epoch 0
+[*] Evaluating epoch 0...
+dict_keys(['z-L2', 'z-L1', 'z-cos', 'z-W2', 'mse/1', 'mse/2', 'bce/1', 'bce/2', 'cross-mse/1', 'cross-mse/2', 'cross-bce/1', 'cross-bce/2', 'loss'])
+--- Training loss:	4902.5116
+--- Validation loss:	4978.1176
+[*] Start training...
+[*] Epoch 1...
+[*] Evaluating epoch 1...
+--- Training loss:	3834.7802
+--- Validation loss:	3901.9924
+EarlyStopping counter: 1 out of 10
+[*] Epoch 2...
+[*] Evaluating epoch 2...
+--- Training loss:	3151.3074
+--- Validation loss:	3067.4800
+[*] Epoch 3...
+[*] Evaluating epoch 3...
+--- Training loss:	2513.0115
+--- Validation loss:	2642.8782
+[*] Epoch 4...
+[*] Evaluating epoch 4...
+--- Training loss:	2142.2249
+--- Validation loss:	2153.2656
+[*] Epoch 5...
+[*] Evaluating epoch 5...
+--- Training loss:	1828.3507
+--- Validation loss:	1811.3133
+[*] Saving model epoch 5...
+[*] Epoch 6...
+[*] Evaluating epoch 6...
+--- Training loss:	1601.2834
+--- Validation loss:	1636.5588
+[*] Epoch 7...
+[*] Evaluating epoch 7...
+--- Training loss:	1391.9476
+--- Validation loss:	1413.5868
+[*] Epoch 8...
+[*] Evaluating epoch 8...
+--- Training loss:	1226.7471
+--- Validation loss:	1254.8360
+[*] Epoch 9...
+[*] Evaluating epoch 9...
+--- Training loss:	1109.5710
+--- Validation loss:	1135.3840
+[*] Epoch 10...
+[*] Evaluating epoch 10...
+--- Training loss:	999.8775
+--- Validation loss:	1024.2124
+[*] Saving model epoch 10...
+[*] Epoch 11...
+[*] Evaluating epoch 11...
+--- Training loss:	907.0276
+--- Validation loss:	930.8072
+[*] Finish training.
+Using model from epoch 10
+Classification
+acc	0.54
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 17-12-2021 13:28:25[0;0m
+
+##########
+Selected device: cuda
+[1;32mSUCCESS: Initialized CrossGeneratingVariationalAutoencoder model.[0;0m
+CrossGeneratingVariationalAutoencoder(
+  (encoder): ProbabilisticFullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=3, out_features=4, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (encoder2): ProbabilisticFullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=3, out_features=4, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (decoder): FullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): Linear(in_features=2, out_features=3, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (loss_fun): MSELoss()
+  (decoder2): FullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): Linear(in_features=2, out_features=3, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (loss_fun2): MSELoss()
+)
+Number of model parameters: 
+62
+Loading training and validation data into CrossGeneratingVariationalAutoencoder...
+[!] No checkpoint found, start epoch 0
+[*] Evaluating epoch 0...
+dict_keys(['z-L2', 'z-L1', 'z-cos', 'z-W2', 'mse/1', 'mse/2', 'bce/1', 'bce/2', 'cross-mse/1', 'cross-mse/2', 'cross-bce/1', 'cross-bce/2', 'loss'])
+--- Training loss:	4902.5116
+--- Validation loss:	4978.1176
+[*] Start training...
+[*] Epoch 1...
+[*] Evaluating epoch 1...
+--- Training loss:	3834.7802
+--- Validation loss:	3901.9924
+EarlyStopping counter: 1 out of 10
+[*] Epoch 2...
+[*] Evaluating epoch 2...
+--- Training loss:	3151.3074
+--- Validation loss:	3067.4800
+[*] Epoch 3...
+[*] Evaluating epoch 3...
+--- Training loss:	2513.0115
+--- Validation loss:	2642.8782
+[*] Epoch 4...
+[*] Evaluating epoch 4...
+--- Training loss:	2142.2249
+--- Validation loss:	2153.2656
+[*] Epoch 5...
+[*] Evaluating epoch 5...
+--- Training loss:	1828.3507
+--- Validation loss:	1811.3133
+[*] Saving model epoch 5...
+[*] Epoch 6...
+[*] Evaluating epoch 6...
+--- Training loss:	1601.2834
+--- Validation loss:	1636.5588
+[*] Epoch 7...
+[*] Evaluating epoch 7...
+--- Training loss:	1391.9476
+--- Validation loss:	1413.5868
+[*] Epoch 8...
+[*] Evaluating epoch 8...
+--- Training loss:	1226.7471
+--- Validation loss:	1254.8360
+[*] Epoch 9...
+[*] Evaluating epoch 9...
+--- Training loss:	1109.5710
+--- Validation loss:	1135.3840
+[*] Epoch 10...
+[*] Evaluating epoch 10...
+--- Training loss:	999.8775
+--- Validation loss:	1024.2124
+[*] Saving model epoch 10...
+[*] Epoch 11...
+[*] Evaluating epoch 11...
+--- Training loss:	907.0276
+--- Validation loss:	930.8072
+[*] Finish training.
+Using model from epoch 10
+Classification
+[0.5366666666666666, array([0.62015504, 0.47058824, 1.        ]), array([0.90909091, 0.78431373, 0.00909091]), array([0.73732719, 0.58823529, 0.01801802]), 0.37830221320844043, array([[80,  8,  0],
+       [22, 80,  0],
+       [27, 82,  1]])]
+0.5366666666666666
+acc	0.54
+[0.62015504 0.47058824 1.        ]
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 17-12-2021 13:30:07[0;0m
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 17-12-2021 13:30:33[0;0m
+
+##########
+Selected device: cuda
+[1;32mSUCCESS: Initialized CrossGeneratingVariationalAutoencoder model.[0;0m
+CrossGeneratingVariationalAutoencoder(
+  (encoder): ProbabilisticFullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=3, out_features=4, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (encoder2): ProbabilisticFullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=3, out_features=4, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (decoder): FullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): Linear(in_features=2, out_features=3, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (loss_fun): MSELoss()
+  (decoder2): FullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): Linear(in_features=2, out_features=3, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (loss_fun2): MSELoss()
+)
+Number of model parameters: 
+62
+Loading training and validation data into CrossGeneratingVariationalAutoencoder...
+[!] No checkpoint found, start epoch 0
+[*] Evaluating epoch 0...
+dict_keys(['z-L2', 'z-L1', 'z-cos', 'z-W2', 'mse/1', 'mse/2', 'bce/1', 'bce/2', 'cross-mse/1', 'cross-mse/2', 'cross-bce/1', 'cross-bce/2', 'loss'])
+--- Training loss:	4902.5116
+--- Validation loss:	4978.1176
+[*] Start training...
+[*] Epoch 1...
+[*] Evaluating epoch 1...
+--- Training loss:	3834.7802
+--- Validation loss:	3901.9924
+EarlyStopping counter: 1 out of 10
+[*] Epoch 2...
+[*] Evaluating epoch 2...
+--- Training loss:	3151.3074
+--- Validation loss:	3067.4800
+[*] Epoch 3...
+[*] Evaluating epoch 3...
+--- Training loss:	2513.0115
+--- Validation loss:	2642.8782
+[*] Epoch 4...
+[*] Evaluating epoch 4...
+--- Training loss:	2142.2249
+--- Validation loss:	2153.2656
+[*] Epoch 5...
+[*] Evaluating epoch 5...
+--- Training loss:	1828.3507
+--- Validation loss:	1811.3133
+[*] Saving model epoch 5...
+[*] Epoch 6...
+[*] Evaluating epoch 6...
+--- Training loss:	1601.2834
+--- Validation loss:	1636.5588
+[*] Epoch 7...
+[*] Evaluating epoch 7...
+--- Training loss:	1391.9476
+--- Validation loss:	1413.5868
+[*] Epoch 8...
+[*] Evaluating epoch 8...
+--- Training loss:	1226.7471
+--- Validation loss:	1254.8360
+[*] Epoch 9...
+[*] Evaluating epoch 9...
+--- Training loss:	1109.5710
+--- Validation loss:	1135.3840
+[*] Epoch 10...
+[*] Evaluating epoch 10...
+--- Training loss:	999.8775
+--- Validation loss:	1024.2124
+[*] Saving model epoch 10...
+[*] Epoch 11...
+[*] Evaluating epoch 11...
+--- Training loss:	907.0276
+--- Validation loss:	930.8072
+[*] Finish training.
+Using model from epoch 10
+Classification
+[0.5366666666666666, array([0.62015504, 0.47058824, 1.        ]), array([0.90909091, 0.78431373, 0.00909091]), array([0.73732719, 0.58823529, 0.01801802]), 0.37830221320844043, array([[80,  8,  0],
+       [22, 80,  0],
+       [27, 82,  1]])]
+[0.6966666666666667, array([0.        , 0.97115385, 0.55102041]), array([0.        , 0.99019608, 0.98181818]), array([0.        , 0.98058252, 0.70588235]), 0.6186134059280284, array([[  0,   1,  87],
+       [  0, 101,   1],
+       [  0,   2, 108]])]
+##########
+
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 17-12-2021 13:34:08[0;0m
+
+##########
+Selected device: cuda
+[1;32mSUCCESS: Initialized CrossGeneratingVariationalAutoencoder model.[0;0m
+CrossGeneratingVariationalAutoencoder(
+  (encoder): ProbabilisticFullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=3, out_features=4, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (encoder2): ProbabilisticFullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=3, out_features=4, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (decoder): FullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): Linear(in_features=2, out_features=3, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (loss_fun): MSELoss()
+  (decoder2): FullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): Linear(in_features=2, out_features=3, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (loss_fun2): MSELoss()
+)
+Number of model parameters: 
+62
+Loading training and validation data into CrossGeneratingVariationalAutoencoder...
+[!] No checkpoint found, start epoch 0
+[*] Evaluating epoch 0...
+dict_keys(['z-L2', 'z-L1', 'z-cos', 'z-W2', 'mse/1', 'mse/2', 'bce/1', 'bce/2', 'cross-mse/1', 'cross-mse/2', 'cross-bce/1', 'cross-bce/2', 'loss'])
+--- Training loss:	4902.5116
+--- Validation loss:	4978.1176
+[*] Start training...
+[*] Epoch 1...
+[*] Evaluating epoch 1...
+--- Training loss:	3834.7802
+--- Validation loss:	3901.9924
+EarlyStopping counter: 1 out of 10
+[*] Epoch 2...
+[*] Evaluating epoch 2...
+--- Training loss:	3151.3074
+--- Validation loss:	3067.4800
+[*] Epoch 3...
+[*] Evaluating epoch 3...
+--- Training loss:	2513.0115
+--- Validation loss:	2642.8782
+[*] Epoch 4...
+[*] Evaluating epoch 4...
+--- Training loss:	2142.2249
+--- Validation loss:	2153.2656
+[*] Epoch 5...
+[*] Evaluating epoch 5...
+--- Training loss:	1828.3507
+--- Validation loss:	1811.3133
+[*] Saving model epoch 5...
+[*] Epoch 6...
+[*] Evaluating epoch 6...
+--- Training loss:	1601.2834
+--- Validation loss:	1636.5588
+[*] Epoch 7...
+[*] Evaluating epoch 7...
+--- Training loss:	1391.9476
+--- Validation loss:	1413.5868
+[*] Epoch 8...
+[*] Evaluating epoch 8...
+--- Training loss:	1226.7471
+--- Validation loss:	1254.8360
+[*] Epoch 9...
+[*] Evaluating epoch 9...
+--- Training loss:	1109.5710
+--- Validation loss:	1135.3840
+[*] Epoch 10...
+[*] Evaluating epoch 10...
+--- Training loss:	999.8775
+--- Validation loss:	1024.2124
+[*] Saving model epoch 10...
+[*] Epoch 11...
+[*] Evaluating epoch 11...
+--- Training loss:	907.0276
+--- Validation loss:	930.8072
+[*] Finish training.
+Using model from epoch 10
+Classification
+Acc = 0.537
+[0.6966666666666667, array([0.        , 0.97115385, 0.55102041]), array([0.        , 0.99019608, 0.98181818]), array([0.        , 0.98058252, 0.70588235]), 0.6186134059280284, array([[  0,   1,  87],
+       [  0, 101,   1],
+       [  0,   2, 108]])]
+##########
+
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 17-12-2021 13:40:24[0;0m
+
+##########
+Selected device: cuda
+[1;32mSUCCESS: Initialized CrossGeneratingVariationalAutoencoder model.[0;0m
+CrossGeneratingVariationalAutoencoder(
+  (encoder): ProbabilisticFullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=3, out_features=4, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (encoder2): ProbabilisticFullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=3, out_features=4, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (decoder): FullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): Linear(in_features=2, out_features=3, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (loss_fun): MSELoss()
+  (decoder2): FullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): Linear(in_features=2, out_features=3, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (loss_fun2): MSELoss()
+)
+Number of model parameters: 
+62
+Loading training and validation data into CrossGeneratingVariationalAutoencoder...
+[!] No checkpoint found, start epoch 0
+[*] Evaluating epoch 0...
+dict_keys(['z-L2', 'z-L1', 'z-cos', 'z-W2', 'mse/1', 'mse/2', 'bce/1', 'bce/2', 'cross-mse/1', 'cross-mse/2', 'cross-bce/1', 'cross-bce/2', 'loss'])
+--- Training loss:	4902.5116
+--- Validation loss:	4978.1176
+[*] Start training...
+[*] Epoch 1...
+[*] Evaluating epoch 1...
+--- Training loss:	3834.7802
+--- Validation loss:	3901.9924
+EarlyStopping counter: 1 out of 10
+[*] Epoch 2...
+[*] Evaluating epoch 2...
+--- Training loss:	3151.3074
+--- Validation loss:	3067.4800
+[*] Epoch 3...
+[*] Evaluating epoch 3...
+--- Training loss:	2513.0115
+--- Validation loss:	2642.8782
+[*] Epoch 4...
+[*] Evaluating epoch 4...
+--- Training loss:	2142.2249
+--- Validation loss:	2153.2656
+[*] Epoch 5...
+[*] Evaluating epoch 5...
+--- Training loss:	1828.3507
+--- Validation loss:	1811.3133
+[*] Saving model epoch 5...
+[*] Epoch 6...
+[*] Evaluating epoch 6...
+--- Training loss:	1601.2834
+--- Validation loss:	1636.5588
+[*] Epoch 7...
+[*] Evaluating epoch 7...
+--- Training loss:	1391.9476
+--- Validation loss:	1413.5868
+[*] Epoch 8...
+[*] Evaluating epoch 8...
+--- Training loss:	1226.7471
+--- Validation loss:	1254.8360
+[*] Epoch 9...
+[*] Evaluating epoch 9...
+--- Training loss:	1109.5710
+--- Validation loss:	1135.3840
+[*] Epoch 10...
+[*] Evaluating epoch 10...
+--- Training loss:	999.8775
+--- Validation loss:	1024.2124
+[*] Saving model epoch 10...
+[*] Epoch 11...
+[*] Evaluating epoch 11...
+--- Training loss:	907.0276
+--- Validation loss:	930.8072
+[*] Finish training.
+Using model from epoch 10
+Classification
+Using omic 1
+Using omic 2
+Saving results
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 17-12-2021 13:41:01[0;0m
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 17-12-2021 13:41:42[0;0m
+
+##########
+Selected device: cuda
+[1;32mSUCCESS: Initialized CrossGeneratingVariationalAutoencoder model.[0;0m
+CrossGeneratingVariationalAutoencoder(
+  (encoder): ProbabilisticFullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=3, out_features=4, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (encoder2): ProbabilisticFullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=3, out_features=4, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (decoder): FullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): Linear(in_features=2, out_features=3, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (loss_fun): MSELoss()
+  (decoder2): FullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): Linear(in_features=2, out_features=3, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (loss_fun2): MSELoss()
+)
+Number of model parameters: 
+62
+Loading training and validation data into CrossGeneratingVariationalAutoencoder...
+[!] No checkpoint found, start epoch 0
+[*] Evaluating epoch 0...
+dict_keys(['z-L2', 'z-L1', 'z-cos', 'z-W2', 'mse/1', 'mse/2', 'bce/1', 'bce/2', 'cross-mse/1', 'cross-mse/2', 'cross-bce/1', 'cross-bce/2', 'loss'])
+--- Training loss:	4902.5116
+--- Validation loss:	4978.1176
+[*] Start training...
+[*] Epoch 1...
+[*] Evaluating epoch 1...
+--- Training loss:	3834.7802
+--- Validation loss:	3901.9924
+EarlyStopping counter: 1 out of 10
+[*] Epoch 2...
+[*] Evaluating epoch 2...
+--- Training loss:	3151.3074
+--- Validation loss:	3067.4800
+[*] Epoch 3...
+[*] Evaluating epoch 3...
+--- Training loss:	2513.0115
+--- Validation loss:	2642.8782
+[*] Epoch 4...
+[*] Evaluating epoch 4...
+--- Training loss:	2142.2249
+--- Validation loss:	2153.2656
+[*] Epoch 5...
+[*] Evaluating epoch 5...
+--- Training loss:	1828.3507
+--- Validation loss:	1811.3133
+[*] Saving model epoch 5...
+[*] Epoch 6...
+[*] Evaluating epoch 6...
+--- Training loss:	1601.2834
+--- Validation loss:	1636.5588
+[*] Epoch 7...
+[*] Evaluating epoch 7...
+--- Training loss:	1391.9476
+--- Validation loss:	1413.5868
+[*] Epoch 8...
+[*] Evaluating epoch 8...
+--- Training loss:	1226.7471
+--- Validation loss:	1254.8360
+[*] Epoch 9...
+[*] Evaluating epoch 9...
+--- Training loss:	1109.5710
+--- Validation loss:	1135.3840
+[*] Epoch 10...
+[*] Evaluating epoch 10...
+--- Training loss:	999.8775
+--- Validation loss:	1024.2124
+[*] Saving model epoch 10...
+[*] Epoch 11...
+[*] Evaluating epoch 11...
+--- Training loss:	907.0276
+--- Validation loss:	930.8072
+[*] Finish training.
+Using model from epoch 10
+Classification
+Using omic 1
+Using omic 2
+Saving results
+##########
+
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 17-12-2021 13:55:42[0;0m
+
+##########
+Selected device: cuda
+[1;32mSUCCESS: Initialized CrossGeneratingVariationalAutoencoder model.[0;0m
+CrossGeneratingVariationalAutoencoder(
+  (encoder): ProbabilisticFullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=3, out_features=4, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (encoder2): ProbabilisticFullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=3, out_features=4, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (decoder): FullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): Linear(in_features=2, out_features=3, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (loss_fun): MSELoss()
+  (decoder2): FullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): Linear(in_features=2, out_features=3, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (loss_fun2): MSELoss()
+)
+Number of model parameters: 
+62
+Loading training and validation data into CrossGeneratingVariationalAutoencoder...
+[!] No checkpoint found, start epoch 0
+[*] Evaluating epoch 0...
+dict_keys(['z-L2', 'z-L1', 'z-cos', 'z-W2', 'mse/1', 'mse/2', 'bce/1', 'bce/2', 'cross-mse/1', 'cross-mse/2', 'cross-bce/1', 'cross-bce/2', 'loss'])
+--- Training loss:	4902.5116
+--- Validation loss:	4978.1176
+[*] Start training...
+[*] Epoch 1...
+[*] Evaluating epoch 1...
+--- Training loss:	3834.7802
+--- Validation loss:	3901.9924
+EarlyStopping counter: 1 out of 10
+[*] Epoch 2...
+[*] Evaluating epoch 2...
+--- Training loss:	3151.3074
+--- Validation loss:	3067.4800
+[*] Epoch 3...
+[*] Evaluating epoch 3...
+--- Training loss:	2513.0115
+--- Validation loss:	2642.8782
+[*] Epoch 4...
+[*] Evaluating epoch 4...
+--- Training loss:	2142.2249
+--- Validation loss:	2153.2656
+[*] Epoch 5...
+[*] Evaluating epoch 5...
+--- Training loss:	1828.3507
+--- Validation loss:	1811.3133
+[*] Saving model epoch 5...
+[*] Epoch 6...
+[*] Evaluating epoch 6...
+--- Training loss:	1601.2834
+--- Validation loss:	1636.5588
+[*] Epoch 7...
+[*] Evaluating epoch 7...
+--- Training loss:	1391.9476
+--- Validation loss:	1413.5868
+[*] Epoch 8...
+[*] Evaluating epoch 8...
+--- Training loss:	1226.7471
+--- Validation loss:	1254.8360
+[*] Epoch 9...
+[*] Evaluating epoch 9...
+--- Training loss:	1109.5710
+--- Validation loss:	1135.3840
+[*] Epoch 10...
+[*] Evaluating epoch 10...
+--- Training loss:	999.8775
+--- Validation loss:	1024.2124
+[*] Saving model epoch 10...
+[*] Epoch 11...
+[*] Evaluating epoch 11...
+--- Training loss:	907.0276
+--- Validation loss:	930.8072
+[*] Epoch 12...
+[*] Evaluating epoch 12...
+--- Training loss:	822.6004
+--- Validation loss:	839.2323
+[*] Epoch 13...
+[*] Evaluating epoch 13...
+--- Training loss:	758.4623
+--- Validation loss:	763.2152
+[*] Epoch 14...
+[*] Evaluating epoch 14...
+--- Training loss:	710.8172
+--- Validation loss:	707.0699
+[*] Epoch 15...
+[*] Evaluating epoch 15...
+--- Training loss:	658.3526
+--- Validation loss:	663.7236
+[*] Saving model epoch 15...
+[*] Epoch 16...
+[*] Evaluating epoch 16...
+--- Training loss:	620.5588
+--- Validation loss:	630.4153
+[*] Epoch 17...
+[*] Evaluating epoch 17...
+--- Training loss:	584.0240
+--- Validation loss:	593.9654
+[*] Epoch 18...
+[*] Evaluating epoch 18...
+--- Training loss:	551.4624
+--- Validation loss:	567.3870
+[*] Epoch 19...
+[*] Evaluating epoch 19...
+--- Training loss:	526.4911
+--- Validation loss:	529.7279
+[*] Epoch 20...
+[*] Evaluating epoch 20...
+--- Training loss:	500.6017
+--- Validation loss:	495.4298
+[*] Saving model epoch 20...
+[*] Epoch 21...
+[*] Evaluating epoch 21...
+--- Training loss:	475.2149
+--- Validation loss:	482.0243
+[*] Epoch 22...
+[*] Evaluating epoch 22...
+--- Training loss:	454.2511
+--- Validation loss:	455.1344
+[*] Epoch 23...
+[*] Evaluating epoch 23...
+--- Training loss:	433.0392
+--- Validation loss:	440.3665
+[*] Epoch 24...
+[*] Evaluating epoch 24...
+--- Training loss:	417.8358
+--- Validation loss:	421.5305
+[*] Epoch 25...
+[*] Evaluating epoch 25...
+--- Training loss:	399.6244
+--- Validation loss:	400.8642
+[*] Saving model epoch 25...
+[*] Epoch 26...
+[*] Evaluating epoch 26...
+--- Training loss:	382.1027
+--- Validation loss:	382.6201
+[*] Epoch 27...
+[*] Evaluating epoch 27...
+--- Training loss:	370.7280
+--- Validation loss:	373.8872
+[*] Epoch 28...
+[*] Evaluating epoch 28...
+--- Training loss:	359.0051
+--- Validation loss:	358.2309
+[*] Epoch 29...
+[*] Evaluating epoch 29...
+--- Training loss:	347.4522
+--- Validation loss:	345.1432
+[*] Epoch 30...
+[*] Evaluating epoch 30...
+--- Training loss:	332.6890
+--- Validation loss:	337.7831
+[*] Saving model epoch 30...
+[*] Epoch 31...
+[*] Evaluating epoch 31...
+--- Training loss:	321.8756
+--- Validation loss:	327.8896
+[*] Epoch 32...
+[*] Evaluating epoch 32...
+--- Training loss:	315.1657
+--- Validation loss:	315.8652
+[*] Epoch 33...
+[*] Evaluating epoch 33...
+--- Training loss:	306.5348
+--- Validation loss:	302.9833
+[*] Epoch 34...
+[*] Evaluating epoch 34...
+--- Training loss:	296.5206
+--- Validation loss:	299.5688
+[*] Epoch 35...
+[*] Evaluating epoch 35...
+--- Training loss:	288.9958
+--- Validation loss:	290.5620
+[*] Saving model epoch 35...
+[*] Epoch 36...
+[*] Evaluating epoch 36...
+--- Training loss:	281.3061
+--- Validation loss:	279.8497
+[*] Epoch 37...
+[*] Evaluating epoch 37...
+--- Training loss:	271.7722
+--- Validation loss:	276.0593
+[*] Epoch 38...
+[*] Evaluating epoch 38...
+--- Training loss:	266.7443
+--- Validation loss:	262.9080
+[*] Epoch 39...
+[*] Evaluating epoch 39...
+--- Training loss:	262.2939
+--- Validation loss:	264.4197
+EarlyStopping counter: 1 out of 10
+[*] Epoch 40...
+[*] Evaluating epoch 40...
+--- Training loss:	253.9240
+--- Validation loss:	257.4431
+[*] Saving model epoch 40...
+[*] Epoch 41...
+[*] Evaluating epoch 41...
+--- Training loss:	248.5631
+--- Validation loss:	248.9339
+[*] Epoch 42...
+[*] Evaluating epoch 42...
+--- Training loss:	245.2233
+--- Validation loss:	242.1639
+[*] Epoch 43...
+[*] Evaluating epoch 43...
+--- Training loss:	237.6606
+--- Validation loss:	236.0610
+[*] Epoch 44...
+[*] Evaluating epoch 44...
+--- Training loss:	233.9028
+--- Validation loss:	233.1236
+[*] Epoch 45...
+[*] Evaluating epoch 45...
+--- Training loss:	227.9618
+--- Validation loss:	228.9387
+[*] Saving model epoch 45...
+[*] Epoch 46...
+[*] Evaluating epoch 46...
+--- Training loss:	224.7640
+--- Validation loss:	223.5589
+[*] Epoch 47...
+[*] Evaluating epoch 47...
+--- Training loss:	218.4758
+--- Validation loss:	214.3009
+[*] Epoch 48...
+[*] Evaluating epoch 48...
+--- Training loss:	214.1304
+--- Validation loss:	213.3708
+EarlyStopping counter: 1 out of 10
+[*] Epoch 49...
+[*] Evaluating epoch 49...
+--- Training loss:	208.3794
+--- Validation loss:	203.4198
+[*] Epoch 50...
+[*] Evaluating epoch 50...
+--- Training loss:	205.6174
+--- Validation loss:	201.2676
+[*] Saving model epoch 50...
+[*] Epoch 51...
+[*] Evaluating epoch 51...
+--- Training loss:	203.1872
+--- Validation loss:	201.2994
+EarlyStopping counter: 1 out of 10
+[*] Epoch 52...
+[*] Evaluating epoch 52...
+--- Training loss:	198.3936
+--- Validation loss:	193.2462
+[*] Epoch 53...
+[*] Evaluating epoch 53...
+--- Training loss:	196.3414
+--- Validation loss:	192.2610
+EarlyStopping counter: 1 out of 10
+[*] Epoch 54...
+[*] Evaluating epoch 54...
+--- Training loss:	190.5163
+--- Validation loss:	190.0188
+[*] Epoch 55...
+[*] Evaluating epoch 55...
+--- Training loss:	188.8512
+--- Validation loss:	188.0972
+[*] Saving model epoch 55...
+[*] Epoch 56...
+[*] Evaluating epoch 56...
+--- Training loss:	183.6268
+--- Validation loss:	183.9775
+[*] Epoch 57...
+[*] Evaluating epoch 57...
+--- Training loss:	181.4920
+--- Validation loss:	182.4568
+EarlyStopping counter: 1 out of 10
+[*] Epoch 58...
+[*] Evaluating epoch 58...
+--- Training loss:	178.3636
+--- Validation loss:	177.7142
+[*] Epoch 59...
+[*] Evaluating epoch 59...
+--- Training loss:	175.3885
+--- Validation loss:	175.7414
+[*] Epoch 60...
+[*] Evaluating epoch 60...
+--- Training loss:	172.6197
+--- Validation loss:	170.8704
+[*] Saving model epoch 60...
+[*] Epoch 61...
+[*] Evaluating epoch 61...
+--- Training loss:	168.5979
+--- Validation loss:	167.7343
+[*] Epoch 62...
+[*] Evaluating epoch 62...
+--- Training loss:	167.1008
+--- Validation loss:	166.1836
+EarlyStopping counter: 1 out of 10
+[*] Epoch 63...
+[*] Evaluating epoch 63...
+--- Training loss:	166.1544
+--- Validation loss:	163.1720
+[*] Epoch 64...
+[*] Evaluating epoch 64...
+--- Training loss:	162.2428
+--- Validation loss:	162.9834
+EarlyStopping counter: 1 out of 10
+[*] Epoch 65...
+[*] Evaluating epoch 65...
+--- Training loss:	159.7910
+--- Validation loss:	159.2345
+[*] Saving model epoch 65...
+[*] Epoch 66...
+[*] Evaluating epoch 66...
+--- Training loss:	157.4665
+--- Validation loss:	153.6714
+[*] Epoch 67...
+[*] Evaluating epoch 67...
+--- Training loss:	154.4402
+--- Validation loss:	153.7533
+EarlyStopping counter: 1 out of 10
+[*] Epoch 68...
+[*] Evaluating epoch 68...
+--- Training loss:	151.4525
+--- Validation loss:	148.7577
+[*] Epoch 69...
+[*] Evaluating epoch 69...
+--- Training loss:	149.8544
+--- Validation loss:	149.4367
+EarlyStopping counter: 1 out of 10
+[*] Epoch 70...
+[*] Evaluating epoch 70...
+--- Training loss:	147.6732
+--- Validation loss:	149.7912
+[*] Saving model epoch 70...
+EarlyStopping counter: 2 out of 10
+[*] Epoch 71...
+[*] Evaluating epoch 71...
+--- Training loss:	145.4867
+--- Validation loss:	145.1351
+[*] Epoch 72...
+[*] Evaluating epoch 72...
+--- Training loss:	143.1016
+--- Validation loss:	142.6097
+[*] Epoch 73...
+[*] Evaluating epoch 73...
+--- Training loss:	142.6234
+--- Validation loss:	137.2459
+[*] Epoch 74...
+[*] Evaluating epoch 74...
+--- Training loss:	140.3896
+--- Validation loss:	138.7403
+EarlyStopping counter: 1 out of 10
+[*] Epoch 75...
+[*] Evaluating epoch 75...
+--- Training loss:	137.9180
+--- Validation loss:	140.3498
+[*] Saving model epoch 75...
+EarlyStopping counter: 2 out of 10
+[*] Epoch 76...
+[*] Evaluating epoch 76...
+--- Training loss:	135.8602
+--- Validation loss:	131.2596
+[*] Epoch 77...
+[*] Evaluating epoch 77...
+--- Training loss:	134.3802
+--- Validation loss:	131.7153
+EarlyStopping counter: 1 out of 10
+[*] Epoch 78...
+[*] Evaluating epoch 78...
+--- Training loss:	132.0007
+--- Validation loss:	131.8832
+EarlyStopping counter: 2 out of 10
+[*] Epoch 79...
+[*] Evaluating epoch 79...
+--- Training loss:	130.0886
+--- Validation loss:	128.6243
+[*] Epoch 80...
+[*] Evaluating epoch 80...
+--- Training loss:	128.3842
+--- Validation loss:	131.2753
+[*] Saving model epoch 80...
+EarlyStopping counter: 1 out of 10
+[*] Epoch 81...
+[*] Evaluating epoch 81...
+--- Training loss:	127.0550
+--- Validation loss:	130.4323
+EarlyStopping counter: 2 out of 10
+[*] Epoch 82...
+[*] Evaluating epoch 82...
+--- Training loss:	125.4023
+--- Validation loss:	127.2026
+[*] Epoch 83...
+[*] Evaluating epoch 83...
+--- Training loss:	124.4743
+--- Validation loss:	121.6136
+[*] Epoch 84...
+[*] Evaluating epoch 84...
+--- Training loss:	122.2174
+--- Validation loss:	123.6132
+EarlyStopping counter: 1 out of 10
+[*] Epoch 85...
+[*] Evaluating epoch 85...
+--- Training loss:	121.6984
+--- Validation loss:	117.2515
+[*] Saving model epoch 85...
+[*] Epoch 86...
+[*] Evaluating epoch 86...
+--- Training loss:	119.9016
+--- Validation loss:	121.1467
+EarlyStopping counter: 1 out of 10
+[*] Epoch 87...
+[*] Evaluating epoch 87...
+--- Training loss:	117.5434
+--- Validation loss:	116.7145
+EarlyStopping counter: 2 out of 10
+[*] Epoch 88...
+[*] Evaluating epoch 88...
+--- Training loss:	117.0371
+--- Validation loss:	114.1458
+[*] Epoch 89...
+[*] Evaluating epoch 89...
+--- Training loss:	116.0102
+--- Validation loss:	114.3790
+EarlyStopping counter: 1 out of 10
+[*] Epoch 90...
+[*] Evaluating epoch 90...
+--- Training loss:	114.3421
+--- Validation loss:	115.5030
+[*] Saving model epoch 90...
+EarlyStopping counter: 2 out of 10
+[*] Epoch 91...
+[*] Evaluating epoch 91...
+--- Training loss:	113.2107
+--- Validation loss:	114.3773
+EarlyStopping counter: 3 out of 10
+[*] Epoch 92...
+[*] Evaluating epoch 92...
+--- Training loss:	112.4466
+--- Validation loss:	109.0781
+[*] Epoch 93...
+[*] Evaluating epoch 93...
+--- Training loss:	110.7545
+--- Validation loss:	109.4637
+EarlyStopping counter: 1 out of 10
+[*] Epoch 94...
+[*] Evaluating epoch 94...
+--- Training loss:	109.7483
+--- Validation loss:	110.0035
+EarlyStopping counter: 2 out of 10
+[*] Epoch 95...
+[*] Evaluating epoch 95...
+--- Training loss:	108.5638
+--- Validation loss:	105.5914
+[*] Saving model epoch 95...
+[*] Epoch 96...
+[*] Evaluating epoch 96...
+--- Training loss:	108.8225
+--- Validation loss:	108.8530
+EarlyStopping counter: 1 out of 10
+[*] Epoch 97...
+[*] Evaluating epoch 97...
+--- Training loss:	106.6047
+--- Validation loss:	105.4993
+EarlyStopping counter: 2 out of 10
+[*] Epoch 98...
+[*] Evaluating epoch 98...
+--- Training loss:	105.5882
+--- Validation loss:	106.6942
+EarlyStopping counter: 3 out of 10
+[*] Epoch 99...
+[*] Evaluating epoch 99...
+--- Training loss:	104.4063
+--- Validation loss:	102.8313
+[*] Epoch 100...
+[*] Evaluating epoch 100...
+--- Training loss:	103.9904
+--- Validation loss:	103.7401
+[*] Saving model epoch 100...
+EarlyStopping counter: 1 out of 10
+[*] Finish training.
+Using model from epoch 100
+Classification
+Using omic 1
+Using omic 2
+Saving results
+##########
+
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 17-12-2021 15:58:37[0;0m
+
+##########
+Selected device: cuda
+[1;32mSUCCESS: Initialized CrossGeneratingVariationalAutoencoder model.[0;0m
+CrossGeneratingVariationalAutoencoder(
+  (encoder): ProbabilisticFullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=3, out_features=4, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (encoder2): ProbabilisticFullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=3, out_features=4, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (decoder): FullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): Linear(in_features=2, out_features=3, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (loss_fun): MSELoss()
+  (decoder2): FullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): Linear(in_features=2, out_features=3, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (loss_fun2): MSELoss()
+)
+Number of model parameters: 
+62
+Loading training and validation data into CrossGeneratingVariationalAutoencoder...
+[!] No checkpoint found, start epoch 0
+[*] Evaluating epoch 0...
+dict_keys(['z-L2', 'z-L1', 'z-cos', 'z-W2', 'mse/1', 'mse/2', 'bce/1', 'bce/2', 'cross-mse/1', 'cross-mse/2', 'cross-bce/1', 'cross-bce/2', 'loss'])
+--- Training loss:	4902.5116
+--- Validation loss:	4978.1176
+[*] Start training...
+[*] Epoch 1...
+[*] Evaluating epoch 1...
+--- Training loss:	3834.7802
+--- Validation loss:	3901.9924
+EarlyStopping counter: 1 out of 10
+[*] Epoch 2...
+[*] Evaluating epoch 2...
+--- Training loss:	3151.3074
+--- Validation loss:	3067.4800
+[*] Epoch 3...
+[*] Evaluating epoch 3...
+--- Training loss:	2513.0115
+--- Validation loss:	2642.8782
+[*] Epoch 4...
+[*] Evaluating epoch 4...
+--- Training loss:	2142.2249
+--- Validation loss:	2153.2656
+[*] Epoch 5...
+[*] Evaluating epoch 5...
+--- Training loss:	1828.3507
+--- Validation loss:	1811.3133
+[*] Saving model epoch 5...
+[*] Finish training.
+Using model from epoch 5
+Imputation: Extracting Z1 and Z2 using test set
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 17-12-2021 16:12:05[0;0m
+
+##########
+Selected device: cuda
+[1;32mSUCCESS: Initialized CrossGeneratingVariationalAutoencoder model.[0;0m
+CrossGeneratingVariationalAutoencoder(
+  (encoder): ProbabilisticFullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=3, out_features=4, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (encoder2): ProbabilisticFullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=3, out_features=4, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (decoder): FullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): Linear(in_features=2, out_features=3, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (loss_fun): MSELoss()
+  (decoder2): FullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): Linear(in_features=2, out_features=3, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (loss_fun2): MSELoss()
+)
+Number of model parameters: 
+62
+Loading training and validation data into CrossGeneratingVariationalAutoencoder...
+[!] No checkpoint found, start epoch 0
+[*] Evaluating epoch 0...
+dict_keys(['z-L2', 'z-L1', 'z-cos', 'z-W2', 'mse/1', 'mse/2', 'bce/1', 'bce/2', 'cross-mse/1', 'cross-mse/2', 'cross-bce/1', 'cross-bce/2', 'loss'])
+--- Training loss:	4902.5116
+--- Validation loss:	4978.1176
+[*] Start training...
+[*] Epoch 1...
+[*] Evaluating epoch 1...
+--- Training loss:	3834.7802
+--- Validation loss:	3901.9924
+EarlyStopping counter: 1 out of 10
+[*] Epoch 2...
+[*] Evaluating epoch 2...
+--- Training loss:	3151.3074
+--- Validation loss:	3067.4800
+[*] Epoch 3...
+[*] Evaluating epoch 3...
+--- Training loss:	2513.0115
+--- Validation loss:	2642.8782
+[*] Epoch 4...
+[*] Evaluating epoch 4...
+--- Training loss:	2142.2249
+--- Validation loss:	2153.2656
+[*] Epoch 5...
+[*] Evaluating epoch 5...
+--- Training loss:	1828.3507
+--- Validation loss:	1811.3133
+[*] Saving model epoch 5...
+[*] Finish training.
+Using model from epoch 5
+Imputation: Extracting Z1 and Z2 using test set
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 17-12-2021 16:14:22[0;0m
+
+##########
+Selected device: cuda
+[1;32mSUCCESS: Initialized CrossGeneratingVariationalAutoencoder model.[0;0m
+CrossGeneratingVariationalAutoencoder(
+  (encoder): ProbabilisticFullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=3, out_features=4, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (encoder2): ProbabilisticFullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=3, out_features=4, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (decoder): FullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): Linear(in_features=2, out_features=3, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (loss_fun): MSELoss()
+  (decoder2): FullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): Linear(in_features=2, out_features=3, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (loss_fun2): MSELoss()
+)
+Number of model parameters: 
+62
+Loading training and validation data into CrossGeneratingVariationalAutoencoder...
+[!] No checkpoint found, start epoch 0
+[*] Evaluating epoch 0...
+dict_keys(['z-L2', 'z-L1', 'z-cos', 'z-W2', 'mse/1', 'mse/2', 'bce/1', 'bce/2', 'cross-mse/1', 'cross-mse/2', 'cross-bce/1', 'cross-bce/2', 'loss'])
+--- Training loss:	4902.5116
+--- Validation loss:	4978.1176
+[*] Start training...
+[*] Epoch 1...
+[*] Evaluating epoch 1...
+--- Training loss:	3834.7802
+--- Validation loss:	3901.9924
+EarlyStopping counter: 1 out of 10
+[*] Epoch 2...
+[*] Evaluating epoch 2...
+--- Training loss:	3151.3074
+--- Validation loss:	3067.4800
+[*] Epoch 3...
+[*] Evaluating epoch 3...
+--- Training loss:	2513.0115
+--- Validation loss:	2642.8782
+[*] Epoch 4...
+[*] Evaluating epoch 4...
+--- Training loss:	2142.2249
+--- Validation loss:	2153.2656
+[*] Epoch 5...
+[*] Evaluating epoch 5...
+--- Training loss:	1828.3507
+--- Validation loss:	1811.3133
+[*] Saving model epoch 5...
+[*] Finish training.
+Using model from epoch 5
+Imputation: Extracting Z1 and Z2 using test set
+Performance: {'mse': array([[ 0.        , 15.63581513],
+       [16.00049703,  0.        ]]), 'rsquared': array([[ 1.00000000e+00, -2.14241374e+04],
+       [-9.65890171e+01,  1.00000000e+00]]), 'spearman_corr': array([[ 0.        , -0.01167124],
+       [-0.30655036,  0.        ]]), 'spearman_p': array([[0.00000000e+00, 8.44441721e-01],
+       [4.74644239e-07, 0.00000000e+00]])}
+##########
+
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 17-12-2021 17:19:00[0;0m
+
+##########
+Selected device: cuda
+[1;32mSUCCESS: Initialized CrossGeneratingVariationalAutoencoder model.[0;0m
+CrossGeneratingVariationalAutoencoder(
+  (encoder): ProbabilisticFullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=2, out_features=4, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (encoder2): ProbabilisticFullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=2, out_features=4, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (decoder): FullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): Linear(in_features=2, out_features=2, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (loss_fun): MSELoss()
+  (decoder2): FullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): Linear(in_features=2, out_features=2, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (loss_fun2): MSELoss()
+)
+Number of model parameters: 
+48
+Loading training and validation data into CrossGeneratingVariationalAutoencoder...
+[!] No checkpoint found, start epoch 0
+[*] Evaluating epoch 0...
+dict_keys(['z-L2', 'z-L1', 'z-cos', 'z-W2', 'mse/1', 'mse/2', 'bce/1', 'bce/2', 'cross-mse/1', 'cross-mse/2', 'cross-bce/1', 'cross-bce/2', 'loss'])
+--- Training loss:	64.5619
+--- Validation loss:	87.6928
+[*] Start training...
+[*] Epoch 1...
+[*] Evaluating epoch 1...
+--- Training loss:	61.7096
+--- Validation loss:	83.2172
+EarlyStopping counter: 1 out of 10
+[*] Epoch 2...
+[*] Evaluating epoch 2...
+--- Training loss:	57.6967
+--- Validation loss:	81.4228
+[*] Epoch 3...
+[*] Evaluating epoch 3...
+--- Training loss:	55.7791
+--- Validation loss:	79.6883
+[*] Epoch 4...
+[*] Evaluating epoch 4...
+--- Training loss:	52.9483
+--- Validation loss:	73.1526
+[*] Epoch 5...
+[*] Evaluating epoch 5...
+--- Training loss:	49.3386
+--- Validation loss:	69.0540
+[*] Saving model epoch 5...
+[*] Finish training.
+Using model from epoch 5
+Imputation: Extracting Z1 and Z2 using test set
+Performance: {'mse': array([[0.        , 0.61332628],
+       [1.98347322, 0.        ]]), 'rsquared': array([[   1.        ,  -30.55534912],
+       [-336.56393246,    1.        ]]), 'spearman_corr': array([[[ 0.        ,  0.        ],
+        [-0.07880235, -0.07880235]],
+
+       [[-0.01719375, -0.01719375],
+        [ 0.        ,  0.        ]]]), 'spearman_p': array([[0.        , 0.02216425],
+       [0.74359684, 0.        ]])}
+##########
+
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 20-12-2021 10:03:58[0;0m
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 20-12-2021 10:35:03[0;0m
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 20-12-2021 10:36:33[0;0m
+
+##########
+[1;32mSUCCESS: Running Product-of-Experts MVAE Model[0;0m
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 20-12-2021 10:39:42[0;0m
+
+##########
+[1;32mSUCCESS: Running Product-of-Experts MVAE Model[0;0m
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 20-12-2021 10:41:35[0;0m
+
+##########
+[1;32mSUCCESS: Running Product-of-Experts MVAE Model[0;0m
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 20-12-2021 10:41:51[0;0m
+
+##########
+[1;32mSUCCESS: Running Product-of-Experts MVAE Model[0;0m
+Running Task 1 on omic v1 and omic v2
+Using Pre-Trained PoE found at /home/bram/jointomicscomp/results/geme_moe_poe_task1 13-09-2021 20:52:10/PoE/best_model.pth.tar
+-----   Loading Trained Model   -----
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 20-12-2021 10:53:04[0;0m
+
+##########
+[1;32mSUCCESS: Running Product-of-Experts MVAE Model[0;0m
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 20-12-2021 10:53:37[0;0m
+
+##########
+[1;32mSUCCESS: Running Product-of-Experts MVAE Model[0;0m
+Running Task 1 on omic v1 and omic v2
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 20-12-2021 12:52:18[0;0m
+
+##########
+[1;32mSUCCESS: Running Product-of-Experts MVAE Model[0;0m
+Running Task 1 on omic v1 and omic v2
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 20-12-2021 12:55:06[0;0m
+
+##########
+[1;32mSUCCESS: Running Product-of-Experts MVAE Model[0;0m
+Running Task 1 on omic v1 and omic v2
+EarlyStopping counter: 1 out of 10
+EarlyStopping counter: 2 out of 10
+EarlyStopping counter: 3 out of 10
+EarlyStopping counter: 4 out of 10
+====> Epoch: 5	Loss: 42.6520
+====> Epoch: 5	Reconstruction Loss: 42.6440
+====> Epoch: 5	KLD Loss: -0.6025
+====> Epoch: 5	Validation Loss: 14.3043
+====> Epoch: 5	Reconstruction Loss: 13.9844
+====> Epoch: 5	KLD Loss: -0.3199
+EarlyStopping counter: 5 out of 10
+[1;32mSUCCESS: Finished training PoE model. Now calculating task results.[0;0m
+Task 1 Imputation: Extracting Z using test set
+Reconstruction loss for v1 from both omics : 14.786227669077862
+Reconstruction loss for v1 from v1 : 14.766835001320738
+Reconstruction loss for v2 from both omics : 13.639338105591873
+Reconstruction loss for v2 from v2 : 13.643873678536773
+{'mse': array([[ 0.        , 13.63996872],
+       [14.81314186,  0.        ]]), 'rsquared': array([[ 1.        , -1.09124432],
+       [-1.55537967,  1.        ]]), 'spearman_corr': array([[[0.        , 0.        ],
+        [0.10089246, 0.24631313]],
+
+       [[0.03508917, 0.16674232],
+        [0.        , 0.        ]]]), 'spearman_p': array([[0.00000000e+00, 7.86693104e-05],
+       [1.48573444e-03, 0.00000000e+00]])}
+Imputation loss for v1 from v2 : 13.63996872113875
+Imputation loss for v2 from v1 : 14.813141858862425
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 20-12-2021 13:07:10[0;0m
+
+##########
+[1;32mSUCCESS: Running Product-of-Experts MVAE Model[0;0m
+Running Task 1 on omic v1 and omic v2
+EarlyStopping counter: 1 out of 10
+EarlyStopping counter: 2 out of 10
+EarlyStopping counter: 3 out of 10
+EarlyStopping counter: 4 out of 10
+====> Epoch: 5	Loss: 42.8006
+====> Epoch: 5	Reconstruction Loss: 42.7896
+====> Epoch: 5	KLD Loss: -0.8292
+====> Epoch: 5	Validation Loss: 14.5064
+====> Epoch: 5	Reconstruction Loss: 14.0988
+====> Epoch: 5	KLD Loss: -0.4076
+EarlyStopping counter: 5 out of 10
+[1;32mSUCCESS: Finished training PoE model. Now calculating task results.[0;0m
+Task 1 Imputation: Extracting Z using test set
+Reconstruction loss for v1 from both omics : 15.082186559715774
+Reconstruction loss for v1 from v1 : 15.072225001538039
+Reconstruction loss for v2 from both omics : 13.616862541693436
+Reconstruction loss for v2 from v2 : 13.627913428830519
+{'mse': array([[ 0.        , 13.6122697 ],
+       [15.10515816,  0.        ]]), 'rsquared': array([[ 1.        , -1.08591924],
+       [-1.61623871,  1.        ]]), 'spearman_corr': array([[[ 0.        ,  0.        ],
+        [-0.08005888, -0.23714049]],
+
+       [[-0.11864264, -0.23575903],
+        [ 0.        ,  0.        ]]]), 'spearman_p': array([[0.00000000e+00, 1.12100747e-05],
+       [2.98951489e-05, 0.00000000e+00]])}
+Imputation loss for v1 from v2 : 13.612269698816073
+Imputation loss for v2 from v1 : 15.105158158033603
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 20-12-2021 13:11:21[0;0m
+
+##########
+[1;32mSUCCESS: Running Product-of-Experts MVAE Model[0;0m
+Running Task 1 on omic v1 and omic v2
+EarlyStopping counter: 1 out of 10
+EarlyStopping counter: 2 out of 10
+EarlyStopping counter: 3 out of 10
+EarlyStopping counter: 4 out of 10
+====> Epoch: 5	Loss: 43.3229
+====> Epoch: 5	Reconstruction Loss: 43.3016
+====> Epoch: 5	KLD Loss: -1.5981
+====> Epoch: 5	Validation Loss: 15.1045
+====> Epoch: 5	Reconstruction Loss: 14.3604
+====> Epoch: 5	KLD Loss: -0.7441
+EarlyStopping counter: 5 out of 10
+[1;32mSUCCESS: Finished training PoE model. Now calculating task results.[0;0m
+Task 1 Imputation: Extracting Z using test set
+Reconstruction loss for v1 from both omics : 15.179120197655154
+Reconstruction loss for v1 from v1 : 15.262480493639883
+Reconstruction loss for v2 from both omics : 14.026436084017442
+Reconstruction loss for v2 from v2 : 14.039189356232859
+{'mse': array([[ 0.        , 14.01307402],
+       [15.11510397,  0.        ]]), 'rsquared': array([[ 1.        , -1.14780285],
+       [-1.62138362,  1.        ]]), 'spearman_corr': array([[[ 0.        ,  0.        ],
+        [ 0.02923744,  0.08289153]],
+
+       [[-0.06946675, -0.27463361],
+        [ 0.        ,  0.        ]]]), 'spearman_p': array([[0.00000000e+00, 9.21167345e-02],
+       [8.82040203e-07, 0.00000000e+00]])}
+Imputation loss for v1 from v2 : 14.013074016895388
+Imputation loss for v2 from v1 : 15.115103974123087
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 20-12-2021 13:12:08[0;0m
+
+##########
+[1;32mSUCCESS: Running Product-of-Experts MVAE Model[0;0m
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 20-12-2021 16:56:24[0;0m
+
+##########
+[1;32mSUCCESS: Running Product-of-Experts MVAE Model[0;0m
+Using Pre-Trained PoE found at /home/bram/jointomicscomp/results/geme_moe_poe_task1 13-09-2021 20:52:10/PoE/best_model.pth.tar
+-----   Loading Trained Model   -----
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 20-12-2021 16:58:25[0;0m
+
+##########
+[1;32mSUCCESS: Running Product-of-Experts MVAE Model[0;0m
+EarlyStopping counter: 1 out of 10
+EarlyStopping counter: 2 out of 10
+EarlyStopping counter: 3 out of 10
+EarlyStopping counter: 4 out of 10
+====> Epoch: 5	Loss: 44.0522
+====> Epoch: 5	Reconstruction Loss: 44.0360
+====> Epoch: 5	KLD Loss: -1.2173
+====> Epoch: 5	Validation Loss: 15.1721
+====> Epoch: 5	Reconstruction Loss: 14.6065
+====> Epoch: 5	KLD Loss: -0.5656
+EarlyStopping counter: 5 out of 10
+[1;32mSUCCESS: Finished training PoE model. Now calculating task results.[0;0m
+PoE(
+  (omic1_encoder): Encoder(
+    (encoder): Sequential(
+      (0): Sequential(
+        (0): Linear(in_features=3, out_features=2, bias=True)
+        (1): BatchNorm1d(2, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (2): ReLU()
+      )
+    )
+    (fc_mu): Linear(in_features=2, out_features=2, bias=True)
+    (fc_var): Linear(in_features=2, out_features=2, bias=True)
+  )
+  (omic2_encoder): Encoder(
+    (encoder): Sequential(
+      (0): Sequential(
+        (0): Linear(in_features=3, out_features=2, bias=True)
+        (1): BatchNorm1d(2, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (2): ReLU()
+      )
+    )
+    (fc_mu): Linear(in_features=2, out_features=2, bias=True)
+    (fc_var): Linear(in_features=2, out_features=2, bias=True)
+  )
+  (omic1_decoder): Decoder(
+    (decoder): Sequential(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): BatchNorm1d(2, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (2): ReLU()
+    )
+    (final_layer): Sequential(
+      (0): Linear(in_features=2, out_features=3, bias=True)
+      (1): Sigmoid()
+    )
+  )
+  (omic2_decoder): Decoder(
+    (decoder): Sequential(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): BatchNorm1d(2, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (2): ReLU()
+    )
+    (final_layer): Sequential(
+      (0): Linear(in_features=2, out_features=3, bias=True)
+      (1): Sigmoid()
+    )
+  )
+  (experts): ProductOfExperts()
+)
+[1;32mSUCCESS: Extract z1 and z2 for classification[0;0m
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 20-12-2021 19:20:11[0;0m
+
+##########
+[1;32mSUCCESS: Running Product-of-Experts MVAE Model[0;0m
+EarlyStopping counter: 1 out of 10
+EarlyStopping counter: 2 out of 10
+EarlyStopping counter: 3 out of 10
+EarlyStopping counter: 4 out of 10
+====> Epoch: 5	Loss: 42.8554
+====> Epoch: 5	Reconstruction Loss: 42.8363
+====> Epoch: 5	KLD Loss: -1.4348
+====> Epoch: 5	Validation Loss: 14.6178
+====> Epoch: 5	Reconstruction Loss: 13.9486
+====> Epoch: 5	KLD Loss: -0.6693
+EarlyStopping counter: 5 out of 10
+[1;32mSUCCESS: Finished training PoE model. Now calculating task results.[0;0m
+PoE(
+  (omic1_encoder): Encoder(
+    (encoder): Sequential(
+      (0): Sequential(
+        (0): Linear(in_features=3, out_features=2, bias=True)
+        (1): BatchNorm1d(2, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (2): ReLU()
+      )
+    )
+    (fc_mu): Linear(in_features=2, out_features=2, bias=True)
+    (fc_var): Linear(in_features=2, out_features=2, bias=True)
+  )
+  (omic2_encoder): Encoder(
+    (encoder): Sequential(
+      (0): Sequential(
+        (0): Linear(in_features=3, out_features=2, bias=True)
+        (1): BatchNorm1d(2, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (2): ReLU()
+      )
+    )
+    (fc_mu): Linear(in_features=2, out_features=2, bias=True)
+    (fc_var): Linear(in_features=2, out_features=2, bias=True)
+  )
+  (omic1_decoder): Decoder(
+    (decoder): Sequential(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): BatchNorm1d(2, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (2): ReLU()
+    )
+    (final_layer): Sequential(
+      (0): Linear(in_features=2, out_features=3, bias=True)
+      (1): Sigmoid()
+    )
+  )
+  (omic2_decoder): Decoder(
+    (decoder): Sequential(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): BatchNorm1d(2, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (2): ReLU()
+    )
+    (final_layer): Sequential(
+      (0): Linear(in_features=2, out_features=3, bias=True)
+      (1): Sigmoid()
+    )
+  )
+  (experts): ProductOfExperts()
+)
+[1;32mSUCCESS: Extract z1 and z2 for classification[0;0m
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 20-12-2021 19:34:56[0;0m
+
+##########
+[1;32mSUCCESS: Running Product-of-Experts MVAE Model[0;0m
+EarlyStopping counter: 1 out of 10
+EarlyStopping counter: 2 out of 10
+EarlyStopping counter: 3 out of 10
+EarlyStopping counter: 4 out of 10
+====> Epoch: 5	Loss: 44.4880
+====> Epoch: 5	Reconstruction Loss: 44.4793
+====> Epoch: 5	KLD Loss: -0.6543
+====> Epoch: 5	Validation Loss: 14.8034
+====> Epoch: 5	Reconstruction Loss: 14.4656
+====> Epoch: 5	KLD Loss: -0.3378
+EarlyStopping counter: 5 out of 10
+[1;32mSUCCESS: Finished training PoE model. Now calculating task results.[0;0m
+PoE(
+  (omic1_encoder): Encoder(
+    (encoder): Sequential(
+      (0): Sequential(
+        (0): Linear(in_features=3, out_features=2, bias=True)
+        (1): BatchNorm1d(2, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (2): ReLU()
+      )
+    )
+    (fc_mu): Linear(in_features=2, out_features=2, bias=True)
+    (fc_var): Linear(in_features=2, out_features=2, bias=True)
+  )
+  (omic2_encoder): Encoder(
+    (encoder): Sequential(
+      (0): Sequential(
+        (0): Linear(in_features=3, out_features=2, bias=True)
+        (1): BatchNorm1d(2, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (2): ReLU()
+      )
+    )
+    (fc_mu): Linear(in_features=2, out_features=2, bias=True)
+    (fc_var): Linear(in_features=2, out_features=2, bias=True)
+  )
+  (omic1_decoder): Decoder(
+    (decoder): Sequential(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): BatchNorm1d(2, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (2): ReLU()
+    )
+    (final_layer): Sequential(
+      (0): Linear(in_features=2, out_features=3, bias=True)
+      (1): Sigmoid()
+    )
+  )
+  (omic2_decoder): Decoder(
+    (decoder): Sequential(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): BatchNorm1d(2, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (2): ReLU()
+    )
+    (final_layer): Sequential(
+      (0): Linear(in_features=2, out_features=3, bias=True)
+      (1): Sigmoid()
+    )
+  )
+  (experts): ProductOfExperts()
+)
+[1;32mSUCCESS: Extract z1 and z2 for classification[0;0m
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 20-12-2021 21:29:44[0;0m
+
+##########
+[1;32mSUCCESS: Running Product-of-Experts MVAE Model[0;0m
+EarlyStopping counter: 1 out of 10
+EarlyStopping counter: 2 out of 10
+EarlyStopping counter: 3 out of 10
+EarlyStopping counter: 4 out of 10
+====> Epoch: 5	Loss: 44.1506
+====> Epoch: 5	Reconstruction Loss: 44.1385
+====> Epoch: 5	KLD Loss: -0.9030
+====> Epoch: 5	Validation Loss: 14.9127
+====> Epoch: 5	Reconstruction Loss: 14.4541
+====> Epoch: 5	KLD Loss: -0.4586
+EarlyStopping counter: 5 out of 10
+[1;32mSUCCESS: Finished training PoE model. Now calculating task results.[0;0m
+PoE(
+  (omic1_encoder): Encoder(
+    (encoder): Sequential(
+      (0): Sequential(
+        (0): Linear(in_features=3, out_features=2, bias=True)
+        (1): BatchNorm1d(2, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (2): ReLU()
+      )
+    )
+    (fc_mu): Linear(in_features=2, out_features=2, bias=True)
+    (fc_var): Linear(in_features=2, out_features=2, bias=True)
+  )
+  (omic2_encoder): Encoder(
+    (encoder): Sequential(
+      (0): Sequential(
+        (0): Linear(in_features=3, out_features=2, bias=True)
+        (1): BatchNorm1d(2, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (2): ReLU()
+      )
+    )
+    (fc_mu): Linear(in_features=2, out_features=2, bias=True)
+    (fc_var): Linear(in_features=2, out_features=2, bias=True)
+  )
+  (omic1_decoder): Decoder(
+    (decoder): Sequential(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): BatchNorm1d(2, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (2): ReLU()
+    )
+    (final_layer): Sequential(
+      (0): Linear(in_features=2, out_features=3, bias=True)
+      (1): Sigmoid()
+    )
+  )
+  (omic2_decoder): Decoder(
+    (decoder): Sequential(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): BatchNorm1d(2, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (2): ReLU()
+    )
+    (final_layer): Sequential(
+      (0): Linear(in_features=2, out_features=3, bias=True)
+      (1): Sigmoid()
+    )
+  )
+  (experts): ProductOfExperts()
+)
+[1;32mSUCCESS: Extract z1 and z2 for classification[0;0m
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 20-12-2021 21:33:18[0;0m
+
+##########
+[1;32mSUCCESS: Running Product-of-Experts MVAE Model[0;0m
+EarlyStopping counter: 1 out of 10
+EarlyStopping counter: 2 out of 10
+EarlyStopping counter: 3 out of 10
+EarlyStopping counter: 4 out of 10
+====> Epoch: 5	Loss: 43.6378
+====> Epoch: 5	Reconstruction Loss: 43.6153
+====> Epoch: 5	KLD Loss: -1.6908
+====> Epoch: 5	Validation Loss: 15.1350
+====> Epoch: 5	Reconstruction Loss: 14.3105
+====> Epoch: 5	KLD Loss: -0.8244
+EarlyStopping counter: 5 out of 10
+[1;32mSUCCESS: Finished training PoE model. Now calculating task results.[0;0m
+PoE(
+  (omic1_encoder): Encoder(
+    (encoder): Sequential(
+      (0): Sequential(
+        (0): Linear(in_features=3, out_features=2, bias=True)
+        (1): BatchNorm1d(2, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (2): ReLU()
+      )
+    )
+    (fc_mu): Linear(in_features=2, out_features=2, bias=True)
+    (fc_var): Linear(in_features=2, out_features=2, bias=True)
+  )
+  (omic2_encoder): Encoder(
+    (encoder): Sequential(
+      (0): Sequential(
+        (0): Linear(in_features=3, out_features=2, bias=True)
+        (1): BatchNorm1d(2, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (2): ReLU()
+      )
+    )
+    (fc_mu): Linear(in_features=2, out_features=2, bias=True)
+    (fc_var): Linear(in_features=2, out_features=2, bias=True)
+  )
+  (omic1_decoder): Decoder(
+    (decoder): Sequential(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): BatchNorm1d(2, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (2): ReLU()
+    )
+    (final_layer): Sequential(
+      (0): Linear(in_features=2, out_features=3, bias=True)
+      (1): Sigmoid()
+    )
+  )
+  (omic2_decoder): Decoder(
+    (decoder): Sequential(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): BatchNorm1d(2, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (2): ReLU()
+    )
+    (final_layer): Sequential(
+      (0): Linear(in_features=2, out_features=3, bias=True)
+      (1): Sigmoid()
+    )
+  )
+  (experts): ProductOfExperts()
+)
+[1;32mSUCCESS: Extract z1 and z2 for classification[0;0m
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 20-12-2021 21:39:36[0;0m
+
+##########
+[1;32mSUCCESS: Running Product-of-Experts MVAE Model[0;0m
+EarlyStopping counter: 1 out of 10
+EarlyStopping counter: 2 out of 10
+EarlyStopping counter: 3 out of 10
+EarlyStopping counter: 4 out of 10
+====> Epoch: 5	Loss: 45.2220
+====> Epoch: 5	Reconstruction Loss: 45.2029
+====> Epoch: 5	KLD Loss: -1.4290
+====> Epoch: 5	Validation Loss: 15.5257
+====> Epoch: 5	Reconstruction Loss: 14.8427
+====> Epoch: 5	KLD Loss: -0.6831
+EarlyStopping counter: 5 out of 10
+[1;32mSUCCESS: Finished training PoE model. Now calculating task results.[0;0m
+PoE(
+  (omic1_encoder): Encoder(
+    (encoder): Sequential(
+      (0): Sequential(
+        (0): Linear(in_features=3, out_features=2, bias=True)
+        (1): BatchNorm1d(2, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (2): ReLU()
+      )
+    )
+    (fc_mu): Linear(in_features=2, out_features=2, bias=True)
+    (fc_var): Linear(in_features=2, out_features=2, bias=True)
+  )
+  (omic2_encoder): Encoder(
+    (encoder): Sequential(
+      (0): Sequential(
+        (0): Linear(in_features=3, out_features=2, bias=True)
+        (1): BatchNorm1d(2, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (2): ReLU()
+      )
+    )
+    (fc_mu): Linear(in_features=2, out_features=2, bias=True)
+    (fc_var): Linear(in_features=2, out_features=2, bias=True)
+  )
+  (omic1_decoder): Decoder(
+    (decoder): Sequential(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): BatchNorm1d(2, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (2): ReLU()
+    )
+    (final_layer): Sequential(
+      (0): Linear(in_features=2, out_features=3, bias=True)
+      (1): Sigmoid()
+    )
+  )
+  (omic2_decoder): Decoder(
+    (decoder): Sequential(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): BatchNorm1d(2, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (2): ReLU()
+    )
+    (final_layer): Sequential(
+      (0): Linear(in_features=2, out_features=3, bias=True)
+      (1): Sigmoid()
+    )
+  )
+  (experts): ProductOfExperts()
+)
+[1;32mSUCCESS: Extract z1 and z2 for classification[0;0m
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 20-12-2021 21:41:57[0;0m
+
+##########
+[1;32mSUCCESS: Running Product-of-Experts MVAE Model[0;0m
+EarlyStopping counter: 1 out of 10
+EarlyStopping counter: 2 out of 10
+EarlyStopping counter: 3 out of 10
+EarlyStopping counter: 4 out of 10
+====> Epoch: 5	Loss: 44.0571
+====> Epoch: 5	Reconstruction Loss: 44.0368
+====> Epoch: 5	KLD Loss: -1.5272
+====> Epoch: 5	Validation Loss: 15.0729
+====> Epoch: 5	Reconstruction Loss: 14.4710
+====> Epoch: 5	KLD Loss: -0.6019
+EarlyStopping counter: 5 out of 10
+[1;32mSUCCESS: Finished training PoE model. Now calculating task results.[0;0m
+PoE(
+  (omic1_encoder): Encoder(
+    (encoder): Sequential(
+      (0): Sequential(
+        (0): Linear(in_features=3, out_features=2, bias=True)
+        (1): BatchNorm1d(2, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (2): ReLU()
+      )
+    )
+    (fc_mu): Linear(in_features=2, out_features=2, bias=True)
+    (fc_var): Linear(in_features=2, out_features=2, bias=True)
+  )
+  (omic2_encoder): Encoder(
+    (encoder): Sequential(
+      (0): Sequential(
+        (0): Linear(in_features=3, out_features=2, bias=True)
+        (1): BatchNorm1d(2, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (2): ReLU()
+      )
+    )
+    (fc_mu): Linear(in_features=2, out_features=2, bias=True)
+    (fc_var): Linear(in_features=2, out_features=2, bias=True)
+  )
+  (omic1_decoder): Decoder(
+    (decoder): Sequential(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): BatchNorm1d(2, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (2): ReLU()
+    )
+    (final_layer): Sequential(
+      (0): Linear(in_features=2, out_features=3, bias=True)
+      (1): Sigmoid()
+    )
+  )
+  (omic2_decoder): Decoder(
+    (decoder): Sequential(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): BatchNorm1d(2, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (2): ReLU()
+    )
+    (final_layer): Sequential(
+      (0): Linear(in_features=2, out_features=3, bias=True)
+      (1): Sigmoid()
+    )
+  )
+  (experts): ProductOfExperts()
+)
+[1;32mSUCCESS: Extract z1 and z2 for classification[0;0m
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 20-12-2021 21:44:31[0;0m
+
+##########
+[1;32mSUCCESS: Running Product-of-Experts MVAE Model[0;0m
+EarlyStopping counter: 1 out of 10
+EarlyStopping counter: 2 out of 10
+EarlyStopping counter: 3 out of 10
+EarlyStopping counter: 4 out of 10
+====> Epoch: 5	Loss: 43.3169
+====> Epoch: 5	Reconstruction Loss: 43.2994
+====> Epoch: 5	KLD Loss: -1.3145
+====> Epoch: 5	Validation Loss: 14.8392
+====> Epoch: 5	Reconstruction Loss: 14.1917
+====> Epoch: 5	KLD Loss: -0.6475
+EarlyStopping counter: 5 out of 10
+[1;32mSUCCESS: Finished training PoE model. Now calculating task results.[0;0m
+PoE(
+  (omic1_encoder): Encoder(
+    (encoder): Sequential(
+      (0): Sequential(
+        (0): Linear(in_features=3, out_features=2, bias=True)
+        (1): BatchNorm1d(2, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (2): ReLU()
+      )
+    )
+    (fc_mu): Linear(in_features=2, out_features=2, bias=True)
+    (fc_var): Linear(in_features=2, out_features=2, bias=True)
+  )
+  (omic2_encoder): Encoder(
+    (encoder): Sequential(
+      (0): Sequential(
+        (0): Linear(in_features=3, out_features=2, bias=True)
+        (1): BatchNorm1d(2, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (2): ReLU()
+      )
+    )
+    (fc_mu): Linear(in_features=2, out_features=2, bias=True)
+    (fc_var): Linear(in_features=2, out_features=2, bias=True)
+  )
+  (omic1_decoder): Decoder(
+    (decoder): Sequential(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): BatchNorm1d(2, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (2): ReLU()
+    )
+    (final_layer): Sequential(
+      (0): Linear(in_features=2, out_features=3, bias=True)
+      (1): Sigmoid()
+    )
+  )
+  (omic2_decoder): Decoder(
+    (decoder): Sequential(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): BatchNorm1d(2, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (2): ReLU()
+    )
+    (final_layer): Sequential(
+      (0): Linear(in_features=2, out_features=3, bias=True)
+      (1): Sigmoid()
+    )
+  )
+  (experts): ProductOfExperts()
+)
+[1;32mSUCCESS: Extract z1 and z2 for classification[0;0m
+Saving results
+[1;32mSUCCESS: Finished running Product-of-Experts MVAE Model[0;0m
+##########
+
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 20-12-2021 21:47:29[0;0m
+
+##########
+[1;32mSUCCESS: Running Product-of-Experts MVAE Model[0;0m
+EarlyStopping counter: 1 out of 10
+EarlyStopping counter: 2 out of 10
+EarlyStopping counter: 3 out of 10
+EarlyStopping counter: 4 out of 10
+====> Epoch: 5	Loss: 4.0098
+====> Epoch: 5	Reconstruction Loss: 3.9941
+====> Epoch: 5	KLD Loss: -1.1762
+====> Epoch: 5	Validation Loss: 1.9153
+====> Epoch: 5	Reconstruction Loss: 1.3355
+====> Epoch: 5	KLD Loss: -0.5799
+EarlyStopping counter: 5 out of 10
+[1;32mSUCCESS: Finished training PoE model. Now calculating task results.[0;0m
+PoE(
+  (omic1_encoder): Encoder(
+    (encoder): Sequential(
+      (0): Sequential(
+        (0): Linear(in_features=2, out_features=2, bias=True)
+        (1): BatchNorm1d(2, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (2): ReLU()
+      )
+    )
+    (fc_mu): Linear(in_features=2, out_features=2, bias=True)
+    (fc_var): Linear(in_features=2, out_features=2, bias=True)
+  )
+  (omic2_encoder): Encoder(
+    (encoder): Sequential(
+      (0): Sequential(
+        (0): Linear(in_features=2, out_features=2, bias=True)
+        (1): BatchNorm1d(2, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (2): ReLU()
+      )
+    )
+    (fc_mu): Linear(in_features=2, out_features=2, bias=True)
+    (fc_var): Linear(in_features=2, out_features=2, bias=True)
+  )
+  (omic1_decoder): Decoder(
+    (decoder): Sequential(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): BatchNorm1d(2, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (2): ReLU()
+    )
+    (final_layer): Sequential(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): Sigmoid()
+    )
+  )
+  (omic2_decoder): Decoder(
+    (decoder): Sequential(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): BatchNorm1d(2, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (2): ReLU()
+    )
+    (final_layer): Sequential(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): Sigmoid()
+    )
+  )
+  (experts): ProductOfExperts()
+)
+[1;32mSUCCESS: Extract z1 and z2 for classification[0;0m
+Saving results
+[1;32mSUCCESS: Finished running Product-of-Experts MVAE Model[0;0m
+##########
+
