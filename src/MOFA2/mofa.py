@@ -1,6 +1,5 @@
 """
 Main file for running Multi-omics Factor Analysis V2.
-
 Additional documentation found in https://biofam.github.io/MOFA2/tutorials.html
 Model can be trained in Python, but as of this moment downstream analysis can only be done in R.
 This file will therefore also run an R script, since the Z matrix needs to be fetched in order to calculate
@@ -28,7 +27,6 @@ from src.util.evaluate import evaluate_imputation, save_factorizations_to_csv
 def run(args: dict) -> None:
     """
     Setup before running MOFA+
-
     @param args: Dictionary containing input parameters
     @return: None
     """
@@ -64,7 +62,6 @@ def run(args: dict) -> None:
 def train_mofa(args: dict, save_file_path: str) -> None:
     """
     Run Multi-omics Factor Analysis V2
-
     @param args:           Dictionary containing input parameters
     @param save_file_path: Name of trained model that can be saved in /results dir
     @return: None
@@ -225,10 +222,8 @@ def get_W_and_Z(save_dir: str, model_file: str) -> None:
     """
     Perform R based code here in Python.
     Documentation: https://rpy2.github.io/doc/v2.9.x/html/introduction.html
-
     @param save_dir:   path to directory where factors and weights should be saved
     @param model_file: path to trained model
-
     @return: None
     """
     # import R's "base" package
@@ -257,9 +252,8 @@ def get_W_and_Z(save_dir: str, model_file: str) -> None:
             # create a function `f` that saves model factors and weights
             save_z <- function(save_dir, model_path, verbose=FALSE) {
                 trained_model <- (model_path)
-
                 model <- load_model(trained_model, remove_inactive_factors = F)
-                
+
                 Z = get_expectations(model, "Z", as.data.frame = TRUE)
                 W = get_expectations(model, "W", as.data.frame = TRUE)
                 write.csv(Z, paste(save_dir, "Z.csv", sep="/"), row.names = FALSE)
@@ -276,10 +270,8 @@ def get_W_and_Z(save_dir: str, model_file: str) -> None:
 def downstream_analysis(args: dict, save_dir: str) -> None:
     """
     Calculating the reconstruction loss using the trained model and input data
-
     @param args:         Dictionary containing input parameters
     @param save_dir:     path to directory where factors and weights should be saved
-
     @return: None
     """
     logger.info("Reading original data...")
@@ -464,6 +456,3 @@ def downstream_analysis(args: dict, save_dir: str) -> None:
         np.save("{}/task2_z_from_pseudoinv_w2.npy".format(save_dir), Z_frompseudo2)
 
         logger.info("Z's are saved for later predictions.")
-
-
-

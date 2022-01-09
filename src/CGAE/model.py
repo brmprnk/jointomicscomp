@@ -26,7 +26,6 @@ class MultiOmicsDataset():
         # get the index-th element of the 3 matrices
         return self.d1.__getitem__(index), self.d2.__getitem__(index)
 
-
 def multiomic_collate(batch):
     d1 = [x[0] for x in batch]
     d2 = [x[1] for x in batch]
@@ -34,6 +33,36 @@ def multiomic_collate(batch):
     print(len(d1[0]))
 
     return torch.from_numpy(np.array(d1)), torch.from_numpy(np.array(d2))
+
+def evaluateUsingBatches(net, device, dataloader, multimodal=False):
+    for i, trd in enumerate(dataloader):
+        if i == 0:
+            if not multimodal:
+                x = trd[0].to(device)
+                metrics = net.evaluate(x) * x.shape[0]
+            else:
+                x1 = trd[0][0].to(device)
+                x2 = trd[1][0].to(device)
+                # evaluate method averages across samples, multiply with #samples to get total
+                metrics = net.evaluate(x1, x2) * x1.shape[0]
+        else:
+            # add intermediate metrics to total
+            if not multimodal:
+                x = trd[0].to(device)
+                tmpmetrics = net.evaluate(x) * x.shape[0]
+            else:
+                x1 = trd[0][0].to(device)
+                x2 = trd[1][0].to(device)
+                tmpmetrics = net.evaluate(x1, x2) * x1.shape[0]
+
+            for kk in metrics:
+                metrics[kk] += tmpmetrics[kk]
+
+        for kk in metrics:
+            # now divide by total number of points to get the average across all samples
+            metrics[kk] /= len(train_loader_eval.dataset)
+
+    return metrics
 
 
 def train(device, net, num_epochs, train_loader, train_loader_eval, valid_loader, ckpt_dir, logs_dir, early_stopping,
@@ -46,31 +75,18 @@ def train(device, net, num_epochs, train_loader, train_loader_eval, valid_loader
 
     # Evaluate validation set before start training
     print("[*] Evaluating epoch %d..." % start_epoch)
-    for trd in train_loader_eval:
-        if not multimodal:
-            x = trd[0]
-            metrics = net.evaluate(x)
-        else:
-            x1 = trd[0][0]
-            x2 = trd[1][0]
-            metrics = net.evaluate(x1, x2)
+    metrics = evaluateUsingBatches(net, device, train_loader_eval, multimodal)
 
-        print(metrics.keys())
-        assert 'loss' in metrics
-        print("--- Training loss:\t%.4f" % metrics['loss'])
+    print(metrics.keys())
+    assert 'loss' in metrics
+    print("--- Training loss:\t%.4f" % metrics['loss'])
 
-    for vld in valid_loader:
-        if not multimodal:
-            x = vld[0]
-            metrics = net.evaluate(x)
-        else:
-            x1 = vld[0][0]
-            x2 = vld[1][0]
-            metrics = net.evaluate(x1, x2)
 
-        assert 'loss' in metrics
-        print("--- Validation loss:\t%.4f" % metrics['loss'])
-        checkpoint_loss = [metrics['loss']]
+    metrics = evaluateUsingBatches(net, device, valid_loader, multimodal)
+
+    assert 'loss' in metrics
+    print("--- Validation loss:\t%.4f" % metrics['loss'])
+    checkpoint_loss = [metrics['loss']]
 
 
     # Start training phase
@@ -92,9 +108,9 @@ def train(device, net, num_epochs, train_loader, train_loader_eval, valid_loader
                 net.opt.zero_grad()
 
                 if not multimodal:
-                    current_loss = net.compute_loss(data[0])
+                    current_loss = net.compute_loss(data[0].to(device))
                 else:
-                    current_loss = net.compute_loss(data[0][0], data[1][0])
+                    current_loss = net.compute_loss(data[0][0].to(device), data[1][0].to(device))
 
                 # Backward pass and optimize
                 current_loss.backward()
@@ -108,17 +124,9 @@ def train(device, net, num_epochs, train_loader, train_loader_eval, valid_loader
         # Evaluate all training set and validation set at epoch
         print("[*] Evaluating epoch %d..." % (epoch + 1))
 
-        for data in train_loader_eval:
-            if not multimodal:
-                metricsTrain = net.evaluate(data[0])
-            else:
-                metricsTrain = net.evaluate(data[0][0], data[1][0])
+        metricsTrain = evaluateUsingBatches(net, device, train_loader_eval, multimodal)
+        metricsValidation = evaluateUsingBatches(net, device, valid_loader, multimodal)
 
-        for data in valid_loader:
-            if not multimodal:
-                metricsValidation = net.evaluate(data[0])
-            else:
-                metricsValidation = net.evaluate(data[0][0], data[1][0])
 
         print("--- Training loss:\t%.4f" % metricsTrain['loss'])
         print("--- Validation loss:\t%.4f" % metricsValidation['loss'])

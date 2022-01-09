@@ -719,6 +719,9 @@ class CrossGeneratingVariationalAutoencoder(MultiOmicRepresentationLearner):
 			kl1 = -0.5 * torch.mean(torch.sum(1 + torch.log(z1std ** 2) - (z1mean ** 2) - (z1std ** 2), 1))
 			kl2 = -0.5 * torch.mean(torch.sum(1 + torch.log(z2std ** 2) - (z2mean ** 2) - (z2std ** 2), 1))
 
+			metrics['KL/1'] = kl1.item()
+			metrics['KL/2'] = kl2.item()
+
 
 			# likelihood/loss
 			if self.loss_fun == 'nll':
@@ -748,24 +751,24 @@ class CrossGeneratingVariationalAutoencoder(MultiOmicRepresentationLearner):
 			if self.decoder.lastActivation is None:
 				metrics['mse/1'] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(torch.sigmoid(x1_hat), x1), 1)).item()
 				metrics['mse/2'] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(torch.sigmoid(x2_hat), x2), 1)).item()
-				metrics['bce/1'] = torch.mean(torch.sum(torch.nn.BCEWithLogitsLoss(reduction='none')(x1_hat, x1), 1)).item()
-				metrics['bce/2'] = torch.mean(torch.sum(torch.nn.BCEWithLogitsLoss(reduction='none')(x2_hat, x2), 1)).item()
+				# metrics['bce/1'] = torch.mean(torch.sum(torch.nn.BCEWithLogitsLoss(reduction='none')(x1_hat, x1), 1)).item()
+				# metrics['bce/2'] = torch.mean(torch.sum(torch.nn.BCEWithLogitsLoss(reduction='none')(x2_hat, x2), 1)).item()
 
 				metrics['cross-mse/1'] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(torch.sigmoid(cross1_hat), x1), 1)).item()
 				metrics['cross-mse/2'] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(torch.sigmoid(cross2_hat), x2), 1)).item()
-				metrics['cross-bce/1'] = torch.mean(torch.sum(torch.nn.BCEWithLogitsLoss(reduction='none')(cross1_hat, x1), 1)).item()
-				metrics['cross-bce/2'] = torch.mean(torch.sum(torch.nn.BCEWithLogitsLoss(reduction='none')(cross2_hat, x2), 1)).item()
+				# metrics['cross-bce/1'] = torch.mean(torch.sum(torch.nn.BCEWithLogitsLoss(reduction='none')(cross1_hat, x1), 1)).item()
+				# metrics['cross-bce/2'] = torch.mean(torch.sum(torch.nn.BCEWithLogitsLoss(reduction='none')(cross2_hat, x2), 1)).item()
 
 			else:
 				metrics['mse/1'] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(x1_hat, x1), 1)).item()
 				metrics['mse/2'] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(x2_hat, x2), 1)).item()
-				metrics['bce/1'] = torch.mean(torch.sum(torch.nn.BCELoss(reduction='none')(x1_hat, x1), 1)).item()
-				metrics['bce/2'] = torch.mean(torch.sum(torch.nn.BCELoss(reduction='none')(x2_hat, x2), 1)).item()
+				# metrics['bce/1'] = torch.mean(torch.sum(torch.nn.BCELoss(reduction='none')(x1_hat, x1), 1)).item()
+				# metrics['bce/2'] = torch.mean(torch.sum(torch.nn.BCELoss(reduction='none')(x2_hat, x2), 1)).item()
 
 				metrics['cross-mse/1'] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(cross1_hat, x1), 1)).item()
 				metrics['cross-mse/2'] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(cross2_hat, x2), 1)).item()
-				metrics['cross-bce/1'] = torch.mean(torch.sum(torch.nn.BCELoss(reduction='none')(cross1_hat, x1), 1)).item()
-				metrics['cross-bce/2'] = torch.mean(torch.sum(torch.nn.BCELoss(reduction='none')(cross2_hat, x2), 1)).item()
+				# metrics['cross-bce/1'] = torch.mean(torch.sum(torch.nn.BCELoss(reduction='none')(cross1_hat, x1), 1)).item()
+				# metrics['cross-bce/2'] = torch.mean(torch.sum(torch.nn.BCELoss(reduction='none')(cross2_hat, x2), 1)).item()
 
 		metrics['loss'] = l1 + l2 + self.crossPenaltyCoef * (cl1 + cl2) + self.zconstraintCoef * similarityConstraint + self.beta * (kl1 + kl2)
 

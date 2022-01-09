@@ -113,7 +113,8 @@ def main() -> None:
             and not args.mvae_impute:
         run_baseline(config)
         run_mofa(config)
-        run_mvae(config, mixture=True, product=True)
+        run_poe(config)
+        run_moe(config)
         run_mvib(config)
         run_cgae(config)
         return
@@ -126,10 +127,12 @@ def main() -> None:
         run_mofa(config)
 
     if args.moe:
-        run_mvae(config, mixture=True)
+        assert 'MoE' in config
+        run_moe(config)
 
     if args.poe:
-        run_mvae(config, product=True)
+        assert 'PoE' in config
+        run_poe(config)
 
     if args.mvib:
         run_mvib(config)
@@ -174,38 +177,49 @@ def run_mofa(config: dict) -> None:
     logger.info("##########\n")
 
 
-def run_mvae(config: dict, mixture=False, product=False) -> None:
+def run_poe(config: dict) -> None:
     """
-    Setup and run MOFA+ module.
+    Setup and run product of experts.
 
     @param config: Dictionary containing input parameters
-    @param mixture: boolean flag that indicates whether the MVAE model is Mixture-of-Experts
-    @param product: boolean flag that indicates whether the MVAE model is Product-of-Experts
     @return: None
     """
-    from src.MVAE.train import run as mvae_model
+    from src.PoE.train import run as mvae_model
 
-    if mixture is True:
-        logger.info("\n##########")
-        logger.success("Running Mixture-of-Experts MVAE Model")
+    logger.info("\n##########")
+    logger.success("Running Product-of-Experts MVAE Model")
 
-        config['MVAE']['mixture'] = True
-        mvae_model({**config['GLOBAL_PARAMS'], **config['MVAE']})
-        logger.success("Finished running Mixture-of-Experts MVAE Model")
-        logger.info("##########\n")
-    if product is True:
-        logger.info("\n##########")
-        logger.success("Running Product-of-Experts MVAE Model")
 
-        config['MVAE']['mixture'] = False
-        mvae_model({**config['GLOBAL_PARAMS'], **config['MVAE']})
-        logger.success("Finished running Product-of-Experts MVAE Model")
-        logger.info("##########\n")
+    mvae_model({**config['GLOBAL_PARAMS'], **config['PoE']})
+    logger.success("Finished running Product-of-Experts MVAE Model")
+    logger.info("##########\n")
+
+
+
+def run_moe(config: dict) -> None:
+    """
+    Setup and run mixture of experts.
+
+    @param config: Dictionary containing input parameters
+    @return: None
+    """
+    from src.MoE.train import run as mvae_model
+
+    logger.info("\n##########")
+    logger.success("Running Mixture-of-Experts MVAE Model")
+
+    
+    mvae_model({**config['GLOBAL_PARAMS'], **config['MoE']})
+    logger.success("Finished running Mixture-of-Experts MVAE Model")
+    logger.info("##########\n")
+
+
+
 
 
 def run_mvib(config: dict) -> None:
     """
-    Setup and run MOFA+ module.
+    Setup and run multi-view info bottleneck.
 
     @param config: Dictionary containing input parameters
     @return: None
@@ -221,7 +235,7 @@ def run_mvib(config: dict) -> None:
 
 def run_cgae(config: dict) -> None:
     """
-    Setup and run MOFA+ module.
+    Setup and run CGVAE.
 
     @param config: Dictionary containing input parameters
     @return: None
