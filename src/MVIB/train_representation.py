@@ -167,7 +167,7 @@ def run(args: dict) -> None:
                 save_factorizations_to_csv(z2, sample_names, save_dir, 'task1_z2')
 
                 labels = np.load(args['labels']).astype(int)
-                test_labels = labeltypes[[labels[test_ind]]]
+                test_labels = labeltypes[tuple([labels[test_ind]])]
 
                 z1_plot = UMAPPlotter(z1, test_labels, "MVIB Z1: Task {} | {} & {} \n"
                                                        "Epochs: {}, Latent Dimension: {}, LR: {}, Batch size: {}"

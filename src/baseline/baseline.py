@@ -95,7 +95,7 @@ def classification(x_train, y_train, x_valid, y_valid, x_test, y_test, alphas, c
     validationPerformance = np.zeros(alphas.shape[0])
     models = []
     for i, a in enumerate(alphas):
-        model = LinearSVC(penalty='l2', loss='hinge', C=a, multi_class='ovr', fit_intercept=True, random_state=1)
+        model = LinearSVC(penalty='l2', loss='hinge', C=a, multi_class='ovr', fit_intercept=True, random_state=1, max_iter=10000)
 
         # train
         model.fit(x_train, y_train)
