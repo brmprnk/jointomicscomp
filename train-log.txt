@@ -2996,3 +2996,317 @@ Running the JointOmicsComp software - A compilation of multi-omic integration mo
 [1;32mSUCCESS: Running Mixture-of-Experts MVAE Model[0;0m
 [!] No checkpoint found, start epoch 0
 [*] Evaluating epoch 0...
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 16-01-2022 11:50:06[0;0m
+
+##########
+[1;32mSUCCESS: Running Mixture-of-Experts MVAE Model[0;0m
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 16-01-2022 11:52:12[0;0m
+
+##########
+[1;32mSUCCESS: Running Mixture-of-Experts MVAE Model[0;0m
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 16-01-2022 11:53:31[0;0m
+
+##########
+[1;32mSUCCESS: Running Mixture-of-Experts MVAE Model[0;0m
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 16-01-2022 11:56:27[0;0m
+
+##########
+[1;32mSUCCESS: Running Mixture-of-Experts MVAE Model[0;0m
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 16-01-2022 11:57:08[0;0m
+
+##########
+[1;32mSUCCESS: Running Mixture-of-Experts MVAE Model[0;0m
+[!] No checkpoint found, start epoch 0
+[*] Evaluating epoch 0...
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 16-01-2022 12:04:32[0;0m
+
+##########
+Selected device: cuda
+[1;32mSUCCESS: Initialized CrossGeneratingVariationalAutoencoder model.[0;0m
+CrossGeneratingVariationalAutoencoder(
+  (encoder): ProbabilisticFullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=3, out_features=4, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (encoder2): ProbabilisticFullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=3, out_features=4, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (decoder): FullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): Linear(in_features=2, out_features=3, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (loss_fun): MSELoss()
+  (decoder2): FullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): Linear(in_features=2, out_features=3, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (loss_fun2): MSELoss()
+)
+Number of model parameters: 
+62
+Loading training and validation data into CrossGeneratingVariationalAutoencoder...
+[!] No checkpoint found, start epoch 0
+[*] Evaluating epoch 0...
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 16-01-2022 12:05:45[0;0m
+
+##########
+Selected device: cuda
+[1;32mSUCCESS: Initialized CrossGeneratingVariationalAutoencoder model.[0;0m
+CrossGeneratingVariationalAutoencoder(
+  (encoder): ProbabilisticFullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=3, out_features=4, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (encoder2): ProbabilisticFullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=3, out_features=4, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (decoder): FullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): Linear(in_features=2, out_features=3, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (loss_fun): MSELoss()
+  (decoder2): FullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): Linear(in_features=2, out_features=3, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (loss_fun2): MSELoss()
+)
+Number of model parameters: 
+62
+Loading training and validation data into CrossGeneratingVariationalAutoencoder...
+[!] No checkpoint found, start epoch 0
+[*] Evaluating epoch 0...
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 16-01-2022 12:06:44[0;0m
+
+##########
+Selected device: cuda
+[1;32mSUCCESS: Initialized CrossGeneratingVariationalAutoencoder model.[0;0m
+CrossGeneratingVariationalAutoencoder(
+  (encoder): ProbabilisticFullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=3, out_features=4, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (encoder2): ProbabilisticFullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=3, out_features=4, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (decoder): FullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): Linear(in_features=2, out_features=3, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (loss_fun): MSELoss()
+  (decoder2): FullyConnectedModule(
+    (encode_layers): ModuleList(
+      (0): Linear(in_features=2, out_features=2, bias=True)
+      (1): Linear(in_features=2, out_features=3, bias=True)
+    )
+    (drop): Dropout(p=0.0, inplace=False)
+  )
+  (loss_fun2): MSELoss()
+)
+Number of model parameters: 
+62
+Loading training and validation data into CrossGeneratingVariationalAutoencoder...
+[!] No checkpoint found, start epoch 0
+[*] Evaluating epoch 0...
+dict_keys(['z-L2', 'z-L1', 'z-cos', 'z-W2', 'KL/1', 'KL/2', 'mse/1', 'mse/2', 'cross-mse/1', 'cross-mse/2', 'loss'])
+--- Training loss:	4902.5116
+--- Validation loss:	4978.1176
+[*] Start training...
+[*] Epoch 1...
+[*] Evaluating epoch 1...
+--- Training loss:	3834.7802
+--- Validation loss:	3901.9924
+EarlyStopping counter: 1 out of 10
+[*] Epoch 2...
+[*] Evaluating epoch 2...
+--- Training loss:	3151.3074
+--- Validation loss:	3067.4800
+[*] Epoch 3...
+[*] Evaluating epoch 3...
+--- Training loss:	2513.0115
+--- Validation loss:	2642.8782
+[*] Epoch 4...
+[*] Evaluating epoch 4...
+--- Training loss:	2142.2249
+--- Validation loss:	2153.2656
+[*] Epoch 5...
+[*] Evaluating epoch 5...
+--- Training loss:	1828.3507
+--- Validation loss:	1811.3133
+[*] Saving model epoch 5...
+[*] Finish training.
+Using model from epoch 5
+Imputation: Extracting Z1 and Z2 using test set
+Performance: {'mse': array([[ 0.        , 15.63581513],
+       [16.00049703,  0.        ]]), 'rsquared': array([[ 1.00000000e+00, -2.14241374e+04],
+       [-9.65890171e+01,  1.00000000e+00]]), 'spearman_corr': array([[[ 0.        ,  0.        ],
+        [-0.01167124, -0.00369767]],
+
+       [[-0.30655036, -0.30180955],
+        [ 0.        ,  0.        ]]]), 'spearman_p': array([[0.00000000e+00, 8.44441721e-01],
+       [4.74644239e-07, 0.00000000e+00]])}
+##########
+
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 16-01-2022 12:10:47[0;0m
+
+##########
+[1;32mSUCCESS: Running Mixture-of-Experts MVAE Model[0;0m
+[!] No checkpoint found, start epoch 0
+[*] Evaluating epoch 0...
+dict_keys(['z-L2', 'z-L1', 'z-cos', 'z-W2', 'KL/1', 'KL/2', 'mse/1', 'mse/2', 'cross-mse/1', 'cross-mse/2', 'loss'])
+--- Training loss:	224.1603
+--- Validation loss:	222.0962
+[*] Start training...
+[*] Epoch 1...
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 16-01-2022 13:03:42[0;0m
+
+##########
+[1;32mSUCCESS: Running Mixture-of-Experts MVAE Model[0;0m
+[!] No checkpoint found, start epoch 0
+[*] Evaluating epoch 0...
+dict_keys(['z-L2', 'z-L1', 'z-cos', 'z-W2', 'KL/1', 'KL/2', 'mse/1', 'mse/2', 'cross-mse/1', 'cross-mse/2', 'loss'])
+--- Training loss:	253.2815
+--- Validation loss:	251.0503
+[*] Start training...
+[*] Epoch 1...
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 16-01-2022 13:06:00[0;0m
+
+##########
+[1;32mSUCCESS: Running Mixture-of-Experts MVAE Model[0;0m
+[!] No checkpoint found, start epoch 0
+[*] Evaluating epoch 0...
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 16-01-2022 13:09:23[0;0m
+
+##########
+[1;32mSUCCESS: Running Mixture-of-Experts MVAE Model[0;0m
+[!] No checkpoint found, start epoch 0
+[*] Evaluating epoch 0...
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 16-01-2022 14:21:16[0;0m
+
+##########
+[1;32mSUCCESS: Running Mixture-of-Experts MVAE Model[0;0m
+[!] No checkpoint found, start epoch 0
+[*] Evaluating epoch 0...
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 16-01-2022 14:57:50[0;0m
+
+##########
+[1;32mSUCCESS: Running Mixture-of-Experts MVAE Model[0;0m
+[!] No checkpoint found, start epoch 0
+[*] Evaluating epoch 0...
+dict_keys(['loss'])
+--- Training loss:	0.0000
+--- Validation loss:	0.0000
+[*] Start training...
+[*] Epoch 1...
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 16-01-2022 14:58:38[0;0m
+
+##########
+[1;32mSUCCESS: Running Mixture-of-Experts MVAE Model[0;0m
+[!] No checkpoint found, start epoch 0
+[*] Evaluating epoch 0...
+dict_keys(['loss'])
+--- Training loss:	0.0000
+--- Validation loss:	0.0000
+[*] Start training...
+[*] Epoch 1...
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 16-01-2022 14:59:08[0;0m
+
+##########
+[1;32mSUCCESS: Running Mixture-of-Experts MVAE Model[0;0m
+[!] No checkpoint found, start epoch 0
+[*] Evaluating epoch 0...
+dict_keys(['loss'])
+--- Training loss:	0.0000
+--- Validation loss:	0.0000
+[*] Start training...
+[*] Epoch 1...
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 16-01-2022 15:00:29[0;0m
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 16-01-2022 15:00:47[0;0m
+
+##########
+[1;32mSUCCESS: Running Mixture-of-Experts MVAE Model[0;0m
+[!] No checkpoint found, start epoch 0
+[*] Evaluating epoch 0...
+dict_keys(['loss'])
+--- Training loss:	0.0000
+--- Validation loss:	0.0000
+[*] Start training...
+[*] Epoch 1...
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 18-01-2022 10:29:40[0;0m
+
+##########
+[1;32mSUCCESS: Now starting MVIB[0;0m
+Running the JointOmicsComp software - A compilation of multi-omic integration models.
+[1;32mSUCCESS: Starting Experiment : test[0;0m
+[1;32mSUCCESS: Saving to : /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/results/test v1v2 18-01-2022 10:32:31[0;0m
+
+##########
+Selected device: cuda

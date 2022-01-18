@@ -199,7 +199,7 @@ def run(args) -> None:
     train_dataset = tcga_data.get_data_partition("train")
     val_dataset = tcga_data.get_data_partition("val")
 
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args['batch_size'], shuffle=False)
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args['batch_size'], shuffle=True)
     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=len(val_dataset), shuffle=False)  # (1 batch)
 
     if args['pre_trained'] != "":

@@ -592,8 +592,8 @@ class CrossGeneratingAutoencoder(MultiOmicRepresentationLearner):
 
 
 class CrossGeneratingVariationalAutoencoder(MultiOmicRepresentationLearner):
-	def __init__(self, input_dim1, input_dim2, enc_hidden_dim=[100], dec_hidden_dim=[], loss1='bce', loss2='bce', use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder1_lr=1e-4, decoder1_lr=1e-4, enc1_lastActivation='none', enc1_outputScale=1., encoder2_lr=1e-4, decoder2_lr=1e-4, enc2_lastActivation='none', enc2_outputScale=1., beta=1.0, zconstraintCoef=1.0, crossPenaltyCoef=1.0):
-		super(CrossGeneratingVariationalAutoencoder, self).__init__(input_dim1, input_dim2, enc_hidden_dim, use_batch_norm, dropoutP, optimizer_name, True, encoder1_lr, enc1_lastActivation, enc1_outputScale, encoder2_lr, enc2_lastActivation, enc2_outputScale)
+	def __init__(self, input_dim1, input_dim2, enc_hidden_dim=[100], dec_hidden_dim=[], loss1='bce', loss2='bce', use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder1_lr=1e-4, decoder1_lr=1e-4, enc1_lastActivation='none', enc1_outputScale=1., encoder2_lr=1e-4, decoder2_lr=1e-4, enc2_lastActivation='none', enc2_outputScale=1., enc_distribution='normal', beta=1.0, zconstraintCoef=1.0, crossPenaltyCoef=1.0):
+		super(CrossGeneratingVariationalAutoencoder, self).__init__(input_dim1, input_dim2, enc_hidden_dim, use_batch_norm, dropoutP, optimizer_name, True, encoder1_lr, enc1_lastActivation, enc1_outputScale, encoder2_lr, enc2_lastActivation, enc2_outputScale, enc_distribution)
 
 		if loss1 == 'bce':
 			self.decoder = FullyConnectedModule(self.z_dim, dec_hidden_dim + [input_dim1], self._use_batch_norm, self._dropoutP, lastActivation='none')
@@ -778,90 +778,102 @@ class CrossGeneratingVariationalAutoencoder(MultiOmicRepresentationLearner):
 		z1, z2 = super().encode(x1, x2)
 		return z1.mean, z2.mean
 
-class SimCLR(MultiOmicRepresentationLearner):
-	def __init__(self, input_dim1, input_dim2, enc_hidden_dim=[100], mi_net_arch=[100, 20], use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder1_lr=1e-4, enc1_lastActivation='relu', enc1_outputScale=1., encoder2_lr=1e-4, enc2_lastActivation='relu', enc2_outputScale=1., mi_net_lr=1e-4, temperature=1.0):
-		super().__init__(input_dim1, input_dim2, enc_hidden_dim, use_batch_norm, dropoutP, optimizer_name, False, encoder1_lr, enc1_lastActivation, enc1_outputScale, encoder2_lr, enc2_lastActivation, enc2_outputScale)
 
-		self.MInet = FullyConnectedModule(self.z_dim, mi_net_arch, self._use_batch_norm, self._dropoutP, lastActivation='none')
+# Auxiliary network for mutual information estimation
+# change the default to only one hidden layer
+# in the future, make it possible to choose architecture (like OmicsEncoder)
 
+class MIEstimator(FullyConnectedModule):
+	def __init__(self, input_dim, arch, use_batch_norm, dropoutP, lastActivation):
+		super(MIEstimator, self).__init__(input_dim, arch, use_batch_norm, dropoutP, lastActivation)
+
+
+	# Gradient for JSD mutual information estimation and EB-based estimation
+	def forward(self, x1, x2):
+		pos = super(MIEstimator, self).forward(torch.cat([x1, x2], 1))  # Positive Samples
+		neg = super(MIEstimator, self).forward(torch.cat([torch.roll(x1, 1, 0), x2], 1))  # Negative Samples
+
+		print(pos.shape, neg.shape)
+
+		return -F.softplus(-pos).mean() - F.softplus(neg).mean(), pos.mean() - neg.exp().mean() + 1
+
+
+
+class MVIB(MultiOmicRepresentationLearner):
+	def __init__(self, input_dim1, input_dim2, enc_hidden_dim=[100], mi_net_arch=[100, 1], use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder1_lr=1e-4, enc1_lastActivation='none', enc1_outputScale=1., encoder2_lr=1e-4, enc2_lastActivation='none', enc2_outputScale=1., mi_net_lr=1e-4, beta=1.0):
+		super().__init__(input_dim1, input_dim2, enc_hidden_dim, use_batch_norm, dropoutP, optimizer_name, True, encoder1_lr, enc1_lastActivation, enc1_outputScale, encoder2_lr, enc2_lastActivation, enc2_outputScale)
+
+		if mi_net_arch[-1] != 1:
+			mi_net_arch.append(1)
+
+		self.beta = beta
+		self.MInet = MIEstimator(2 * self.z_dim, mi_net_arch, self._use_batch_norm, self._dropoutP, lastActivation='none')
 
 		self.opt.add_param_group({'params': self.MInet.parameters(), 'lr': mi_net_lr})
 
-		self.temp = temperature
-		self.expInvTemp = torch.exp(torch.tensor(1 / self.temp))
 
 	def compute_loss(self, x1, x2):
-		z1 = self.encoder(x1)
-		z2 = self.encoder2(x2)
+		p_z1_given_v1 = self.encoder(x1)
+		p_z2_given_v2 = self.encoder2(x2)
 
-		h1 = self.MInet(z1)
-		h2 = self.MInet(z2)
+		z1 = p_z1_given_v1.rsample()
+		z2 = p_z2_given_v2.rsample()
 
-		# scale to unit vectors
-		u1 = h1 / torch.norm(h1, dim=1).repeat(h1.shape[1], 1).T
-		u2 = h2 / torch.norm(h2, dim=1).repeat(h2.shape[1], 1).T
 
-		S11 = torch.matmul(u1, u1.T)
-		S12 = torch.matmul(u1, u2.T)
-		S22 = torch.matmul(u2, u2.T)
+		# Symmetrized Kullback-Leibler divergence
+		kl_1_2 = p_z1_given_v1.log_prob(z1) - p_z2_given_v2.log_prob(z1)
+		kl_2_1 = p_z2_given_v2.log_prob(z2) - p_z1_given_v1.log_prob(z2)
+		skl = (kl_1_2 + kl_2_1) / 2.
 
-		s1 = torch.sum(torch.exp(S11 / self.temp), 1)
-		s2 = torch.sum(torch.exp(S22 / self.temp), 1)
-		s12 = torch.sum(torch.exp(S12 / self.temp), 1)
-		s21 = torch.sum(torch.exp(S12 / self.temp), 0)
+		skl = torch.mean(torch.sum(skl, 1))
 
-		num = torch.exp(torch.diag(S12) / self.temp)
+		# Mutual information estimation
+		mi_gradient, mi_estimation = self.MInet(z1, z2)
+		# mi_gradient = mi_gradient.mean()
+		# mi_estimation = mi_estimation.mean()
 
-		negLossPerSample = torch.log(num / (s1 + s12 - self.expInvTemp)) + torch.log(num / (s2 + s21 - self.expInvTemp))
+		loss = - mi_gradient + self.beta * skl
 
-		loss = -0.5 * torch.mean(negLossPerSample)
 
 		return loss
 
 	def evaluate(self, x1, x2):
 		metrics = dict()
 		with torch.no_grad():
-			z1 = self.encoder(x1)
-			z2 = self.encoder2(x2)
+			p_z1_given_v1 = self.encoder(x1)
+			p_z2_given_v2 = self.encoder2(x2)
 
-			h1 = self.MInet(z1)
-			h2 = self.MInet(z2)
+			z1mean = p_z1_given_v1.mean
+			z2mean = p_z2_given_v2.mean
+			z1std = p_z1_given_v1.stddev
+			z2std = p_z2_given_v2.stddev
+			z1var = p_z1_given_v1.variance
+			z2var = p_z2_given_v2.variance
 
-			# scale to unit vectors
-			u1 = h1 / torch.norm(h1, dim=1).repeat(h1.shape[1], 1).T
-			u2 = h2 / torch.norm(h2, dim=1).repeat(h2.shape[1], 1).T
+			# compute the KL in closed form
+			metrics['KL_1_2'] = torch.mean(torch.sum(torch.log(z2std / z1std) + 0.5 * (z1var + (z1mean - z2mean) ** 2) / z2var - 0.5, 1))
+			metrics['KL_2_1'] = torch.mean(torch.sum(torch.log(z1std / z2std) + 0.5 * (z2var + (z2mean - z1mean) ** 2) / z1var - 0.5, 1))
 
-			S11 = torch.matmul(u1, u1.T)
-			S12 = torch.matmul(u1, u2.T)
-			S22 = torch.matmul(u2, u2.T)
+			metrics['SKL'] = 0.5 * (metrics['KL_1_2'] + metrics['KL_2_1'])
 
-			s1 = torch.sum(torch.exp(S11 / self.temp), 1)
-			s2 = torch.sum(torch.exp(S22 / self.temp), 1)
-			s12 = torch.sum(torch.exp(S12 / self.temp), 1)
-			s21 = torch.sum(torch.exp(S12 / self.temp), 0)
+			# using the means here
+			metrics['MI_grad'], metrics['MI_est'] = self.MInet(z1mean, z2mean)
 
-			num = torch.exp(torch.diag(S12) / self.temp)
+			metrics['loss'] = - metrics['MI_grad'] + self.beta * metrics['SKL']
 
-			negLossPerSample = torch.log(num / (s1 + s12 - self.expInvTemp)) + torch.log(num / (s2 + s21 - self.expInvTemp))
-
-			metrics['loss'] = -0.5 * torch.mean(negLossPerSample)
-
-			metrics['z-L2'] = nn.MSELoss(reduction='none')(z1, z2)
+			metrics['z-L2'] = nn.MSELoss(reduction='none')(z1mean, z2mean)
 			metrics['z-L2'] = torch.mean(torch.sum(metrics['z-L2'], 1)).item()
 
-			metrics['z-L1'] = nn.L1Loss(reduction='none')(z1, z2)
+			metrics['z-L1'] = nn.L1Loss(reduction='none')(z1mean, z2mean)
 			metrics['z-L1'] = torch.mean(torch.sum(metrics['z-L1'], 1)).item()
-			metrics['z-cos'] = torch.mean(1 - torch.cosine_similarity(z1, z2)).item()
+			metrics['z-cos'] = torch.mean(1 - torch.cosine_similarity(z1mean, z2mean)).item()
 
 		return metrics
 
-'''
-model = simCLR(500, 500)
-model2 = MultiOmicVAE(500, 500)
 
-x = torch.rand(200, 500)
-y = torch.rand(200, 500)
+if __name__ == '__main__':
+	model = MVIB(3, 3, enc_hidden_dim=[2])
+	#model2 = MultiOmicVAE(500, 500)
 
-z1 = model.encoder(x)
-z2 = model.encoder(y)
-'''
+	x1 = torch.rand(20, 3)
+	x2 = torch.rand(20, 3)

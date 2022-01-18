@@ -39,7 +39,7 @@ MoE:
   enc1_last_activation: 'none'
   enc2_last_activation: 'none'
   beta_start_value: 1.
-
+  K: 10
   plot: False     # Flag for plotting training and validation losses (loss, recon loss and KL loss)
 
   # Model optionsmain.yaml

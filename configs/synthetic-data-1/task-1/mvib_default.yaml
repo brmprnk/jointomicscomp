@@ -21,16 +21,13 @@ GLOBAL_PARAMS:
   test_ind: "synthetic-data/dataset1/testInd.npy"
 
 
-CGAE:
+MVIB:
   epochs: 5
   batch_size: 32
   latent_dim: 2
   clf_criterion: 'acc'
   enc1_lr: 0.0001
-  dec1_lr: 0.0001
   enc2_lr: 0.0001
-  dec2_lr: 0.0001
-  loss_function: 'mse'
   use_batch_norm: False
   dropout_probability: 0.0
   optimizer: 'Adam'
@@ -38,6 +35,4 @@ CGAE:
   enc2_output_scale: 1.
   enc1_last_activation: 'none'
   enc2_last_activation: 'none'
-  beta_start_value: 1.
-  zconstraintCoef: 1.
-  crossPenaltyCoef: 1.
+  beta: 1.

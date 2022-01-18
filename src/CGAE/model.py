@@ -39,28 +39,35 @@ def evaluateUsingBatches(net, device, dataloader, multimodal=False):
         if i == 0:
             if not multimodal:
                 x = trd[0].to(device)
-                metrics = net.evaluate(x) * x.shape[0]
+                metrics = net.evaluate(x)
+                for kk in metrics:
+                    metrics[kk] *= x.shape[0]
             else:
                 x1 = trd[0][0].to(device)
                 x2 = trd[1][0].to(device)
                 # evaluate method averages across samples, multiply with #samples to get total
-                metrics = net.evaluate(x1, x2) * x1.shape[0]
+                metrics = net.evaluate(x1, x2)
+                for kk in metrics:
+                    metrics[kk] *= x1.shape[0]
+
         else:
             # add intermediate metrics to total
             if not multimodal:
                 x = trd[0].to(device)
-                tmpmetrics = net.evaluate(x) * x.shape[0]
+                tmpmetrics = net.evaluate(x)
+                shape = x.shape[0]
             else:
                 x1 = trd[0][0].to(device)
                 x2 = trd[1][0].to(device)
-                tmpmetrics = net.evaluate(x1, x2) * x1.shape[0]
+                tmpmetrics = net.evaluate(x1, x2)
+                shape = x1.shape[0]
 
             for kk in metrics:
-                metrics[kk] += tmpmetrics[kk]
+                metrics[kk] += tmpmetrics[kk] * shape
 
         for kk in metrics:
             # now divide by total number of points to get the average across all samples
-            metrics[kk] /= len(train_loader_eval.dataset)
+            metrics[kk] /= len(dataloader.dataset)
 
     return metrics
 

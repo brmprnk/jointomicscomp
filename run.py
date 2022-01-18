@@ -208,7 +208,7 @@ def run_moe(config: dict) -> None:
     logger.info("\n##########")
     logger.success("Running Mixture-of-Experts MVAE Model")
 
-    
+
     mvae_model({**config['GLOBAL_PARAMS'], **config['MoE']})
     logger.success("Finished running Mixture-of-Experts MVAE Model")
     logger.info("##########\n")
@@ -225,6 +225,7 @@ def run_mvib(config: dict) -> None:
     @return: None
     """
     from src.MVIB.train_representation import run as mvib_model
+
 
     logger.info("\n##########")
 

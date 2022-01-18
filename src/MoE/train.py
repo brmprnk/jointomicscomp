@@ -11,7 +11,7 @@ import pickle
 from src.MoE.model import MixtureOfExperts
 import src.PoE.datasets as datasets
 from src.PoE.evaluate import impute
-from src.CGAE.model import train
+from src.CGAE.model import train, MultiOmicsDataset
 import src.util.logger as logger
 from src.util.early_stopping import EarlyStopping
 from src.util.umapplotter import UMAPPlotter
@@ -168,20 +168,48 @@ def run(args) -> None:
     # Define tensorboard logger
     # tf_logger = SummaryWriter(save_dir)
 
-    # Fetch Datasets
-    tcga_data = datasets.TCGAData(args, save_dir=save_dir)
-    train_dataset = tcga_data.get_data_partition("train")
-    val_dataset = tcga_data.get_data_partition("val")
+    # Load in data
+    omic1 = np.load(args['data_path1'])
+    omic2 = np.load(args['data_path2'])
+    labels = np.load(args['labels'])
+    labeltypes = np.load(args['labelnames'])
 
+    assert omic1.shape[0] == omic2.shape[0]
 
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args['batch_size'], shuffle=True)
-    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=len(val_dataset), shuffle=False)  # (1 batch)
+    # Use predefined split
+    train_ind = np.load(args['train_ind'])
+    val_ind = np.load(args['val_ind'])
+    test_ind = np.load(args['test_ind'])
+
+    omic1_train_file = omic1[train_ind]
+    omic1_val_file = omic1[val_ind]
+    omic1_test_file = omic1[test_ind]
+    omic2_train_file = omic2[train_ind]
+    omic2_val_file = omic2[val_ind]
+    omic2_test_file = omic2[test_ind]
+
+    ytrain = labels[train_ind]
+    yvalid = labels[val_ind]
+    ytest = labels[test_ind]
+
+    dataTrain1 = torch.tensor(omic1_train_file, device=device)
+    dataTrain2 = torch.tensor(omic2_train_file, device=device)
+
+    dataValidation1 = torch.tensor(omic1_val_file, device=device)
+    dataValidation2 = torch.tensor(omic2_val_file, device=device)
+
+    datasetTrain = MultiOmicsDataset(dataTrain1, dataTrain2)
+    datasetValidation = MultiOmicsDataset(dataValidation1, dataValidation2)
+
+    train_loader = torch.utils.data.DataLoader(datasetTrain, batch_size=args['batch_size'], shuffle=True, num_workers=0, drop_last=False)
+    val_loader = torch.utils.data.DataLoader(datasetValidation, batch_size=dataValidation1.shape[0], shuffle=False, num_workers=0, drop_last=False)
+
     if args['train_loader_eval_batch_size'] > 0:
         trnEvalBatchSize = args['train_loader_eval_batch_size']
     else:
         trnEvalBatchSize = len(train_dataset)
 
-    train_loader_eval = torch.utils.data.DataLoader(train_dataset, batch_size=trnEvalBatchSize, shuffle=False)
+    train_loader_eval = torch.utils.data.DataLoader(datasetTrain, batch_size=trnEvalBatchSize, shuffle=False)
 
     if args['pre_trained'] != "":
         logger.info("Using Pre-Trained MVAE found at {}".format(args['pre_trained']))
@@ -208,7 +236,7 @@ def run(args) -> None:
          args['dropout_probability'], args['optimizer'], args['enc1_lr'], args['dec1_lr'],
          args['enc1_last_activation'], args['enc1_output_scale'],
          args['enc2_lr'], args['dec2_lr'], args['enc2_last_activation'],
-         args['enc1_output_scale'], args['beta_start_value'])
+         args['enc1_output_scale'], args['beta_start_value'], args['K'])
 
         model.double()
         if device == torch.device('cuda'):
@@ -269,7 +297,9 @@ def run(args) -> None:
 
         logger.info("Task 1 Imputation: Extracting Z using test set")
 
-        impute_dataset = tcga_data.get_data_partition("test")
+        dataTest1 = torch.tensor(omic1_test_file, device=device)
+        dataTest2 = torch.tensor(omic2_test_file, device=device)
+
 
         # 1 batch (whole test set)
         impute_loader = torch.utils.data.DataLoader(impute_dataset, batch_size=len(impute_dataset), shuffle=False)
