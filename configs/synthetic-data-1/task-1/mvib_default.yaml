@@ -24,10 +24,11 @@ GLOBAL_PARAMS:
 MVIB:
   epochs: 5
   batch_size: 32
-  latent_dim: 2
+  latent_dim: '2'
   clf_criterion: 'acc'
   enc1_lr: 0.0001
   enc2_lr: 0.0001
+  mi_net_lr: 0.0001
   use_batch_norm: False
   dropout_probability: 0.0
   optimizer: 'Adam'
@@ -35,4 +36,5 @@ MVIB:
   enc2_output_scale: 1.
   enc1_last_activation: 'none'
   enc2_last_activation: 'none'
+  mi_net_arch: '100-1'
   beta: 1.

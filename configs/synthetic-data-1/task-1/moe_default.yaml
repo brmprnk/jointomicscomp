@@ -25,7 +25,7 @@ MoE:
   epochs: 5
   batch_size: 32
   train_loader_eval_batch_size: 2400
-  latent_dim: 2
+  latent_dim: '2'
   enc1_lr: 0.0001
   dec1_lr: 0.0001
   enc2_lr: 0.0001

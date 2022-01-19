@@ -54,15 +54,16 @@ def run(args: dict) -> None:
     assert input_dim1 == omic1.shape[1]
     assert input_dim2 == omic2.shape[1]
 
-    encoder_layers = [args['latent_dim']]
-    decoder_layers = [args['latent_dim']]
+    encoder_layers = [int(kk) for kk in args['latent_dim'].split('-')]
+    decoder_layers = encoder_layers[::-1][1:]
+
 
     # Initialize network model
     net = CrossGeneratingVariationalAutoencoder(input_dim1, input_dim2, encoder_layers, decoder_layers, args['loss_function'],
                        args['loss_function'],
                        args['use_batch_norm'], args['dropout_probability'], args['optimizer'], args['enc1_lr'],
                        args['dec1_lr'], args['enc1_last_activation'], args['enc1_output_scale'], args['enc2_lr'],
-                       args['dec2_lr'], args['enc2_last_activation'], args['enc1_output_scale'],
+                       args['dec2_lr'], args['enc2_last_activation'], args['enc2_output_scale'],
                        args['beta_start_value'],
                        args['zconstraintCoef'], args['crossPenaltyCoef']).to(device)
 
