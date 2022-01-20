@@ -119,6 +119,12 @@ def run(args: dict) -> None:
     assert os.path.exists(modelCheckpoint)
 
 
+    if args['task'] == 0:
+        lossDict = {'epoch': bestEpoch, 'val_loss': np.min(cploss)}
+        with open(save_dir + '/finalValidationLoss.pkl', 'wb') as f:
+            pickle.dump(lossDict, f)
+
+
 
     # Imputation
     if args['task'] == 1:

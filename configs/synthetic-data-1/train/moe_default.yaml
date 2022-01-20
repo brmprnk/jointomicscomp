@@ -1,0 +1,47 @@
+GLOBAL_PARAMS:
+  name: "experiment"
+  task: 1
+  num_features1: 3
+  num_features2: 3
+  cuda: true
+  random_seed: 1
+  log_save_interval: 5
+  early_stopping_patience: 10 # If set to 0 or <0, early stopping is turned off.
+  data1: "v1"
+  data2: "v2"
+  data_path1: "synthetic-data/dataset1/view1.npy"
+  data_path2: "synthetic-data/dataset1/view2.npy"
+  data_features1: "synthetic-data/dataset1/view1_features.npy"
+  data_features2: "synthetic-data/dataset1/view2_features.npy"
+  sample_names: "synthetic-data/dataset1/samples.npy"
+  labels: "synthetic-data/dataset1/labels.npy"
+  labelnames: "synthetic-data/dataset1/labelnames.npy"
+  train_ind: "synthetic-data/dataset1/trainInd.npy"
+  val_ind: "synthetic-data/dataset1/validInd.npy"
+  test_ind: "synthetic-data/dataset1/testInd.npy"
+
+
+MoE:
+  epochs: 5
+  batch_size: 32
+  train_loader_eval_batch_size: 2400
+  latent_dim: '2'
+  enc1_lr: 0.0001
+  dec1_lr: 0.0001
+  enc2_lr: 0.0001
+  dec2_lr: 0.0001
+  loss_function: 'mse'
+  use_batch_norm: False
+  dropout_probability: 0.0
+  optimizer: 'Adam'
+  enc1_output_scale: 1.
+  enc2_output_scale: 1.
+  enc1_last_activation: 'none'
+  enc2_last_activation: 'none'
+  beta_start_value: 1.
+  K: 10
+  plot: False     # Flag for plotting training and validation losses (loss, recon loss and KL loss)
+
+  # Model optionsmain.yaml
+  pre_trained: ""
+  lr: 0.0001

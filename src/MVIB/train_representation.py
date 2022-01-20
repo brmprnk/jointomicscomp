@@ -118,6 +118,9 @@ def run(args: dict) -> None:
     assert os.path.exists(modelCheckpoint)
 
 
+    if args['task'] == 0:
+        return np.min(cploss), bestEpoch
+
 
     # Load in data, depending on task
 
