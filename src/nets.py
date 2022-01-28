@@ -123,7 +123,7 @@ class ProbabilisticFullyConnectedModule(FullyConnectedModule):
 			self.p2Transform = torch.exp
 			self.D = torch.distributions.Laplace
 		else:
-			raise NotImplementedError('Supported: \'normal\' or \'beta\'')
+			raise NotImplementedError('%s not supported. Use: \'normal\' or \'beta\'' % self.distribution)
 
 		if self.distribution != 'cbernoulli':
 			self.z_dim = self.z_dim // 2

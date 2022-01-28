@@ -86,11 +86,10 @@ def main() -> None:
     dt_string = now.strftime("%d-%m-%Y %H:%M:%S")
     if args.experiment != "experiment":
         config['GLOBAL_PARAMS']['name'] = args.experiment
-    save_dir = os.path.join(ROOT_DIR, 'results', '{} {}{} {}'
+    save_dir = os.path.join(ROOT_DIR, 'results', '{}_{}_{}'
                             .format(config['GLOBAL_PARAMS']['name'],
                                     config['GLOBAL_PARAMS']['data1'],
-                                    config['GLOBAL_PARAMS']['data2'],
-                                    dt_string))
+                                    config['GLOBAL_PARAMS']['data2']))
     os.makedirs(save_dir)
     config['GLOBAL_PARAMS']['save_dir'] = save_dir
     config['GLOBAL_PARAMS']['ROOT_DIR'] = ROOT_DIR

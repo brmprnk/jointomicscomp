@@ -150,3 +150,8 @@ dmypy.json
 # slurm output files
 *.out
 
+# config files
+configs/synthetic-data-1/
+configs/tcga/MECNV/
+configs/tcga/GECNV/
+

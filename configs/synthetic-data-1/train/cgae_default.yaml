@@ -1,5 +1,5 @@
 GLOBAL_PARAMS:
-  name: "experiment"
+  name: "train-synthetic1-cgae"
   task: 0
   num_features1: 3
   num_features2: 3
@@ -22,7 +22,7 @@ GLOBAL_PARAMS:
 
 
 CGAE:
-  epochs: 400
+  epochs: 500
   batch_size: 32
   latent_dim: '2'
   clf_criterion: 'acc'
@@ -41,3 +41,4 @@ CGAE:
   beta_start_value: 1.
   zconstraintCoef: 1.
   crossPenaltyCoef: 1.
+  enc_distribution: 'normal'

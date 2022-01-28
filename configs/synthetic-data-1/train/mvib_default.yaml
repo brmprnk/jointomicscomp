@@ -1,5 +1,5 @@
 GLOBAL_PARAMS:
-  name: "experiment"
+  name: "train-synthetic1-mvib"
   task: 0
   num_features1: 3
   num_features2: 3
@@ -22,7 +22,7 @@ GLOBAL_PARAMS:
 
 
 MVIB:
-  epochs: 400
+  epochs: 500
   batch_size: 32
   latent_dim: '2'
   clf_criterion: 'acc'
@@ -38,3 +38,4 @@ MVIB:
   enc2_last_activation: 'none'
   mi_net_arch: '100-1'
   beta: 1.
+  enc_distribution: 'normal'

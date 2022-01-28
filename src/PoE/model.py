@@ -19,20 +19,22 @@ class PoE(nn.Module):
         device = torch.device('cuda') if torch.cuda.is_available() and args['cuda'] else torch.device('cpu')
         self.to(device)
 
-        latent_dim = args['latent_dim']
+
+        latent_dim = [int(k) for k in args['latent_dim'].split('-')]
+
         # define q(z|x_i) for i = 1...2
-        self.omic1_encoder = Encoder(latent_dim, args['num_features1'], device)
-        self.omic2_encoder = Encoder(latent_dim, args['num_features2'], device)
+        self.omic1_encoder = Encoder(latent_dim[-1], args['num_features1'], latent_dim[:-1], device, args['dropout_probability'], args['use_batch_norm'])
+        self.omic2_encoder = Encoder(latent_dim[-1], args['num_features2'], latent_dim[:-1], device, args['dropout_probability'], args['use_batch_norm'])
 
         # define p(x_i|z) for i = 1...2
-        self.omic1_decoder = Decoder(latent_dim, args['num_features1'], device)
-        self.omic2_decoder = Decoder(latent_dim, args['num_features2'], device)
+        self.omic1_decoder = Decoder(latent_dim[-1], args['num_features1'], latent_dim[:-1][::-1], device, args['dropout_probability'], args['use_batch_norm'])
+        self.omic2_decoder = Decoder(latent_dim[-1], args['num_features2'], latent_dim[:-1][::-1], device, args['dropout_probability'], args['use_batch_norm'])
 
         # define q(z|x) = q(z|x_1)...q(z|x_6)
         self.experts = ProductOfExperts()
         # use MMVAE model for MoE
 
-        self.latent_dim = latent_dim
+        self.latent_dim = latent_dim[-1]
         self.use_cuda = args['cuda']
         self.training = False
 
@@ -107,26 +109,42 @@ class Encoder(nn.Module):
                       number of latent dimensions
     """
 
-    def __init__(self, latent_dim, num_features, device):
+    def __init__(self, latent_dim, num_features, hidden_dims, device, dropoutP=0., use_batch_norm=True):
         super(Encoder, self).__init__()
 
         self.to(device)
 
         input_size = num_features
-        hidden_dims = [latent_dim]
+
 
         modules = []
-        if hidden_dims is None:
-            hidden_dims = [256]
 
-        for h_dim in hidden_dims:
-            modules.append(
-                nn.Sequential(
-                    nn.Linear(input_size, h_dim),
-                    nn.BatchNorm1d(h_dim),
-                    nn.ReLU()
+        if use_batch_norm:
+            for h_dim in hidden_dims:
+                modules.append(
+                    nn.Sequential(
+                        nn.Dropout(dropoutP),
+                        nn.Linear(input_size, h_dim),
+                        nn.BatchNorm1d(h_dim),
+                        nn.ReLU()
+                    )
                 )
-            )
+                input_size = h_dim
+        else:
+            for h_dim in hidden_dims:
+                modules.append(
+                    nn.Sequential(
+                        nn.Dropout(dropoutP),
+                        nn.Linear(input_size, h_dim),
+                        nn.ReLU()
+                    )
+                )
+                input_size = h_dim
+
+
+        if len(hidden_dims) == 0:
+            hidden_dims = [input_size]
+
 
         self.encoder = nn.Sequential(*modules)
 
@@ -156,21 +174,45 @@ class Decoder(nn.Module):
                       number of latent dimension
     """
 
-    def __init__(self, latent_dim, num_features, device):
+    def __init__(self, latent_dim, num_features, hidden_dims, device, dropoutP=0., use_batch_norm=True):
         super(Decoder, self).__init__()
         self.to(device)
 
-        input_size = num_features
-        hidden_dims = [latent_dim]
+        input_size = latent_dim
 
-        self.decoder = nn.Sequential(
-            nn.Linear(latent_dim, hidden_dims[-1]),
-            nn.BatchNorm1d(hidden_dims[-1]),
-            nn.ReLU()
-        )
+
+        modules = []
+
+        if use_batch_norm:
+            for h_dim in hidden_dims:
+                modules.append(
+                    nn.Sequential(
+                        nn.Dropout(dropoutP),
+                        nn.Linear(input_size, h_dim),
+                        nn.BatchNorm1d(h_dim),
+                        nn.ReLU()
+                    )
+                )
+                input_size = h_dim
+        else:
+            for h_dim in hidden_dims:
+                modules.append(
+                    nn.Sequential(
+                        nn.Dropout(dropoutP),
+                        nn.Linear(input_size, h_dim),
+                        nn.ReLU()
+                    )
+                )
+                input_size = h_dim
+
+
+        if len(hidden_dims) == 0:
+            hidden_dims = [input_size]
+
+        self.decoder = nn.Sequential(*modules)
+
         self.final_layer = nn.Sequential(
-            nn.Linear(hidden_dims[-1], input_size),
-            nn.Sigmoid())
+            nn.Linear(hidden_dims[-1], num_features))
 
     def forward(self, z):
         # the input will be a vector of size |latent_dim|

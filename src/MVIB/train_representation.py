@@ -3,7 +3,7 @@ import os
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
-from tqdm import tqdm
+
 
 from src.nets import MVIB
 from src.CGAE.model import train, extract, MultiOmicsDataset
@@ -13,7 +13,7 @@ from src.util.umapplotter import UMAPPlotter
 from tensorboardX import SummaryWriter
 from src.util.early_stopping import EarlyStopping
 from src.util.evaluate import save_factorizations_to_csv
-
+import pickle
 
 def run(args: dict) -> None:
     logger.success("Now starting MVIB")
@@ -112,14 +112,20 @@ def run(args: dict) -> None:
 
     # find best checkpoint based on the validation loss
     bestEpoch = args['log_save_interval'] * np.argmin(cploss)
+    print(bestEpoch)
+
+    if bestEpoch == 0:
+        logger.info('WARNING!!! Training failed! Epoch 0 has the lowest loss.')
 
     logger.info("Using model from epoch %d" % bestEpoch)
     modelCheckpoint = ckpt_dir + '/model_epoch%d.pth.tar' % (bestEpoch)
-    assert os.path.exists(modelCheckpoint)
+    assert os.path.exists(modelCheckpoint), 'missing saved model epoch %d' % bestEpoch
 
 
     if args['task'] == 0:
-        return np.min(cploss), bestEpoch
+        lossDict = {'epoch': bestEpoch, 'val_loss': np.min(cploss)}
+        with open(save_dir + '/finalValidationLoss.pkl', 'wb') as f:
+            pickle.dump(lossDict, f)
 
 
     # Load in data, depending on task

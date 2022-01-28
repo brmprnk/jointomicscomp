@@ -63,7 +63,7 @@ def run(args: dict) -> None:
                        args['loss_function'],
                        args['use_batch_norm'], args['dropout_probability'], args['optimizer'], args['enc1_lr'],
                        args['dec1_lr'], args['enc1_last_activation'], args['enc1_output_scale'], args['enc2_lr'],
-                       args['dec2_lr'], args['enc2_last_activation'], args['enc2_output_scale'],
+                       args['dec2_lr'], args['enc2_last_activation'], args['enc2_output_scale'], args['enc_distribution'],
                        args['beta_start_value'],
                        args['zconstraintCoef'], args['crossPenaltyCoef']).to(device)
 

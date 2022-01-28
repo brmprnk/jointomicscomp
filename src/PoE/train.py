@@ -29,6 +29,11 @@ def loss_function(recon_omic1, omic1, recon_omic2, omic2, mu, log_var, kld_weigh
     :return:
     """
     # Reconstruction loss
+    with open('deleteme.txt', 'w') as fw:
+        fw.write('Omic1: %d x %d\n' % (omic1.shape[0], omic1.shape[1]))
+        fw.write('Omic1 rec: %d x %d\n' % (recon_omic1.shape[0], recon_omic1.shape[1]))
+
+
     recons_loss = 0
     if recon_omic1 is not None and omic1 is not None:
         recons_loss += F.mse_loss(recon_omic1, omic1)
@@ -63,7 +68,7 @@ def train(args, model, train_loader, optimizer, epoch, tf_logger):
     model = model.double()
     model.train()
 
-    progress_bar = tqdm(total=len(train_loader))
+    #progress_bar = tqdm(total=len(train_loader))
     train_loss_per_batch = np.zeros(len(train_loader))
     train_recon_loss_per_batch = np.zeros(len(train_loader))
     train_kl_loss_per_batch = np.zeros(len(train_loader))
@@ -114,9 +119,9 @@ def train(args, model, train_loader, optimizer, epoch, tf_logger):
         train_loss.backward()
         optimizer.step()
 
-        progress_bar.update()
+        #progress_bar.update()
 
-    progress_bar.close()
+    #progress_bar.close()
     if epoch % args['log_save_interval'] == 0:
         tf_logger.add_scalar("train loss", train_loss_per_batch.mean(), epoch)
         tf_logger.add_scalar("train reconstruction loss", train_recon_loss_per_batch.mean(), epoch)
@@ -130,9 +135,17 @@ def train(args, model, train_loader, optimizer, epoch, tf_logger):
 def test(args, model, val_loader, optimizer, epoch, tf_logger):
     model.training = False
     model.eval()
-    validation_loss = 0
-    validation_recon_loss = 0
-    validation_kl_loss = 0
+    validation_joint_loss = 0
+    validation_joint_recon_loss = 0
+    validation_joint_kl_loss = 0
+
+    validation_omic1_loss = 0
+    validation_omic1_recon_loss = 0
+    validation_omic1_kl_loss = 0
+
+    validation_omic2_loss = 0
+    validation_omic2_recon_loss = 0
+    validation_omic2_kl_loss = 0
 
 
     for batch_idx, (omic1, omic2) in enumerate(val_loader):
@@ -141,8 +154,15 @@ def test(args, model, val_loader, optimizer, epoch, tf_logger):
             omic1 = omic1.cuda()
             omic2 = omic2.cuda()
 
-        # for ease, only compute the joint loss in validation
-        (joint_recon_omic1, joint_recon_omic2, joint_mu, joint_logvar) = model.forward(omic1, omic2)
+        with torch.no_grad():
+            (joint_recon_omic1, joint_recon_omic2, joint_mu, joint_logvar) = model.forward(omic1, omic2)
+
+            # compute reconstructions using each of the individual modalities
+            (omic1_recon_omic1, omic1_recon_omic2, omic1_mu, omic1_logvar) = model.forward(omic1=omic1)
+
+            (omic2_recon_omic1, omic2_recon_omic2, omic2_mu, omic2_logvar) = model.forward(omic2=omic2)
+
+
 
         kld_weight = len(omic1) / len(val_loader.dataset)  # Account for the minibatch samples from the dataset
 
@@ -151,23 +171,56 @@ def test(args, model, val_loader, optimizer, epoch, tf_logger):
                                         joint_recon_omic2, omic2,
                                         joint_mu, joint_logvar, kld_weight)
 
-        validation_loss += joint_test_loss['loss']
-        validation_recon_loss += joint_test_loss['Reconstruction_Loss']
-        validation_kl_loss += joint_test_loss['KLD']
+        omic1_test_loss = loss_function(omic1_recon_omic1, omic1,
+                                        omic1_recon_omic2, omic2,
+                                        omic1_mu, omic1_logvar, kld_weight)
 
-    validation_loss /= len(val_loader)
-    validation_recon_loss /= len(val_loader)
-    validation_kl_loss /= len(val_loader)
+        omic2_test_loss = loss_function(omic2_recon_omic1, omic1,
+                                        omic2_recon_omic2, omic2,
+                                        omic2_mu, omic2_logvar, kld_weight)
 
-    if epoch % args['log_save_interval'] == 0:
 
-        tf_logger.add_scalar("validation loss", validation_loss, epoch)
-        tf_logger.add_scalar("validation reconstruction loss", validation_recon_loss, epoch)
-        tf_logger.add_scalar("validation KL loss", validation_kl_loss, epoch)
+        validation_joint_loss += joint_test_loss['loss']
+        validation_joint_recon_loss += joint_test_loss['Reconstruction_Loss']
+        validation_joint_kl_loss += joint_test_loss['KLD']
 
-        print('====> Epoch: {}\tValidation Loss: {:.4f}'.format(epoch, validation_loss))
-        print('====> Epoch: {}\tReconstruction Loss: {:.4f}'.format(epoch, validation_recon_loss))
-        print('====> Epoch: {}\tKLD Loss: {:.4f}'.format(epoch, validation_kl_loss))
+        validation_omic1_loss += omic1_test_loss['loss']
+        validation_omic1_recon_loss += omic1_test_loss['Reconstruction_Loss']
+        validation_omic1_kl_loss += omic1_test_loss['KLD']
+
+        validation_omic2_loss += omic2_test_loss['loss']
+        validation_omic2_recon_loss += omic2_test_loss['Reconstruction_Loss']
+        validation_omic2_kl_loss += omic2_test_loss['KLD']
+
+    validation_joint_loss /= len(val_loader)
+    validation_joint_recon_loss /= len(val_loader)
+    validation_joint_kl_loss /= len(val_loader)
+
+    validation_omic1_loss /= len(val_loader)
+    validation_omic1_recon_loss /= len(val_loader)
+    validation_omic1_kl_loss /= len(val_loader)
+
+    validation_omic2_loss /= len(val_loader)
+    validation_omic2_recon_loss /= len(val_loader)
+    validation_omic2_kl_loss /= len(val_loader)
+
+    if epoch > 0:
+        tf_logger.add_scalar("loss/joint/validation", validation_joint_loss, epoch)
+        tf_logger.add_scalar("mse/joint/validation", validation_joint_recon_loss, epoch)
+        tf_logger.add_scalar("KL/joint/validation", -1 * validation_joint_kl_loss, epoch)
+
+        tf_logger.add_scalar("loss/1/validation", validation_omic1_loss, epoch)
+        tf_logger.add_scalar("mse/1/validation", validation_omic1_recon_loss, epoch)
+        tf_logger.add_scalar("KL/1/validation", -1 * validation_omic1_kl_loss, epoch)
+
+        tf_logger.add_scalar("loss/2/validation", validation_omic2_loss, epoch)
+        tf_logger.add_scalar("mse/2/validation", validation_omic2_recon_loss, epoch)
+        tf_logger.add_scalar("KL/2/validation", -1 * validation_omic2_kl_loss, epoch)
+
+    validation_loss = validation_joint_loss + validation_omic1_loss + validation_omic2_loss
+
+    print('====> Epoch: {}\tValidation Loss: {:.4f}'.format(epoch, validation_loss))
+
 
     return validation_loss
 
@@ -221,6 +274,8 @@ def run(args) -> None:
         else:
             args['cuda'] = False
 
+        model.double()
+
         # Log Data shape, input arguments and model
         model_file = open("{}/PoE {} Model.txt".format(save_dir, 'PoE'), "a")
         model_file.write("Running at {}\n".format(datetime.now().strftime("%d-%m-%Y %H:%M:%S")))
@@ -230,8 +285,11 @@ def run(args) -> None:
         model_file.write("PoE Model : {}".format(model))
         model_file.close()
 
+
         # Preparation for training
         optimizer = optim.Adam(model.parameters(), lr=args['lr'])
+
+        checkpoint_loss = [test(args, model, val_loader, optimizer, 0, tf_logger)]
 
         # Setup early stopping, terminates training when validation loss does not improve for early_stopping_patience epochs
         early_stopping = EarlyStopping(patience=args['early_stopping_patience'], verbose=True)
@@ -251,6 +309,7 @@ def run(args) -> None:
                     'batch_size': args['batch_size'],
                     'optimizer': optimizer.state_dict(),
                 }, epoch, save_dir)
+                checkpoint_loss.append(validation_loss)
 
             early_stopping(validation_loss)
 
@@ -261,8 +320,26 @@ def run(args) -> None:
                 args['epochs'] = epoch  # Update nr of epochs for plots
                 break
 
+
+    logger.success("Finished training PoE model.")
+
+    # find best checkpoint based on the validation loss
+    bestEpoch = args['log_save_interval'] * np.argmin(checkpoint_loss)
+
+    logger.info("Using model from epoch %d" % bestEpoch)
+    modelCheckpoint = ckpt_dir + '/model_epoch%d.pth.tar' % (bestEpoch)
+    assert os.path.exists(modelCheckpoint)
+
+
     # Extract Phase #
-    logger.success("Finished training PoE model. Now calculating task results.")
+
+    if args['task'] == 0:
+        lossDict = {'epoch': bestEpoch, 'val_loss': np.min(checkpoint_loss)}
+        with open(save_dir + '/finalValidationLoss.pkl', 'wb') as f:
+            pickle.dump(lossDict, f)
+
+
+
 
     # Imputation
     if args['task'] == 1:

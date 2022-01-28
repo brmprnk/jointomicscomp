@@ -6,7 +6,7 @@
 #SBATCH --time=00:30:00
 #SBATCH --job-name=trainJoint
 #SBATCH --mail-user=stavrosmakrodi
-#SBATCH --mail-type=ALL
+#SBATCH --mail-type=FAIL
 
 ## $1: config file, default: configs/geme.yaml
 ## $2: which model to run, default: all!
@@ -30,8 +30,8 @@ TRAIN_LOG="train-log.txt";
 if [ $# -eq 1 ];
 then
   # no model specified, run all
-  python run.py --experiment='test' --config=${CONFIG_FILE} >> ${TRAIN_LOG};
+  python run.py --experiment='experiment' --config=${CONFIG_FILE} >> ${TRAIN_LOG};
 else
 
-  python run.py --experiment='test' --config=${CONFIG_FILE} -$2 >> ${TRAIN_LOG};
+  python run.py --experiment='experiment' --config=${CONFIG_FILE} -$2 >> ${TRAIN_LOG};
 fi;
