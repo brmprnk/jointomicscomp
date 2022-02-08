@@ -152,9 +152,9 @@ dmypy.json
 
 # config files
 configs/synthetic-data-1/
-configs/tcga/MECNV/
-configs/tcga/GECNV/
-configs/tcga/GEME/
+configs/tcga/MECNV/*.yaml
+configs/tcga/GECNV/*.yaml
+configs/tcga/GEME/*.yaml
 
 !configs/tcga/GEME/*_default.yaml
 !configs/tcga/GEME/*.py
