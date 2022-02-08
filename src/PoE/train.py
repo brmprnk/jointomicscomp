@@ -60,7 +60,7 @@ def save_checkpoint(state, epoch, save_dir):
     @return: None
     """
     # Save checkpoint
-    torch.save(state, os.path.join(save_dir, 'trained_model_epoch{}.pth.tar'.format(epoch)))
+    torch.save(state, os.path.join(save_dir, 'model_epoch{}.pth.tar'.format(epoch)))
 
 
 def train(args, model, train_loader, optimizer, epoch, tf_logger):
@@ -241,11 +241,15 @@ def run(args) -> None:
     # torch.manual_seed(args['random_seed'])
     # np.random.seed(args['random_seed'])
 
-    save_dir = os.path.join(args['save_dir'], 'PoE')
+    save_dir = os.path.join(args['save_dir'], 'PoE/')
     os.makedirs(save_dir)
 
     # Define tensorboard logger
-    tf_logger = SummaryWriter(save_dir)
+    tf_logger = SummaryWriter(save_dir + '/logs')
+    ckpt_dir = save_dir + '/checkpoint'
+    if not os.path.exists(ckpt_dir):
+        os.makedirs(ckpt_dir)
+
 
     # Fetch Datasets
     tcga_data = datasets.TCGAData(args, save_dir=save_dir)
@@ -253,7 +257,8 @@ def run(args) -> None:
     val_dataset = tcga_data.get_data_partition("val")
 
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args['batch_size'], shuffle=True)
-    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=len(val_dataset), shuffle=False)  # (1 batch)
+    #val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=len(val_dataset), shuffle=False)  # (1 batch)
+    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=args['batch_size'], shuffle=False)  #
 
     if args['pre_trained'] != "":
         logger.info("Using Pre-Trained PoE found at {}".format(args['pre_trained']))
@@ -308,7 +313,7 @@ def run(args) -> None:
                     'lr': args['lr'],
                     'batch_size': args['batch_size'],
                     'optimizer': optimizer.state_dict(),
-                }, epoch, save_dir)
+                }, epoch, ckpt_dir)
                 checkpoint_loss.append(validation_loss)
 
             early_stopping(validation_loss)

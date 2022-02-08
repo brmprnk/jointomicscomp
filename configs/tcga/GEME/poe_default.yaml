@@ -22,9 +22,9 @@ GLOBAL_PARAMS:
 
 
 PoE:
-  epochs: 50
-  batch_size: 4
-  latent_dim: '16'
+  epochs: 500
+  batch_size: 64
+  latent_dim: '128-64'
   clf_criterion: 'acc'
   loss_function: 'mse'
   use_batch_norm: False

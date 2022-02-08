@@ -34,6 +34,10 @@ PARSER.add_argument('--config', '-c',
 PARSER.add_argument('--experiment', '-e',
                     help="Name of experiment",
                     default="experiment")
+PARSER.add_argument('--results-path', '-R',
+                    dest='results_path',
+                    help="where to store the results",
+                    default="/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp")
 PARSER.add_argument('-survival',
                     action='store_true',
                     help="Run Task 2 for survival time comparison")
@@ -86,7 +90,7 @@ def main() -> None:
     dt_string = now.strftime("%d-%m-%Y %H:%M:%S")
     if args.experiment != "experiment":
         config['GLOBAL_PARAMS']['name'] = args.experiment
-    save_dir = os.path.join(ROOT_DIR, 'results', '{}_{}_{}'
+    save_dir = os.path.join(args.results_path, 'results', '{}_{}_{}'
                             .format(config['GLOBAL_PARAMS']['name'],
                                     config['GLOBAL_PARAMS']['data1'],
                                     config['GLOBAL_PARAMS']['data2']))

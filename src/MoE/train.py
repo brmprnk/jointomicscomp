@@ -228,15 +228,18 @@ def run(args) -> None:
         input_dim1 = args['num_features1']
         input_dim2 = args['num_features2']
 
-        encoder_layers = [args['latent_dim']]
-        decoder_layers = [args['latent_dim']]
+        assert input_dim1 == omic1.shape[1]
+        assert input_dim2 == omic2.shape[1]
+
+        encoder_layers = [int(kk) for kk in args['latent_dim'].split('-')]
+        decoder_layers = encoder_layers[::-1][1:]
 
         model = MixtureOfExperts(input_dim1, input_dim2, encoder_layers, decoder_layers,
          args['loss_function'], args['loss_function'], args['use_batch_norm'],
          args['dropout_probability'], args['optimizer'], args['enc1_lr'], args['dec1_lr'],
          args['enc1_last_activation'], args['enc1_output_scale'],
          args['enc2_lr'], args['dec2_lr'], args['enc2_last_activation'],
-         args['enc1_output_scale'], args['beta_start_value'], args['K'])
+         args['enc2_output_scale'], args['enc_distribution'], args['beta_start_value'], args['K'])
 
         model.double()
         if device == torch.device('cuda'):

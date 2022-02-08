@@ -21,7 +21,7 @@ GLOBAL_PARAMS:
   test_ind: "/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/task1/testInd.npy"
 
 CGAE:
-  epochs: 500
+  epochs: 20
   batch_size: 64
   latent_dim: '128'
   clf_criterion: 'acc'

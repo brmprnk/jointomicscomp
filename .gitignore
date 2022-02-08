@@ -154,4 +154,16 @@ dmypy.json
 configs/synthetic-data-1/
 configs/tcga/MECNV/
 configs/tcga/GECNV/
+configs/tcga/GEME/
+
+!configs/tcga/GEME/*_default.yaml
+!configs/tcga/GEME/*.py
+!configs/tcga/GEGCN/*_default.yaml
+!configs/tcga/GEGCN/*.py
+!configs/tcga/MEGCN/*_default.yaml
+!configs/tcga/MEGCN/*.py
+
+# random stuff
+deleteme.txt
+
 

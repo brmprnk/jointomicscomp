@@ -1,11 +1,11 @@
 GLOBAL_PARAMS:
-  name: "experiment"
-  task: 1
+  name: "train-synthetic1-moe"
+  task: 0
   num_features1: 3
   num_features2: 3
   cuda: true
   random_seed: 1
-  log_save_interval: 5
+  log_save_interval: 10
   early_stopping_patience: 10 # If set to 0 or <0, early stopping is turned off.
   data1: "v1"
   data2: "v2"
@@ -22,7 +22,7 @@ GLOBAL_PARAMS:
 
 
 MoE:
-  epochs: 5
+  epochs: 300
   batch_size: 32
   train_loader_eval_batch_size: 2400
   latent_dim: '2'
@@ -39,6 +39,7 @@ MoE:
   enc1_last_activation: 'none'
   enc2_last_activation: 'none'
   beta_start_value: 1.
+  enc_distribution: 'laplace'
   K: 10
   plot: False     # Flag for plotting training and validation losses (loss, recon loss and KL loss)
 

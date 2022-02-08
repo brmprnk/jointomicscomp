@@ -1,7 +1,7 @@
 import yaml
 
 # models = ['cgae', 'mvib', 'poe', 'moe']
-models = ['cgae', 'mvib']
+models = ['cgae', 'mvib', 'poe']
 
 
 lrs = [1e-4, 1e-3]
@@ -71,6 +71,27 @@ for model in models:
 
                         with open(model + '_' + str(counter) + '.yaml', 'w') as writeFile:
                             yaml.safe_dump(config, writeFile)
+
+    elif model == 'poe':
+
+        for bn in batchnorm:
+            config['PoE']['use_batch_norm'] = bn
+
+            for dropoutP in dropouts:
+                config['PoE']['dropout_probability'] = dropoutP
+
+                for learning_rate in lrs:
+                    config['PoE']['lr'] = learning_rate
+
+                    for arch in enc_archs:
+                        config['PoE']['latent_dim'] = arch
+                        counter += 1
+
+                        config['GLOBAL_PARAMS']['name'] = baseName + '-' + str(counter)
+
+                        with open(model + '_' + str(counter) + '.yaml', 'w') as writeFile:
+                            yaml.safe_dump(config, writeFile)
+
 
     else:
         pass
