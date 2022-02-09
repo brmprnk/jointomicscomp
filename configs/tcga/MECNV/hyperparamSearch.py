@@ -1,7 +1,6 @@
 import yaml
 
-# models = ['cgae', 'mvib', 'poe', 'moe']
-models = ['cgae', 'mvib', 'poe']
+models = ['cgae', 'mvib', 'poe', 'moe']
 
 
 lrs = [1e-4, 1e-3]
@@ -9,7 +8,7 @@ enc_archs = ['32', '64', '128-32', '128-64', '256-32', '256-64', '256-256-32', '
 mi_archs = ['100-1', '500-1', '500-100-1']
 dropouts = [0.0, 0.1]
 batchnorm = [False, True]
-
+Ks = [10, 20]
 
 for model in models:
     with open(model + '_default.yaml') as file:
@@ -94,4 +93,28 @@ for model in models:
 
 
     else:
-        pass
+        assert model == 'moe'
+        for bn in batchnorm:
+            config['MoE']['use_batch_norm'] = bn
+
+            for dropoutP in dropouts:
+                config['MoE']['dropout_probability'] = dropoutP
+
+                for kk in Ks:
+                    config['MoE']['K'] = kk
+
+                    for learning_rate in lrs:
+                        config['MoE']['enc1_lr'] = learning_rate
+                        config['MoE']['enc2_lr'] = learning_rate
+                        config['MoE']['dec1_lr'] = learning_rate
+                        config['MoE']['dec2_lr'] = learning_rate
+
+                        for arch in enc_archs:
+                            config['MoE']['latent_dim'] = arch
+
+                            counter += 1
+
+                            config['GLOBAL_PARAMS']['name'] = baseName + '-' + str(counter)
+
+                            with open(model + '_' + str(counter) + '.yaml', 'w') as writeFile:
+                                yaml.safe_dump(config, writeFile)

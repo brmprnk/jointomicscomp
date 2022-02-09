@@ -10,7 +10,7 @@ import src.nets
 from sklearn.metrics import mean_squared_error
 from src.util import logger
 from src.util.evaluate import evaluate_imputation, save_factorizations_to_csv
-
+from src.MoE.model import MixtureOfExperts
 
 class MultiOmicsDataset():
     def __init__(self, data1, data2):
@@ -69,6 +69,7 @@ def evaluateUsingBatches(net, device, dataloader, multimodal=False):
             # now divide by total number of points to get the average across all samples
             metrics[kk] /= len(dataloader.dataset)
 
+
     return metrics
 
 
@@ -82,11 +83,12 @@ def train(device, net, num_epochs, train_loader, train_loader_eval, valid_loader
 
     # Evaluate validation set before start training
     print("[*] Evaluating epoch %d..." % start_epoch)
-    metrics = evaluateUsingBatches(net, device, train_loader_eval, multimodal)
+    if not isinstance(net, MixtureOfExperts):
+        # this takes too long on MoE, so we skip it
+        metrics = evaluateUsingBatches(net, device, train_loader_eval, multimodal)
 
-    print(metrics.keys())
-    assert 'loss' in metrics
-    print("--- Training loss:\t%.4f" % metrics['loss'])
+        assert 'loss' in metrics
+        print("--- Training loss:\t%.4f" % metrics['loss'])
 
 
     metrics = evaluateUsingBatches(net, device, valid_loader, multimodal)
@@ -131,12 +133,16 @@ def train(device, net, num_epochs, train_loader, train_loader_eval, valid_loader
         # Evaluate all training set and validation set at epoch
         print("[*] Evaluating epoch %d..." % (epoch + 1))
 
-        metricsTrain = evaluateUsingBatches(net, device, train_loader_eval, multimodal)
+        if not isinstance(net, MixtureOfExperts):
+            # skip for MoE, it takes too long
+            metricsTrain = evaluateUsingBatches(net, device, train_loader_eval, multimodal)
+            print("--- Training loss:\t%.4f" % metricsTrain['loss'])
+
+
         metricsValidation = evaluateUsingBatches(net, device, valid_loader, multimodal)
-
-
-        print("--- Training loss:\t%.4f" % metricsTrain['loss'])
         print("--- Validation loss:\t%.4f" % metricsValidation['loss'])
+
+
 
         # Save model at epoch, and record loss at that checkpoint
         if (epoch + 1) % save_step == 0:
@@ -146,8 +152,9 @@ def train(device, net, num_epochs, train_loader, train_loader_eval, valid_loader
 
         early_stopping(metricsValidation['loss'])
 
-        for m in metricsTrain:
-            tf_logger.add_scalar(m + '/train', metricsTrain[m], epoch + 1)
+        for m in metricsValidation:
+            if not isinstance(net, MixtureOfExperts):
+                tf_logger.add_scalar(m + '/train', metricsTrain[m], epoch + 1)
             tf_logger.add_scalar(m + '/validation', metricsValidation[m], epoch + 1)
 
         # Stop training when not improving

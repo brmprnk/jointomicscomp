@@ -1,5 +1,5 @@
 GLOBAL_PARAMS:
-  name: "train-tcga-cgae"
+  name: "train-tcga-moe"
   task: 0
   num_features1: 5000
   num_features2: 5000
@@ -20,16 +20,17 @@ GLOBAL_PARAMS:
   val_ind: "/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/task1/validInd.npy"
   test_ind: "/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/task1/testInd.npy"
 
-CGAE:
+
+MoE:
   epochs: 500
   batch_size: 64
-  latent_dim: '128'
-  clf_criterion: 'acc'
+  latent_dim: '128-64'
   enc1_lr: 0.0001
   dec1_lr: 0.0001
   enc2_lr: 0.0001
   dec2_lr: 0.0001
   loss_function: 'mse'
+  train_loader_eval_batch_size: 16
   use_batch_norm: False
   dropout_probability: 0.0
   optimizer: 'Adam'
@@ -37,7 +38,10 @@ CGAE:
   enc2_output_scale: 1.
   enc1_last_activation: 'none'
   enc2_last_activation: 'none'
-  beta_start_value: 1
-  zconstraintCoef: 1
-  crossPenaltyCoef: 1
-  enc_distribution: 'normal'
+  beta_start_value: 1.
+  enc_distribution: 'laplace'
+  K: 50
+  plot: False     # Flag for plotting training and validation losses (loss, recon loss and KL loss)
+
+  # Model optionsmain.yaml
+  pre_trained: ""

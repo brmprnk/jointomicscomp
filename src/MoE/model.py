@@ -50,60 +50,6 @@ def _m_dreg_looser(model, x1, x2):
     return torch.stack(lws), torch.stack(zss)
 
 
-# def moe_eval_(model, x1, x2):
-#     metrics = {}
-#     S = model.compute_microbatch_split((x1, x2))
-#     assert S == x1.shape[0]
-#
-#     qz_xs, px_zs, zss = model(x1, x2)
-#
-#     qz_xs_ = [Independent(Laplace(qz_xs[0].base_dist.loc.detach(), qz_xs[0].base_dist.scale.detach()), 0), Independent(Laplace(qz_xs[1].base_dist.loc.detach(), qz_xs[1].base_dist.scale.detach()), 0)]
-#
-#     # replaced by the thing above
-#     #qz_xs_ = [vae.qz_x(*[p.detach() for p in vae.qz_x_params]) for vae in model.vaes]
-#
-#     lpz_1 = model.pz.log_prob(zss[0])
-#     lpz_2 = model.pz.log_prob(zss[1])
-#
-#
-#     lqz_x_1 = log_mean_exp(torch.stack([qz_x_.log_prob(zss[0]) for qz_x_ in qz_xs_])).sum(-1)
-#     lqz_x_2 = log_mean_exp(torch.stack([qz_x_.log_prob(zss[1]) for qz_x_ in qz_xs_])).sum(-1)
-#
-#     metrics['KL/1'] = -torch.mean(lpz_1 - lqz_x_1)
-#     metrics['KL/2'] = -torch.mean(lpz_2 - lqz_x_2)
-#
-#
-#     x = (x1, x2)
-#
-#     lpx_z_1 = [px_z.log_prob(x[d]).view(*px_z.batch_shape[:2], -1).sum(-1) for d, px_z in enumerate(px_zs[0])]
-#     lpx_z_2 = [px_z.log_prob(x[d]).view(*px_z.batch_shape[:2], -1).sum(-1) for d, px_z in enumerate(px_zs[1])]
-#
-#     metrics['mse/1'] = torch.mean(lpx_z_1[0])
-#     metrics['cross-mse/1'] = torch.mean(lpx_z_1[1])
-#
-#     metrics['mse/2'] = torch.mean(lpx_z_2[0])
-#     metrics['cross-mse/2'] = torch.mean(lpx_z_2[1])
-#
-#
-#     lpx_z_1 = torch.stack(lpx_z_1).sum(0)
-#     lpx_z_2 = torch.stack(lpx_z_2).sum(0)
-#
-#     lws = []
-#
-#     lw1 = lpz_1 + lpx_z_1 - lqz_x_1
-#     lw2 = lpz_2 + lpx_z_2 - lqz_x_2
-#
-#     lw = torch.stack([lw1, lw2])
-#
-#     grad_wt = (lw - torch.logsumexp(lw, 1, keepdim=True)).exp()
-#
-#     metrics['lw'] = lw.mean(0).mean(-1).sum()
-#     metrics['grad_wt'] = grad_wt.mean(0).mean(-1).sum()
-#
-#     metrics['loss'] = -1 * (grad_wt * lw).mean(0).mean(-1).sum()
-#
-#     return metrics
-
 
 class MixtureOfExperts(CrossGeneratingVariationalAutoencoder):
     """Return parameters for mixture of independent experts.
@@ -190,25 +136,6 @@ class MixtureOfExperts(CrossGeneratingVariationalAutoencoder):
         return min(B, S)
 
 
-    # def _m_dreg_looser(model, x1, x2):
-    #     """DREG estimate for log p_\theta(x) for multi-modal vae -- fully vectorised
-    #     This version is the looser bound---with the average over modalities outside the log
-    #     """
-    #     qz_xs, px_zs, zss = model(x1, x2)
-    #     qz_xs_ = [vae.qz_x(*[p.detach() for p in vae.qz_x_params]) for vae in model.vaes]
-    #     lws = []
-    #     for r, vae in enumerate(model.vaes):
-    #         lpz = model.pz(*model.pz_params).log_prob(zss[r]).sum(-1)
-    #         lqz_x = log_mean_exp(torch.stack([qz_x_.log_prob(zss[r]).sum(-1) for qz_x_ in qz_xs_]))
-    #         lpx_z = [px_z.log_prob(x[d]).view(*px_z.batch_shape[:2], -1)
-    #                      .mul(model.vaes[d].llik_scaling).sum(-1)
-    #                  for d, px_z in enumerate(px_zs[r])]
-    #         lpx_z = torch.stack(lpx_z).sum(0)
-    #         lw = lpz + lpx_z - lqz_x
-    #         lws.append(lw)
-    #     return torch.stack(lws), torch.stack(zss)
-
-
     def compute_loss(self, x1, x2):
         """Computes dreg estimate for log p_\theta(x) for multi-modal vae
         This version is the looser bound---with the average over modalities outside the log
@@ -234,55 +161,62 @@ class MixtureOfExperts(CrossGeneratingVariationalAutoencoder):
     def evaluate(self, x1, x2):
         metrics = {}
 
-        S = self.compute_microbatch_split((x1, x2))
-        assert S == x1.shape[0]
+        with torch.no_grad():
+            S = self.compute_microbatch_split((x1, x2))
+            assert S == x1.shape[0]
+            qz_xs, px_zs, zss = self.forward(x1, x2)
 
-        qz_xs, px_zs, zss = self.forward(x1, x2)
+            qz_xs_ = [Independent(Laplace(qz_xs[0].base_dist.loc.detach(), qz_xs[0].base_dist.scale.detach()), 0), Independent(Laplace(qz_xs[1].base_dist.loc.detach(), qz_xs[1].base_dist.scale.detach()), 0)]
 
-        qz_xs_ = [Independent(Laplace(qz_xs[0].base_dist.loc.detach(), qz_xs[0].base_dist.scale.detach()), 0), Independent(Laplace(qz_xs[1].base_dist.loc.detach(), qz_xs[1].base_dist.scale.detach()), 0)]
+            # replaced by the thing above
+            #qz_xs_ = [vae.qz_x(*[p.detach() for p in vae.qz_x_params]) for vae in model.vaes]
 
-        # replaced by the thing above
-        #qz_xs_ = [vae.qz_x(*[p.detach() for p in vae.qz_x_params]) for vae in model.vaes]
-
-        lpz_1 = self.pz.log_prob(zss[0])
-        lpz_2 = self.pz.log_prob(zss[1])
-
-
-        lqz_x_1 = log_mean_exp(torch.stack([qz_x_.log_prob(zss[0]) for qz_x_ in qz_xs_])).sum(-1)
-        lqz_x_2 = log_mean_exp(torch.stack([qz_x_.log_prob(zss[1]) for qz_x_ in qz_xs_])).sum(-1)
-
-        metrics['KL/1'] = -torch.mean(lpz_1 - lqz_x_1)
-        metrics['KL/2'] = -torch.mean(lpz_2 - lqz_x_2)
+            lpz_1 = self.pz.log_prob(zss[0])
+            lpz_2 = self.pz.log_prob(zss[1])
 
 
-        x = (x1, x2)
+            lqz_x_1 = log_mean_exp(torch.stack([qz_x_.log_prob(zss[0]) for qz_x_ in qz_xs_])).sum(-1)
+            lqz_x_2 = log_mean_exp(torch.stack([qz_x_.log_prob(zss[1]) for qz_x_ in qz_xs_])).sum(-1)
 
-        lpx_z_1 = [px_z.log_prob(x[d]).view(*px_z.batch_shape[:2], -1).sum(-1) for d, px_z in enumerate(px_zs[0])]
-        lpx_z_2 = [px_z.log_prob(x[d]).view(*px_z.batch_shape[:2], -1).sum(-1) for d, px_z in enumerate(px_zs[1])]
+            metrics['KL/1'] = -torch.mean(lpz_1 - lqz_x_1)
+            metrics['KL/2'] = -torch.mean(lpz_2 - lqz_x_2)
 
-        metrics['mse/1'] = -torch.mean(lpx_z_1[0])
-        metrics['cross-mse/1'] = -torch.mean(lpx_z_1[1])
+            metrics['KL/1'] = metrics['KL/1'].item()
+            metrics['KL/2'] = metrics['KL/2'].item()
 
-        metrics['mse/2'] = -torch.mean(lpx_z_2[0])
-        metrics['cross-mse/2'] = -torch.mean(lpx_z_2[1])
+            x = (x1, x2)
 
+            lpx_z_1 = [px_z.log_prob(x[d]).view(*px_z.batch_shape[:2], -1).sum(-1) for d, px_z in enumerate(px_zs[0])]
+            lpx_z_2 = [px_z.log_prob(x[d]).view(*px_z.batch_shape[:2], -1).sum(-1) for d, px_z in enumerate(px_zs[1])]
 
-        lpx_z_1 = torch.stack(lpx_z_1).sum(0)
-        lpx_z_2 = torch.stack(lpx_z_2).sum(0)
+            metrics['mse/1'] = -torch.mean(lpx_z_1[0])
+            metrics['cross-mse/1'] = -torch.mean(lpx_z_1[1])
 
-        lws = []
+            metrics['mse/2'] = -torch.mean(lpx_z_2[0])
+            metrics['cross-mse/2'] = -torch.mean(lpx_z_2[1])
 
-        lw1 = lpz_1 + lpx_z_1 - lqz_x_1
-        lw2 = lpz_2 + lpx_z_2 - lqz_x_2
+            metrics['mse/1'] = metrics['mse/1'].item()
+            metrics['mse/2'] = metrics['mse/2'].item()
+            metrics['cross-mse/1'] = metrics['cross-mse/1'].item()
+            metrics['cross-mse/2'] = metrics['cross-mse/2'].item()
 
-        lw = torch.stack([lw1, lw2])
+            lpx_z_1 = torch.stack(lpx_z_1).sum(0)
+            lpx_z_2 = torch.stack(lpx_z_2).sum(0)
 
-        grad_wt = (lw - torch.logsumexp(lw, 1, keepdim=True)).exp()
+            lws = []
 
-        metrics['lw'] = lw.mean(0).mean(-1).sum()
-        metrics['grad_wt'] = grad_wt.mean(0).mean(-1).sum()
+            lw1 = lpz_1 + lpx_z_1 - lqz_x_1
+            lw2 = lpz_2 + lpx_z_2 - lqz_x_2
 
-        metrics['loss'] = -1 * (grad_wt * lw).mean(0).mean(-1).sum()
+            lw = torch.stack([lw1, lw2])
+
+            grad_wt = (lw - torch.logsumexp(lw, 1, keepdim=True)).exp()
+
+            metrics['lw'] = lw.mean(0).mean(-1).sum().item()
+            metrics['grad_wt'] = grad_wt.mean(0).mean(-1).sum().item()
+
+            metrics['loss'] = -1 * (grad_wt * lw).mean(0).mean(-1).sum()
+            metrics['loss'] = metrics['loss'].item()
 
         return metrics
 

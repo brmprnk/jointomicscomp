@@ -202,14 +202,16 @@ def run(args) -> None:
     datasetValidation = MultiOmicsDataset(dataValidation1, dataValidation2)
 
     train_loader = torch.utils.data.DataLoader(datasetTrain, batch_size=args['batch_size'], shuffle=True, num_workers=0, drop_last=False)
-    val_loader = torch.utils.data.DataLoader(datasetValidation, batch_size=dataValidation1.shape[0], shuffle=False, num_workers=0, drop_last=False)
 
     if args['train_loader_eval_batch_size'] > 0:
         trnEvalBatchSize = args['train_loader_eval_batch_size']
+        valBatchSize = trnEvalBatchSize
     else:
-        trnEvalBatchSize = len(train_dataset)
+        trnEvalBatchSize = len(datasetTrain)
+        valBatchSize = dataValidation1.shape[0]
 
     train_loader_eval = torch.utils.data.DataLoader(datasetTrain, batch_size=trnEvalBatchSize, shuffle=False)
+    val_loader = torch.utils.data.DataLoader(datasetValidation, batch_size=valBatchSize, shuffle=False, num_workers=0, drop_last=False)
 
     if args['pre_trained'] != "":
         logger.info("Using Pre-Trained MVAE found at {}".format(args['pre_trained']))
@@ -256,12 +258,24 @@ def run(args) -> None:
         model_file.write("PoE Model : {}".format(model))
         model_file.close()
 
+        ckpt_dir = save_dir + '/checkpoint'
+        if not os.path.exists(ckpt_dir):
+            os.makedirs(ckpt_dir)
+        logs_dir = save_dir + '/logs'
+
         # Setup early stopping, terminates training when validation loss does not improve for early_stopping_patience epochs
         early_stopping = EarlyStopping(patience=args['early_stopping_patience'], verbose=True)
 
         cploss = train(device=device, net=model, num_epochs=args['epochs'], train_loader=train_loader,
               train_loader_eval=train_loader_eval, valid_loader=val_loader,
-              ckpt_dir=save_dir, logs_dir=save_dir, early_stopping=early_stopping, save_step=args['log_save_interval'], multimodal=True)
+              ckpt_dir=ckpt_dir, logs_dir=logs_dir, early_stopping=early_stopping, save_step=args['log_save_interval'], multimodal=True)
+
+        # cploss = cploss.cpu().detach().numpy()
+        bestEpoch = args['log_save_interval'] * np.argmin(cploss)
+
+        logger.info("Using model from epoch %d" % bestEpoch)
+        modelCheckpoint = ckpt_dir + '/model_epoch%d.pth.tar' % (bestEpoch)
+        assert os.path.exists(modelCheckpoint)
 
         #
         # for epoch in range(1, args['epochs'] + 1):
@@ -292,6 +306,14 @@ def run(args) -> None:
 
     # Extract Phase #
     logger.success("Finished training MVAE model. Now calculating task results.")
+
+
+    if args['task'] == 0:
+        lossDict = {'epoch': bestEpoch, 'val_loss': np.min(cploss)}
+        with open(save_dir + '/finalValidationLoss.pkl', 'wb') as f:
+            pickle.dump(lossDict, f)
+
+
 
     # Imputation
     if args['task'] == 1:

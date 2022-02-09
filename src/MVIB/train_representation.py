@@ -110,6 +110,7 @@ def run(args: dict) -> None:
           train_loader_eval=train_loader_eval, valid_loader=valid_loader,
           ckpt_dir=ckpt_dir, logs_dir=logs_dir, early_stopping=early_stopping, save_step=args['log_save_interval'], multimodal=True)
 
+    print(cploss)
     # find best checkpoint based on the validation loss
     bestEpoch = args['log_save_interval'] * np.argmin(cploss)
     print(bestEpoch)

@@ -770,7 +770,7 @@ class CrossGeneratingVariationalAutoencoder(MultiOmicRepresentationLearner):
 				# metrics['cross-bce/1'] = torch.mean(torch.sum(torch.nn.BCELoss(reduction='none')(cross1_hat, x1), 1)).item()
 				# metrics['cross-bce/2'] = torch.mean(torch.sum(torch.nn.BCELoss(reduction='none')(cross2_hat, x2), 1)).item()
 
-		metrics['loss'] = l1 + l2 + self.crossPenaltyCoef * (cl1 + cl2) + self.zconstraintCoef * similarityConstraint + self.beta * (kl1 + kl2)
+		metrics['loss'] = l1 + l2 + self.crossPenaltyCoef * (cl1 + cl2) + self.zconstraintCoef * similarityConstraint + self.beta * (metrics['KL/1'] + metrics['KL/2'])
 
 		return metrics
 
@@ -854,10 +854,16 @@ class MVIB(MultiOmicRepresentationLearner):
 			metrics['KL_1_2'] = torch.mean(torch.sum(torch.log(z2std / z1std) + 0.5 * (z1var + (z1mean - z2mean) ** 2) / z2var - 0.5, 1))
 			metrics['KL_2_1'] = torch.mean(torch.sum(torch.log(z1std / z2std) + 0.5 * (z2var + (z2mean - z1mean) ** 2) / z1var - 0.5, 1))
 
+			metrics['KL_1_2'] = metrics['KL_1_2'].item()
+			metrics['KL_2_1'] = metrics['KL_2_1'].item()
+
 			metrics['SKL'] = 0.5 * (metrics['KL_1_2'] + metrics['KL_2_1'])
 
 			# using the means here
-			metrics['MI_grad'], metrics['MI_est'] = self.MInet(z1mean, z2mean)
+			migrad, miest = self.MInet(z1mean, z2mean)
+
+			metrics['MI_grad'] = migrad.item()
+			metrics['MI_est'] = miest.item()
 
 			metrics['loss'] = - metrics['MI_grad'] + self.beta * metrics['SKL']
 
