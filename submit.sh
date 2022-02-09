@@ -18,23 +18,34 @@ fi;
 
 RESPATH='/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/results/';
 
+VVIEWS=(${CONFIGDIR//\// });
+VIEWS=${VVIEWS[2]};
 
-echo $RESNAME
+VIEW1=$(cut -c -2 <<< $VIEWS);
+echo $VIEW1;
+
+VIEW2=$(cut -c 3- <<< $VIEWS);
+echo $VIEW2;
 
 
 for conf in $CONFIGDIR$MODEL'_'*'.yaml';
 do
   if [[ $conf == *"default"* ]];
   then
-    echo $conf;
+    echo 'Skipping: '$conf;
 
   else
 
     RESNAME='train-tcga-'$MODEL'_'$VIEW1'_'$VIEW2'/'$MODELNAME'/finalValidationLoss.pkl';
 
+    if [ ! -f $RESPATH$RESNAME ];
+    then
+      echo $conf $MODEL;
+      #sbatch train_joint.sbatch $conf $MODEL;
+    else
+      echo 'Skipping, result exists: '$conf;
+    fi;
 
-    echo $conf $MODEL;
-    #sbatch train_joint.sbatch $conf $MODEL;
 
   fi;
 done;
