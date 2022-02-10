@@ -36,12 +36,12 @@ do
 
   else
     FIELDS=(${conf//_/ });
-    NUMBER=$(cut -c -1 <<< ${FIELDS[1]});
+    NUMBER=(${FIELDS[1]//./ });
     RESNAME='train-tcga-'$MODEL'-'$NUMBER'_'$VIEW1'_'$VIEW2'/'$MODELNAME'/finalValidationLoss.pkl';
 
     if [ ! -f $RESPATH$RESNAME ];
     then
-      #echo $conf $MODEL;
+      # echo $conf $MODEL;
       sbatch train_joint.sbatch $conf $MODEL;
     else
       echo 'Skipping, result exists: '$conf;
