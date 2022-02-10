@@ -165,5 +165,5 @@ configs/tcga/GEME/*.yaml
 
 # random stuff
 deleteme.txt
-
+train-log.txt
 

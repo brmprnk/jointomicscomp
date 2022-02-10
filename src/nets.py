@@ -86,7 +86,18 @@ class FullyConnectedModule(nn.Module):
 	def forward(self, x):
 
 		for i, layer in enumerate(self.encode_layers):
-			x = layer(self.drop(x))
+			try:
+				x = layer(self.drop(x))
+			except RuntimeError:
+				# thrown by IWAE when batch normalization is used, due to shape mismatch
+				assert len(x.shape) == 3
+				assert len(layer) == 2
+				# pass through linear layer and switch the last to dims
+				x = layer[0](self.drop(x)).transpose(1,2)
+				# pass through batchnorm now that dims match and revert to original shape
+				x = layer[1](x).transpose(2,1)
+
+
 			if i < self.num_layers - 1:
 				x = F.relu(x)
 			else:
