@@ -92,6 +92,18 @@ class PoE(nn.Module):
 
         return mu, logvar
 
+    def embedAndReconstruct(self, omic1, omic2):
+        assert self.training == False
+        with torch.no_grad():
+            z, _ = self.get_product_params(omic1=omic1, omic2=omic2)
+
+            (x1_hat, x2_cross_hat, _, _) = self.forward(omic1=omic1)
+            (x1_cross_hat, x2_hat, _, _) = self.forward(omic2=omic2)
+
+            return z, x1_hat, x2_hat, x1_cross_hat, x2_cross_hat
+
+
+
 
 def get_batch_size(omic1, omic2):
     if omic1 is None:

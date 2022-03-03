@@ -18,10 +18,6 @@ def run(args: dict) -> None:
     save_dir = os.path.join(args['save_dir'], '{}'.format('CGAE'))
     os.makedirs(save_dir)
 
-    # task 2 is now either survival analysis (to be done in R), cell type prediction or simple classification on synthetic data
-    # therefore all cancer-specific things are not required anymore, the R script can do that
-    # and then here we can keep the nice and clean format of task 1
-
 
     # Load in data
     omic1 = np.load(args['data_path1'])
@@ -69,56 +65,72 @@ def run(args: dict) -> None:
 
     net = net.double()
 
-    logger.success("Initialized CrossGeneratingVariationalAutoencoder model.")
-    logger.info(str(net))
-    logger.info("Number of model parameters: ")
-    num_params = sum(p.numel() for p in net.parameters() if p.requires_grad)
-    logger.info("{}".format(num_params))
+    if 'pre_trained' in args and args['pre_trained'] != '':
+        checkpoint = torch.load(args['pre_trained'])
 
-    # Create directories for checkpoint, sample and logs files
-    ckpt_dir = save_dir + '/checkpoint'
-    if not os.path.exists(ckpt_dir):
-        os.makedirs(ckpt_dir)
-    logs_dir = save_dir + '/logs'
+        net.load_state_dict(checkpoint['state_dict'])
+        logger.success("Loaded trained CrossGeneratingVariationalAutoencoder model.")
 
-    # Data loading
-    logger.info("Loading training and validation data into CrossGeneratingVariationalAutoencoder...")
+    else:
 
-    dataTrain1 = torch.tensor(omic1_train_file, device=device)
-    dataTrain2 = torch.tensor(omic2_train_file, device=device)
+        logger.success("Initialized CrossGeneratingVariationalAutoencoder model.")
+        logger.info(str(net))
+        logger.info("Number of model parameters: ")
+        num_params = sum(p.numel() for p in net.parameters() if p.requires_grad)
+        logger.info("{}".format(num_params))
 
-    dataValidation1 = torch.tensor(omic1_val_file, device=device)
-    dataValidation2 = torch.tensor(omic2_val_file, device=device)
+        # Create directories for checkpoint, sample and logs files
+        ckpt_dir = save_dir + '/checkpoint'
+        if not os.path.exists(ckpt_dir):
+            os.makedirs(ckpt_dir)
+        logs_dir = save_dir + '/logs'
 
-    datasetTrain = MultiOmicsDataset(dataTrain1, dataTrain2)
-    datasetValidation = MultiOmicsDataset(dataValidation1, dataValidation2)
+        # Data loading
+        logger.info("Loading training and validation data into CrossGeneratingVariationalAutoencoder...")
 
-    train_loader = DataLoader(datasetTrain, batch_size=args['batch_size'], shuffle=True, num_workers=0,
-                              drop_last=False)
+        dataTrain1 = torch.tensor(omic1_train_file, device=device)
+        dataTrain2 = torch.tensor(omic2_train_file, device=device)
 
-    train_loader_eval = DataLoader(datasetTrain, batch_size=dataTrain1.shape[0], shuffle=False, num_workers=0,
-                                   drop_last=False)
+        dataValidation1 = torch.tensor(omic1_val_file, device=device)
+        dataValidation2 = torch.tensor(omic2_val_file, device=device)
 
-    valid_loader = DataLoader(datasetValidation, batch_size=dataValidation1.shape[0], shuffle=False, num_workers=0,
-                              drop_last=False)
+        datasetTrain = MultiOmicsDataset(dataTrain1, dataTrain2)
+        datasetValidation = MultiOmicsDataset(dataValidation1, dataValidation2)
 
-    # Setup early stopping, terminates training when validation loss does not improve for early_stopping_patience epochs
-    early_stopping = EarlyStopping(patience=args['early_stopping_patience'], verbose=True)
+        try:
+            validationEvalBatchSize = args['train_loader_eval_batch_size']
+            trainEvalBatchSize = args['train_loader_eval_batch_size']
+        except KeyError:
+            validationEvalBatchSize = dataValidation1.shape[0]
+            trainEvalBatchSize = dataTrain1.shape[0]
 
-    # Training and validation
 
-    cploss = train(device=device, net=net, num_epochs=args['epochs'], train_loader=train_loader,
-          train_loader_eval=train_loader_eval, valid_loader=valid_loader,
-          ckpt_dir=ckpt_dir, logs_dir=logs_dir, early_stopping=early_stopping, save_step=args['log_save_interval'], multimodal=True)
+        train_loader = DataLoader(datasetTrain, batch_size=args['batch_size'], shuffle=True, num_workers=0,
+                                  drop_last=False)
 
-    
-    #cploss = cploss.cpu().detach().numpy()
-    # find best checkpoint based on the validation loss
-    bestEpoch = args['log_save_interval'] * np.argmin(cploss)
+        train_loader_eval = DataLoader(datasetTrain, batch_size=trainEvalBatchSize, shuffle=False, num_workers=0,
+                                       drop_last=False)
 
-    logger.info("Using model from epoch %d" % bestEpoch)
-    modelCheckpoint = ckpt_dir + '/model_epoch%d.pth.tar' % (bestEpoch)
-    assert os.path.exists(modelCheckpoint)
+        valid_loader = DataLoader(datasetValidation, batch_size=validationEvalBatchSize, shuffle=False, num_workers=0,
+                                  drop_last=False)
+
+        # Setup early stopping, terminates training when validation loss does not improve for early_stopping_patience epochs
+        early_stopping = EarlyStopping(patience=args['early_stopping_patience'], verbose=True)
+
+        # Training and validation
+
+        cploss = train(device=device, net=net, num_epochs=args['epochs'], train_loader=train_loader,
+              train_loader_eval=train_loader_eval, valid_loader=valid_loader,
+              ckpt_dir=ckpt_dir, logs_dir=logs_dir, early_stopping=early_stopping, save_step=args['log_save_interval'], multimodal=True)
+
+
+        #cploss = cploss.cpu().detach().numpy()
+        # find best checkpoint based on the validation loss
+        bestEpoch = args['log_save_interval'] * np.argmin(cploss)
+
+        logger.info("Using model from epoch %d" % bestEpoch)
+        modelCheckpoint = ckpt_dir + '/model_epoch%d.pth.tar' % (bestEpoch)
+        assert os.path.exists(modelCheckpoint)
 
 
     if args['task'] == 0:
@@ -130,27 +142,194 @@ def run(args: dict) -> None:
 
     # Imputation
     if args['task'] == 1:
-        logger.info("Imputation: Extracting Z1 and Z2 using test set")
 
-        dataTest1 = omic1_test_file
-        dataTest2 = omic2_test_file
+        dataTrain1 = torch.tensor(omic1_train_file, device=device)
+        dataTrain2 = torch.tensor(omic2_train_file, device=device)
 
-        dataTest1 = torch.tensor(dataTest1, device=device)
-        dataTest2 = torch.tensor(dataTest2, device=device)
+        dataValidation1 = torch.tensor(omic1_val_file, device=device)
+        dataValidation2 = torch.tensor(omic2_val_file, device=device)
 
-        # datasetTrain = MultiOmicsDataset(dataTrain1, dataTrain2)
+        dataTest1 = torch.tensor(omic1_test_file, device=device)
+        dataTest2 = torch.tensor(omic2_test_file, device=device)
 
+        datasetTrain = MultiOmicsDataset(dataTrain1, dataTrain2)
+        datasetValidation = MultiOmicsDataset(dataValidation1, dataValidation2)
         datasetTest = MultiOmicsDataset(dataTest1, dataTest2)
 
-        extract_loader = DataLoader(datasetTest, batch_size=dataTest1.shape[0], shuffle=False, num_workers=0,
-                                    drop_last=False)
+        train_loader = DataLoader(datasetTrain, batch_size=args['batch_size'], shuffle=False, num_workers=0,
+                                  drop_last=False)
 
-        # Compute imputation loss
-        sample_names = np.load(args['sample_names']).astype(str)[test_ind]
-        z1, z2 = impute(net=net,
-                        model_file=modelCheckpoint,
-                        loader=extract_loader, device=device, save_dir=save_dir, sample_names=sample_names,
-                        num_features1=args['num_features1'], num_features2=args['num_features2'], multimodal=True)
+        valid_loader = DataLoader(datasetValidation, batch_size=args['batch_size'], shuffle=False, num_workers=0,
+                                  drop_last=False)
+
+        test_loader = DataLoader(datasetTest, batch_size=args['batch_size'], shuffle=False, num_workers=0,
+                                  drop_last=False)
+
+        z1train = np.zeros((dataTrain1.shape[0], net.z_dim))
+        z2train = np.zeros((dataTrain2.shape[0], net.z_dim))
+
+        z1validation = np.zeros((dataValidation1.shape[0], net.z_dim))
+        z2validation = np.zeros((dataValidation2.shape[0], net.z_dim))
+
+        z1test = np.zeros((dataTest1.shape[0], net.z_dim))
+        z2test = np.zeros((dataTest2.shape[0], net.z_dim))
+
+        x1_hat_train = np.zeros(dataTrain1.shape)
+        x2_hat_train = np.zeros(dataTrain2.shape)
+
+        x1_hat_validation = np.zeros(dataValidation1.shape)
+        x2_hat_validation = np.zeros(dataValidation2.shape)
+
+        x1_hat_test = np.zeros(dataTest1.shape)
+        x2_hat_test = np.zeros(dataTest2.shape)
+
+        x1_cross_hat_train = np.zeros(dataTrain1.shape)
+        x2_cross_hat_train = np.zeros(dataTrain2.shape)
+
+        x1_cross_hat_validation = np.zeros(dataValidation1.shape)
+        x2_cross_hat_validation = np.zeros(dataValidation2.shape)
+
+        x1_cross_hat_test = np.zeros(dataTest1.shape)
+        x2_cross_hat_test = np.zeros(dataTest2.shape)
+
+        net.eval()
+
+        ind = 0
+        b = args['batch_size']
+        for data in train_loader:
+            b1, b2 = (data[0][0], data[1][0])
+            z1_tmp, z2_tmp, x1_hat_tmp, x2_hat_tmp, x1_cross_hat_tmp, x2_cross_hat_tmp = net.embedAndReconstruct(b1, b2)
+
+            z1train[ind:ind+b] = z1_tmp.cpu().detach().numpy()
+            z2train[ind:ind+b] = z2_tmp.cpu().detach().numpy()
+
+            x1_hat_train[ind:ind+b] = x1_hat_tmp.cpu().detach().numpy()
+            x2_hat_train[ind:ind+b] = x2_hat_tmp.cpu().detach().numpy()
+
+            x1_cross_hat_train[ind:ind+b] = x1_cross_hat_tmp.cpu().detach().numpy()
+            x2_cross_hat_train[ind:ind+b] = x2_cross_hat_tmp.cpu().detach().numpy()
+
+            ind += b
+
+        ind = 0
+        for data in valid_loader:
+            b1, b2 = (data[0][0], data[1][0])
+            z1_tmp, z2_tmp, x1_hat_tmp, x2_hat_tmp, x1_cross_hat_tmp, x2_cross_hat_tmp = net.embedAndReconstruct(b1, b2)
+
+            z1validation[ind:ind+b] = z1_tmp.cpu().detach().numpy()
+            z2validation[ind:ind+b] = z2_tmp.cpu().detach().numpy()
+
+            x1_hat_validation[ind:ind+b] = x1_hat_tmp.cpu().detach().numpy()
+            x2_hat_validation[ind:ind+b] = x2_hat_tmp.cpu().detach().numpy()
+
+            x1_cross_hat_validation[ind:ind+b] = x1_cross_hat_tmp.cpu().detach().numpy()
+            x2_cross_hat_validation[ind:ind+b] = x2_cross_hat_tmp.cpu().detach().numpy()
+
+            ind += b
+
+
+        ind = 0
+        for data in test_loader:
+            b1, b2 = (data[0][0], data[1][0])
+            z1_tmp, z2_tmp, x1_hat_tmp, x2_hat_tmp, x1_cross_hat_tmp, x2_cross_hat_tmp = net.embedAndReconstruct(b1, b2)
+
+            z1test[ind:ind+b] = z1_tmp.cpu().detach().numpy()
+            z2test[ind:ind+b] = z2_tmp.cpu().detach().numpy()
+
+            x1_hat_test[ind:ind+b] = x1_hat_tmp.cpu().detach().numpy()
+            x2_hat_test[ind:ind+b] = x2_hat_tmp.cpu().detach().numpy()
+
+            x1_cross_hat_test[ind:ind+b] = x1_cross_hat_tmp.cpu().detach().numpy()
+            x2_cross_hat_test[ind:ind+b] = x2_cross_hat_tmp.cpu().detach().numpy()
+
+            ind += b
+
+
+        # draw random samples from the prior and reconstruct them
+        zrand = Independent(Normal(torch.zeros(net.z_dim), torch.ones(net.z_dim)), 1).sample([2000]).to(device)
+        zrand = zrand.double()
+
+
+        X1sample = net.decoder(zrand).cpu().detach().numpy()
+        X2sample = net.decoder2(zrand).cpu().detach().numpy()
+
+        from src.util.evaluate import evaluate_imputation, evaluate_classification, evaluate_generation
+        logger.info('Evaluating...')
+
+        logger.info('Training performance, reconstruction error, modality 1')
+        mse_train, spearman_train, r2_train = evaluate_imputation(dataTrain1.cpu().detach().numpy(), x1_hat_train, dataTrain1.shape[1])
+        logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse_train, spearman_train, r2_train))
+
+        logger.info('Training performance, reconstruction error, modality 2')
+        mse_train, spearman_train, r2_train = evaluate_imputation(dataTrain2.cpu().detach().numpy(), x2_hat_train, dataTrain2.shape[1])
+        logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse_train, spearman_train, r2_train))
+
+        logger.info('Training performance, imputation error, modality 1')
+        mse_train, spearman_train, r2_train = evaluate_imputation(dataTrain1.cpu().detach().numpy(), x1_cross_hat_train, dataTrain1.shape[1])
+        logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse_train, spearman_train, r2_train))
+
+        logger.info('Training performance, imputation error, modality 2')
+        mse_train, spearman_train, r2_train = evaluate_imputation(dataTrain2.cpu().detach().numpy(), x2_cross_hat_train, dataTrain2.shape[1])
+        logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse_train, spearman_train, r2_train))
+
+        logger.info('Validation performance, reconstruction error, modality 1')
+        mse_train, spearman_train, r2_train = evaluate_imputation(dataValidation1.cpu().detach().numpy(), x1_hat_validation, dataTrain1.shape[1])
+        logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse_train, spearman_train, r2_train))
+
+        logger.info('Validation performance, reconstruction error, modality 2')
+        mse_train, spearman_train, r2_train = evaluate_imputation(dataValidation2.cpu().detach().numpy(), x2_hat_validation, dataTrain2.shape[1])
+        logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse_train, spearman_train, r2_train))
+
+        logger.info('Validation performance, imputation error, modality 1')
+        mse_train, spearman_train, r2_train = evaluate_imputation(dataValidation1.cpu().detach().numpy(), x1_cross_hat_validation, dataTrain1.shape[1])
+        logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse_train, spearman_train, r2_train))
+
+        logger.info('Validation performance, imputation error, modality 2')
+        mse_train, spearman_train, r2_train = evaluate_imputation(dataValidation2.cpu().detach().numpy(), x2_cross_hat_validation, dataTrain2.shape[1])
+        logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse_train, spearman_train, r2_train))
+
+        logger.info('Test performance, reconstruction error, modality 1')
+        mse_train, spearman_train, r2_train = evaluate_imputation(dataTest1.cpu().detach().numpy(), x1_hat_test, dataTrain1.shape[1])
+        logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse_train, spearman_train, r2_train))
+
+        logger.info('Test performance, reconstruction error, modality 2')
+        mse_train, spearman_train, r2_train = evaluate_imputation(dataTest2.cpu().detach().numpy(), x2_hat_test, dataTrain2.shape[1])
+        logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse_train, spearman_train, r2_train))
+
+        logger.info('Test performance, imputation error, modality 1')
+        mse_train, spearman_train, r2_train = evaluate_imputation(dataTest1.cpu().detach().numpy(), x1_cross_hat_test, dataTrain1.shape[1])
+        logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse_train, spearman_train, r2_train))
+
+        logger.info('Test performance, imputation error, modality 2')
+        mse_train, spearman_train, r2_train = evaluate_imputation(dataTest2.cpu().detach().numpy(), x2_cross_hat_test, dataTrain2.shape[1])
+        logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse_train, spearman_train, r2_train))
+
+        logger.info('Generation coherence')
+        acc = evaluate_generation(omic1, omic2, labels, X1sample, X2sample)
+        logger.info('Concordance: %.4f: ' % acc)
+
+        logger.info('Saving embeddings...')
+
+
+        with open(save_dir + '/embeddings.pkl', 'wb') as f:
+            embDict = {'z1train': z1train, 'z1validation': z1validation, 'z1test': z1test, 'z2train': z2train, 'z2validation': z2validation, 'z2test': z2test}
+            pickle.dump(embDict, f)
+
+
+        # sys.exit(0)
+        #
+        # datasetTest = MultiOmicsDataset(dataTest1, dataTest2)
+        #
+        # extract_loader = DataLoader(datasetTest, batch_size=dataTest1.shape[0], shuffle=False, num_workers=0,
+        #                             drop_last=False)
+        #
+        # # Compute imputation loss
+        # sample_names = np.load(args['sample_names']).astype(str)[test_ind]
+        # z1, z2 = impute(net=net,
+        #                 model_file=modelCheckpoint,
+        #                 loader=extract_loader, device=device, save_dir=save_dir, sample_names=sample_names,
+        #                 num_features1=args['num_features1'], num_features2=args['num_features2'], multimodal=True)
+        #
 
 
         # not really needed for now

@@ -38,13 +38,13 @@ def evaluateUsingBatches(net, device, dataloader, multimodal=False):
     for i, trd in enumerate(dataloader):
         if i == 0:
             if not multimodal:
-                x = trd[0].to(device)
+                x = trd[0].to(device).double()
                 metrics = net.evaluate(x)
                 for kk in metrics:
                     metrics[kk] *= x.shape[0]
             else:
-                x1 = trd[0][0].to(device)
-                x2 = trd[1][0].to(device)
+                x1 = trd[0][0].to(device).double()
+                x2 = trd[1][0].to(device).double()
                 # evaluate method averages across samples, multiply with #samples to get total
                 metrics = net.evaluate(x1, x2)
                 for kk in metrics:
@@ -53,12 +53,12 @@ def evaluateUsingBatches(net, device, dataloader, multimodal=False):
         else:
             # add intermediate metrics to total
             if not multimodal:
-                x = trd[0].to(device)
+                x = trd[0].to(device).double()
                 tmpmetrics = net.evaluate(x)
                 shape = x.shape[0]
             else:
-                x1 = trd[0][0].to(device)
-                x2 = trd[1][0].to(device)
+                x1 = trd[0][0].to(device).double()
+                x2 = trd[1][0].to(device).double()
                 tmpmetrics = net.evaluate(x1, x2)
                 shape = x1.shape[0]
 
@@ -117,9 +117,9 @@ def train(device, net, num_epochs, train_loader, train_loader_eval, valid_loader
                 net.opt.zero_grad()
 
                 if not multimodal:
-                    current_loss = net.compute_loss(data[0].to(device))
+                    current_loss = net.compute_loss(data[0].to(device).double())
                 else:
-                    current_loss = net.compute_loss(data[0][0].to(device), data[1][0].to(device))
+                    current_loss = net.compute_loss(data[0][0].to(device).double(), data[1][0].to(device).double())
 
                 # Backward pass and optimize
                 current_loss.backward()

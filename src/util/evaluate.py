@@ -106,9 +106,7 @@ def evaluate_generation(X1, X2, y, reconstructed1, reconstructed2):
     clf2 = KNeighborsClassifier(n_neighbors=9, metric='euclidean')
     clf2.fit(X2, y)
 
-    print('predicting 1...')
     p1 = clf1.predict(reconstructed1)
-    print('predicting 2...')
     p2 = clf2.predict(reconstructed2)
 
     return accuracy_score(p1, p2)

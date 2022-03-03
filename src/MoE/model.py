@@ -220,6 +220,26 @@ class MixtureOfExperts(CrossGeneratingVariationalAutoencoder):
 
         return metrics
 
+    def embedAndReconstruct(self, x1, x2):
+        self.eval()
+        with torch.no_grad():
+            z1 = self.encoder(x1)
+            z1m = z1.mean
+
+            x1_hat = self.decoder(z1m)
+
+            z2 = self.encoder2(x2)
+            z2m = z2.mean
+
+            x2_hat = self.decoder2(z2m)
+
+            x1_cross_hat = self.decoder(z2m)
+            x2_cross_hat = self.decoder2(z1m)
+
+            return z1m, z2m, x1_hat, x2_hat, x1_cross_hat, x2_cross_hat
+
+
+
 
 
 if __name__ == '__main__':

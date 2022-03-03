@@ -155,6 +155,7 @@ configs/synthetic-data-1/
 configs/tcga/MECNV/*.yaml
 configs/tcga/GECNV/*.yaml
 configs/tcga/GEME/*.yaml
+configs/sc/*.yaml
 
 !configs/tcga/GEME/*_default.yaml
 !configs/tcga/GEME/*.py
@@ -162,6 +163,7 @@ configs/tcga/GEME/*.yaml
 !configs/tcga/GECNV/*.py
 !configs/tcga/MECNV/*_default.yaml
 !configs/tcga/MECNV/*.py
+!configs/sc/*_default.yaml
 
 # random stuff
 deleteme.txt

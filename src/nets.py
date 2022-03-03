@@ -789,6 +789,20 @@ class CrossGeneratingVariationalAutoencoder(MultiOmicRepresentationLearner):
 		z1, z2 = super().encode(x1, x2)
 		return z1.mean, z2.mean
 
+	def embedAndReconstruct(self, x1, x2):
+		with torch.no_grad():
+			z1, z2 = self.encode(x1, x2)
+
+			x1_hat = self.decoder(z1)
+			x2_hat = self.decoder2(z2)
+
+			x1_cross_hat = self.decoder(z2)
+			x2_cross_hat = self.decoder2(z1)
+
+			return z1, z2, x1_hat, x2_hat, x1_cross_hat, x2_cross_hat
+
+
+
 
 # Auxiliary network for mutual information estimation
 # change the default to only one hidden layer
@@ -886,6 +900,12 @@ class MVIB(MultiOmicRepresentationLearner):
 			metrics['z-cos'] = torch.mean(1 - torch.cosine_similarity(z1mean, z2mean)).item()
 
 		return metrics
+
+
+	def embedAndReconstruct(self, x1, x2):
+		with torch.no_grad():
+			z1, z2 = super().encode(x1, x2)
+			return z1.mean, z2.mean
 
 
 if __name__ == '__main__':

@@ -1,9 +1,9 @@
 #! /bin/sh
-#SBATCH --partition=general --qos=short
+#SBATCH --partition=general --qos=medium
 #SBATCH --cpus-per-task=1
 #SBATCH --gres=gpu:1
 #SBATCH --mem=10000
-#SBATCH --time=00:20:00
+#SBATCH --time=14:00:00
 #SBATCH --job-name=trainJoint
 #SBATCH --mail-user=stavrosmakrodi
 #SBATCH --mail-type=FAIL

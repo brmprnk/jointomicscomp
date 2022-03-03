@@ -13,6 +13,9 @@ from src.util.umapplotter import UMAPPlotter
 def impute(x_train, y_train, x_valid, y_valid, x_test, y_test, alphas, num_features, criterion='mse'):
     # returns imputed values as well as evaluation of the imputation based on mse and rsquared
 
+    criteria = ['mse', 'spearman', 'r2']
+    index = criteria.index(criterion)
+
     validationPerformance = np.zeros(alphas.shape[0])
     models = []
     for i, a in enumerate(alphas):
@@ -25,7 +28,7 @@ def impute(x_train, y_train, x_valid, y_valid, x_test, y_test, alphas, num_featu
         models.append(model)
 
         # evaluate using user-specified criterion
-        validationPerformance[i] = evaluate_imputation(y_valid, model.predict(x_valid), num_features, criterion)
+        validationPerformance[i] = evaluate_imputation(y_valid, model.predict(x_valid), num_features, criterion)[index]
 
     if criterion == 'mse':
         bestModel = models[np.argmin(validationPerformance)]
@@ -34,11 +37,10 @@ def impute(x_train, y_train, x_valid, y_valid, x_test, y_test, alphas, num_featu
 
     predictions = bestModel.predict(x_test)
 
-    return predictions, \
-           evaluate_imputation(y_test, predictions, num_features, 'mse'), \
-           evaluate_imputation(y_test, predictions, num_features, 'rsquared'), \
-           evaluate_imputation(y_test, predictions, num_features, 'spearman_corr'), \
-           evaluate_imputation(y_test, predictions, num_features, 'spearman_p')
+    mse, corr, rsq = evaluate_imputation(y_test, predictions, num_features, 'mse')
+
+
+    return predictions, mse, corr, rsq
 
 
 def ordinal_regression(x_train, y_train, x_valid, y_valid, x_test, y_test, alphas, criterion='mcc'):
@@ -286,34 +288,36 @@ def run_baseline(args: dict) -> None:
         # mse[i,j]: performance of using modality i to predict modality j
         mse = np.zeros((NR_MODALITIES, NR_MODALITIES), float)
         rsquared = np.eye(NR_MODALITIES)
-        spearman = np.zeros((NR_MODALITIES, NR_MODALITIES, 2), float)  # ,2 since we report mean and median
+        spearman = np.zeros((NR_MODALITIES, NR_MODALITIES), float)  # ,2 since we report mean and median
         spearman_p = np.zeros((NR_MODALITIES, NR_MODALITIES), float)
 
         # From x to y
-        omic2_from_omic1, mse[0, 1], rsquared[0, 1], spearman[0, 1], spearman_p[0, 1] =\
-            impute(omic1_train_file, omic2_train_file, omic1_valid_file,
-                   omic2_valid_file, omic1_test_file, omic2_test_file, alphas, args['num_features2'], 'mse')
-
+        omic2_from_omic1, mse[0, 1], spearman[0, 1], rsquared[0, 1] = impute(omic1_train_file, omic2_train_file, omic1_valid_file, omic2_valid_file, omic1_test_file, omic2_test_file, alphas, args['num_features2'], 'mse')
         # From y to x
-        omic1_from_omic2, mse[1, 0], rsquared[1, 0], spearman[1, 0], spearman_p[1, 0] = \
-            impute(omic2_train_file, omic1_train_file, omic2_valid_file,
-                   omic1_valid_file, omic2_test_file, omic1_test_file, alphas, args['num_features1'], 'mse')
+        omic1_from_omic2, mse[1, 0], spearman[1, 0], rsquared[1, 0] = impute(omic2_train_file, omic1_train_file, omic2_valid_file, omic1_valid_file, omic2_test_file, omic1_test_file, alphas, args['num_features1'], 'mse')
 
         performance = {'mse': mse, 'rsquared': rsquared, 'spearman_corr': spearman, 'spearman_p': spearman_p}
 
-        logger.info("BASELINE RESULTS")
-        logger.info("MSE: From {} to {} : {}".format(args['data1'], args['data2'], performance['mse'][0, 1]))
-        logger.info("MSE: From {} to {} : {}".format(args['data2'], args['data1'], performance['mse'][1, 0]))
-        logger.info("")
-        logger.info("R^2 regression score function: From {} to {} : {}".format(args['data1'], args['data2'],
-                                                                               performance['rsquared'][0, 1]))
-        logger.info("R^2 regression score function: From {} to {} : {}".format(args['data2'], args['data1'],
-                                                                               performance['rsquared'][1, 0]))
-        logger.info("")
-        logger.info("SPEARMAN CORR: From {} to {} : {}".format(args['data1'], args['data2'], performance['spearman_corr'][0, 1]))
-        logger.info("SPEARMAN CORR: From {} to {} : {}".format(args['data2'], args['data1'], performance['spearman_corr'][1, 0]))
-        logger.info("SPEARMAN P-value: From {} to {} : {}".format(args['data1'], args['data2'], performance['spearman_p'][0, 1]))
-        logger.info("SPEARMAN P-value: From {} to {} : {}".format(args['data2'], args['data1'], performance['spearman_p'][1, 0]))
+        logger.info('Test performance, imputation error, modality 1')
+        logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse[1, 0], spearman[1,0], rsquared[1,0]))
+
+        logger.info('Test performance, imputation error, modality 2')
+        logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse[0, 1], spearman[0,1], rsquared[0,1]))
+
+        #
+        # logger.info("BASELINE RESULTS")
+        # logger.info("MSE: From {} to {} : {}".format(args['data1'], args['data2'], performance['mse'][0, 1]))
+        # logger.info("MSE: From {} to {} : {}".format(args['data2'], args['data1'], performance['mse'][1, 0]))
+        # logger.info("")
+        # logger.info("R^2 regression score function: From {} to {} : {}".format(args['data1'], args['data2'],
+        #                                                                        performance['rsquared'][0, 1]))
+        # logger.info("R^2 regression score function: From {} to {} : {}".format(args['data2'], args['data1'],
+        #                                                                        performance['rsquared'][1, 0]))
+        # logger.info("")
+        # logger.info("SPEARMAN CORR: From {} to {} : {}".format(args['data1'], args['data2'], performance['spearman_corr'][0, 1]))
+        # logger.info("SPEARMAN CORR: From {} to {} : {}".format(args['data2'], args['data1'], performance['spearman_corr'][1, 0]))
+        # logger.info("SPEARMAN P-value: From {} to {} : {}".format(args['data1'], args['data2'], performance['spearman_p'][0, 1]))
+        # logger.info("SPEARMAN P-value: From {} to {} : {}".format(args['data2'], args['data1'], performance['spearman_p'][1, 0]))
 
         print(performance)
 
