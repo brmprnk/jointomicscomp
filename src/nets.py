@@ -4,6 +4,7 @@ import torch.nn.functional as F
 from torch.distributions import Normal, Independent, Beta
 import torch.optim as optimizer_module
 import math
+from tensorboardX import SummaryWriter
 
 # several utils
 
@@ -908,9 +909,113 @@ class MVIB(MultiOmicRepresentationLearner):
 			return z1.mean, z2.mean
 
 
-if __name__ == '__main__':
-	model = MVIB(3, 3, enc_hidden_dim=[2])
-	#model2 = MultiOmicVAE(500, 500)
 
-	x1 = torch.rand(20, 3)
-	x2 = torch.rand(20, 3)
+class MLP(nn.Module):
+	# 2-layer perceptron
+	def __init__(self, input_dim, hidden_dim, n_classes):
+		super(MLP, self).__init__()
+		self.input_dim = input_dim
+		self.hidden_dim  = hidden_dim
+		self.n_classes = n_classes
+
+		self.hidden_layer = nn.Sequential(nn.Linear(input_dim, hidden_dim), nn.BatchNorm1d(hidden_dim))
+		self.output_layer = torch.nn.Linear(hidden_dim, n_classes)
+
+	def forward(self, x):
+		hidden = F.relu(self.hidden_layer(x))
+		y_raw = self.output_layer(hidden)
+
+		return y_raw
+
+	def predict(self, x):
+		with torch.no_grad():
+			y_raw = self.forward(x)
+			return nn.Softmax(dim=1)(y_raw)
+
+	def optimize(self, num_epochs, lr, train_loader, valid_loader, ckpt_dir, logs_dir, early_stopping, weights=None):
+		device = torch.device('cuda:0')
+		if weights is None:
+			weights = torch.ones(self.n_classes)
+
+		weights = weights.double().to(device)
+		bestValLoss = 1e100
+
+		loss_fun = nn.CrossEntropyLoss(weight=weights)
+
+		tf_logger = SummaryWriter(logs_dir)
+		opt = init_optimizer('Adam', [{'params': self.parameters(), 'lr': lr}])
+
+		# Start training phase
+		print("[*] Start training...")
+		# Training epochs
+		for epoch in range(num_epochs):
+			self.train()
+
+			print("[*] Epoch %d..." % (epoch + 1))
+			for x, y in train_loader:
+				with torch.set_grad_enabled(True):  # no need to specify 'requires_grad' in tensors
+					opt.zero_grad()
+					y_pred = self.forward(x[0].double().to(device))
+					current_loss = loss_fun(y_pred, y[0].to(device))
+
+					# Backward pass and optimize
+					current_loss.backward()
+					opt.step()
+
+
+			with torch.no_grad():
+				trainingLoss = 0.
+				validationLoss = 0.
+
+				for x, y in train_loader:
+					y_pred = self.forward(x[0].double().to(device))
+					trainingLoss += loss_fun(y_pred, y[0].to(device)).item() * x[0].shape[0]
+
+				trainingLoss /= len(train_loader.dataset)
+
+				for x, y in valid_loader:
+					y_pred = self.forward(x[0].double().to(device))
+					validationLoss += loss_fun(y_pred, y[0].to(device)).item()  * x[0].shape[0]
+
+				validationLoss /= len(valid_loader.dataset)
+
+
+				tf_logger.add_scalar('train loss', trainingLoss, epoch + 1)
+				tf_logger.add_scalar('valid loss', validationLoss, epoch + 1)
+
+
+			# Save last model
+			state = {'epoch': epoch + 1, 'state_dict': self.state_dict(), 'optimizer': opt.state_dict()}
+			torch.save(state, ckpt_dir + '/model_last.pth.tar')
+
+			if validationLoss < bestValLoss:
+				torch.save(state, ckpt_dir + '/model_best.pth.tar')
+				bestValLoss = validationLoss
+
+
+			if (epoch + 1) % 10 == 0:
+				print("[*] Saving model epoch %d..." % (epoch + 1))
+				torch.save(state, ckpt_dir + '/model_epoch%d.pth.tar' % (epoch + 1))
+
+			early_stopping(validationLoss)
+
+			# Stop training when not improving
+			if early_stopping.early_stop:
+				break
+
+		print("[*] Finish training.")
+
+
+
+
+
+if __name__ == '__main__':
+	model = MLP(5, 3, 3)
+	device = torch.device('cuda:0')
+
+	model = model.double().to(device)
+
+	x = torch.rand(20, 5)
+	y = torch.zeros(20)
+	y[:10] = 1
+	y[-5:] = 2

@@ -3,7 +3,7 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --gres=gpu:1
 #SBATCH --mem=10000
-#SBATCH --time=14:00:00
+#SBATCH --time=10:00:00
 #SBATCH --job-name=trainJoint
 #SBATCH --mail-user=stavrosmakrodi
 #SBATCH --mail-type=FAIL

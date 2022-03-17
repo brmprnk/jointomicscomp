@@ -8,13 +8,11 @@ resultsDir = sys.argv[1]
 configDir = sys.argv[2]
 
 
-# prefix = ['tcga', 'tcga', 'tcga', 'sc']
-# datasets = ['_GE_ME', '_GE_CNV', '_ME_CNV', '_RNA_ADT']
-prefix = ['tcga', 'tcga', 'tcga']
-datasets = ['_GE_ME', '_GE_CNV', '_ME_CNV']
+prefix = ['tcga', 'tcga', 'tcga', 'cite']
+datasets = ['_GE_ME', '_GE_CNV', '_ME_CNV', '_RNA_ADT']
+# prefix = ['tcga', 'tcga', 'tcga']
+# datasets = ['_GE_ME', '_GE_CNV', '_ME_CNV']
 
-# models = ['cgae', 'mvib', 'poe', 'moe', 'mofa']
-# modelNames = ['CGAE', 'MVIB', 'PoE', 'MoE', 'MOFA+']
 models = ['cgae', 'mvib', 'poe', 'moe']
 modelNames = ['CGAE', 'MVIB', 'PoE', 'MoE']
 nrCombos = {'cgae': 80, 'mvib': 240, 'poe': 80, 'moe': 160}
@@ -47,10 +45,22 @@ for pr, ds in zip(prefix, datasets):
 
         print(model, bestModel, bestLoss, bestEpoch)
 
-        with open(configDir + pr + '/' + ''.join(ds.split('_')) + '/' + model + '_' + str(bestModel) + '.yaml') as file:
-            config = yaml.safe_load(file)
+        try:
+            with open(configDir + pr + '/' + ''.join(ds.split('_')) + '/' + model + '_' + str(bestModel) + '.yaml') as file:
+                config = yaml.safe_load(file)
+        except FileNotFoundError:
+            assert pr == 'cite'
+            assert ds == '_RNA_ADT'
+            with open(configDir + 'sc/' + model + '_' + str(bestModel) + '.yaml') as file:
+                config = yaml.safe_load(file)
 
-        config['GLOBAL_PARAMS']['task'] = 1
+        if pr == 'tcga':
+            # for tcga only do imputation and save embeddings
+            config['GLOBAL_PARAMS']['task'] = 1
+        else:
+            # for cite-seq additionally do cell type classification
+            config['GLOBAL_PARAMS']['task'] = 2
+            config[name]['clf_criterion'] = 'mcc'
 
         config['GLOBAL_PARAMS']['name'] = 'test' + ds + '_' + model
         config[name]['pre_trained'] = resultsDir + 'train-' + pr + '-' + model + '-' + str(bestModel) + ds + '/' + name + '/checkpoint/model_epoch' + str(bestEpoch) + '.pth.tar'

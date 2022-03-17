@@ -55,6 +55,7 @@ do
     if [ ! -f $RESPATH$RESNAME ];
     then
       #echo $conf $MODEL;
+      rm -r $RESPATH'train-'$DATASETNAME'-'$MODEL'-'$NUMBER'_'$VIEW1'_'$VIEW2'/';
       sbatch train_joint.sbatch $conf $MODEL;
     else
       echo 'Skipping, result exists: '$conf;

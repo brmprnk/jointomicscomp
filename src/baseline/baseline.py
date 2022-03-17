@@ -1,14 +1,13 @@
 import os
 import numpy as np
 import pickle
-from sklearn.linear_model import Ridge
-from sklearn.svm import LinearSVC
+from sklearn.linear_model import Ridge, SGDClassifier
 from sklearn.decomposition import PCA
-from mord import OrdinalRidge
 from src.util.evaluate import *
 import src.util.logger as logger
 from src.util.umapplotter import UMAPPlotter
-
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 def impute(x_train, y_train, x_valid, y_valid, x_test, y_test, alphas, num_features, criterion='mse'):
     # returns imputed values as well as evaluation of the imputation based on mse and rsquared
@@ -20,7 +19,6 @@ def impute(x_train, y_train, x_valid, y_valid, x_test, y_test, alphas, num_featu
     models = []
     for i, a in enumerate(alphas):
         model = Ridge(alpha=a, fit_intercept=True, random_state=1)
-
         # train
         model.fit(x_train, y_train)
 
@@ -43,8 +41,9 @@ def impute(x_train, y_train, x_valid, y_valid, x_test, y_test, alphas, num_featu
     return predictions, mse, corr, rsq
 
 
-def ordinal_regression(x_train, y_train, x_valid, y_valid, x_test, y_test, alphas, criterion='mcc'):
-    # returns the predicted stage, as well as accuracy measures
+
+def classification(x_train, y_train, x_valid, y_valid, x_test, y_test, alphas, criterion='mcc', baseline=False):
+    # returns the predicted class labels, as well as accuracy measures
 
     if criterion == 'acc':
         ind = 0
@@ -61,7 +60,7 @@ def ordinal_regression(x_train, y_train, x_valid, y_valid, x_test, y_test, alpha
     validationPerformance = np.zeros(alphas.shape[0])
     models = []
     for i, a in enumerate(alphas):
-        model = OrdinalRidge(alpha=a, fit_intercept=True, random_state=1)
+        model = SGDClassifier(penalty='l2', loss='hinge', alpha=a, fit_intercept=True, random_state=1)
 
         # train
         model.fit(x_train, y_train)
@@ -75,44 +74,8 @@ def ordinal_regression(x_train, y_train, x_valid, y_valid, x_test, y_test, alpha
     bestModel = models[np.argmax(validationPerformance)]
 
     predictions = bestModel.predict(x_test).astype(int)
-
-    return predictions, evaluate_classification(y_test, predictions)
-
-
-def classification(x_train, y_train, x_valid, y_valid, x_test, y_test, alphas, criterion='mcc'):
-    # returns the predicted stage, as well as accuracy measures
-
-    if criterion == 'acc':
-        ind = 0
-    elif criterion == 'pr':
-        ind = 1
-    elif criterion == 'rc':
-        ind = 2
-    elif criterion == 'f1':
-        ind = 3
-    else:
-        assert criterion == 'mcc'
-        ind = 4
-
-    validationPerformance = np.zeros(alphas.shape[0])
-    models = []
-    for i, a in enumerate(alphas):
-        model = LinearSVC(penalty='l2', loss='hinge', C=a, multi_class='ovr', fit_intercept=True, random_state=1)
-
-        # train
-        model.fit(x_train, y_train)
-
-        # save so that we don't have to re-train
-        models.append(model)
-
-        # evaluate using user-specified criterion
-        validationPerformance[i] = evaluate_classification(y_valid, model.predict(x_valid))[ind]
-
-    bestModel = models[np.argmax(validationPerformance)]
-
-    predictions = bestModel.predict(x_test).astype(int)
-
-    return predictions, evaluate_classification(y_test, predictions)
+    acc, pr, rc, f1, mcc, confMat = evaluate_classification(y_test, predictions)
+    return predictions, acc, pr, rc, f1, mcc, confMat
 
 
 def run_baseline(args: dict) -> None:
@@ -126,11 +89,15 @@ def run_baseline(args: dict) -> None:
     os.makedirs(save_dir)
 
     alphas = np.array([1e-4, 1e-3, 1e-2, 1e-1, 0.5, 1.0, 2.0, 5.0, 10., 20.])
-    Cs = 1. / alphas
+
 
     # Load in data
     omic1 = np.load(args['data_path1']).astype(np.float32)
     omic2 = np.load(args['data_path2']).astype(np.float32)
+
+    classLabels = np.load(args['labels'])
+    labelNames = np.load(args['labelnames'])
+
 
     # Use predefined split
     train_ind = np.load(args['train_ind'])
@@ -147,141 +114,15 @@ def run_baseline(args: dict) -> None:
     omic2_valid_file = omic2[val_ind]
     omic2_test_file = omic2[test_ind]
 
+    ytrain = classLabels[train_ind]
+    yvalid = classLabels[val_ind]
+    ytest = classLabels[test_ind]
+
+
     logger.info("Succesfully loaded in all data")
-
-    if args['task'] == 'classify':
-
-        Nclasses = np.unique(omic2_train_file).shape[0]
-
-        # MOFA, MoE, PoE, MVIB learn a common z --> X will be just an array N x F
-        # CGAE has  a separate z for each modality --> so evaluate K times
-        # baseline has the raw data and requires pca --> in both of these cases there will be a list of length K, with N x F matrices as elements
-
-        if type(omic1_train_file) == list:
-            if args['baseline']:
-                pcTrainList = []
-                pcValidList = []
-                pcTestList = []
-
-                for i in range(omic1_train_file):
-                    pca = PCA(n_components=50, whiten=False, svd_solver='full')
-                    pca.fit(omic1_train_file[i])
-
-                    pcTrainList.append(pca.transform(omic1_train_file[i]))
-                    pcValidList.append(pca.transform(omic1_valid_file[i]))
-                    pcTestList.append(pca.transform(omic1_test_file[i]))
-
-                x_train = np.hstack(pcTrainList)
-                x_valid = np.hstack(pcValidList)
-                x_test = np.hstack(pcTestList)
-
-                assert x_train.shape[0] == x_test.shape[0]
-                assert x_train.shape[1] == 50 * len(omic1_train_file)
-
-                _, acc, pr, rc, f1, mcc, confMat = classification(omic1_train_file, omic2_train_file, omic1_valid_file,
-                                                                  omic2_valid_file, omic1_test_file,
-                                                                  omic2_test_file, Cs, 'mcc')
-
-            else:
-                K = len(omic1_train_file)
-                assert len(omic1_valid_file) == K
-                assert len(omic1_test_file) == K
-
-                acc = np.zeros(K)
-                pr = np.zeros(K)
-                rc = np.zeros(K)
-                f1 = np.zeros(K)
-                mcc = np.zeros(K)
-                confMat = np.zeros(K, Nclasses, Nclasses)
-
-                for i in range(K):
-                    _, acc[i], pr[i], rc[i], f1[i], mcc[i], confMat[i] = classification(omic1_train_file,
-                                                                                        omic2_train_file,
-                                                                                        omic1_valid_file,
-                                                                                        omic2_valid_file,
-                                                                                        omic1_test_file,
-                                                                                        omic2_test_file, Cs,
-                                                                                        'mcc')
-
-
-        else:
-            _, acc, pr, rc, f1, mcc, confMat = classification(omic1_train_file, omic2_train_file, omic1_valid_file,
-                                                              omic2_valid_file, omic1_test_file,
-                                                              omic2_test_file,
-                                                              Cs, 'mcc')
-
-        performance = {'acc': acc, 'precision': pr, 'recall': rc, 'f1': f1, 'mcc': mcc, 'confMat': confMat}
-
-
-    elif args['task'] == 'rank':
-        # this should be the same as classification
-
-        Nclasses = np.unique(omic2_train_file).shape[0]
-
-        # MOFA, MoE, PoE, MVIB learn a common z --> X will be just an array N x F
-        # CGAE has  a separate z for each modality --> so evaluate K times
-        # baseline has the raw data and requires pca --> in both of these cases there will be a list of length K, with N x F matrices as elements
-
-        if type(omic1_train_file) == list:
-            if args['baseline']:
-                pcTrainList = []
-                pcValidList = []
-                pcTestList = []
-
-                for i in range(omic1_train_file):
-                    pca = PCA(n_components=50, whiten=False, svd_solver='full')
-                    pca.fit(omic1_train_file[i])
-
-                    pcTrainList.append(pca.transform(omic1_train_file[i]))
-                    pcValidList.append(pca.transform(omic1_valid_file[i]))
-                    pcTestList.append(pca.transform(omic1_test_file[i]))
-
-                x_train = np.hstack(pcTrainList)
-                x_valid = np.hstack(pcValidList)
-                x_test = np.hstack(pcTestList)
-
-                assert x_train.shape[0] == x_test.shape[0]
-                assert x_train.shape[1] == 50 * len(omic1_train_file)
-
-                _, acc, pr, rc, f1, mcc, confMat = ordinal_regression(omic1_train_file, omic2_train_file,
-                                                                      omic1_valid_file, omic2_valid_file,
-                                                                      omic1_test_file,
-                                                                      omic2_test_file, Cs, 'mcc')
-
-            else:
-                K = len(omic1_train_file)
-                assert len(omic1_valid_file) == K
-                assert len(omic1_test_file) == K
-
-                acc = np.zeros(K)
-                pr = np.zeros(K)
-                rc = np.zeros(K)
-                f1 = np.zeros(K)
-                mcc = np.zeros(K)
-                confMat = np.zeros(K, Nclasses, Nclasses)
-
-                for i in range(K):
-                    _, acc[i], pr[i], rc[i], f1[i], mcc[i], confMat[i] = ordinal_regression(omic1_train_file,
-                                                                                            omic2_train_file,
-                                                                                            omic1_valid_file,
-                                                                                            omic2_valid_file,
-                                                                                            omic1_test_file,
-                                                                                            omic2_test_file, Cs, 'mcc')
-
-
-        else:
-            _, acc, pr, rc, f1, mcc, confMat = ordinal_regression(omic1_train_file, omic2_train_file, omic1_valid_file,
-                                                                  omic2_valid_file, omic1_test_file,
-                                                                  omic2_test_file, Cs, 'mcc')
-
-        performance = {'acc': acc, 'precision': pr, 'recall': rc, 'f1': f1, 'mcc': mcc, 'confMat': confMat}
-
-    else:
-        assert args['task'] == 'impute'
+    if args['task'] > 0:
         logger.success("Running baseline for task {} with data from 1: {} and 2: {}".format(args['task'], args['data1'],
                                                                                             args['data2']))
-        # other methods should generate the imputations by themselves
-        # # TODO: not sure what will happen with MVIB here (ignore it?)
 
         NR_MODALITIES = 2
 
@@ -304,22 +145,57 @@ def run_baseline(args: dict) -> None:
         logger.info('Test performance, imputation error, modality 2')
         logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse[0, 1], spearman[0,1], rsquared[0,1]))
 
-        #
-        # logger.info("BASELINE RESULTS")
-        # logger.info("MSE: From {} to {} : {}".format(args['data1'], args['data2'], performance['mse'][0, 1]))
-        # logger.info("MSE: From {} to {} : {}".format(args['data2'], args['data1'], performance['mse'][1, 0]))
-        # logger.info("")
-        # logger.info("R^2 regression score function: From {} to {} : {}".format(args['data1'], args['data2'],
-        #                                                                        performance['rsquared'][0, 1]))
-        # logger.info("R^2 regression score function: From {} to {} : {}".format(args['data2'], args['data1'],
-        #                                                                        performance['rsquared'][1, 0]))
-        # logger.info("")
-        # logger.info("SPEARMAN CORR: From {} to {} : {}".format(args['data1'], args['data2'], performance['spearman_corr'][0, 1]))
-        # logger.info("SPEARMAN CORR: From {} to {} : {}".format(args['data2'], args['data1'], performance['spearman_corr'][1, 0]))
-        # logger.info("SPEARMAN P-value: From {} to {} : {}".format(args['data1'], args['data2'], performance['spearman_p'][0, 1]))
-        # logger.info("SPEARMAN P-value: From {} to {} : {}".format(args['data2'], args['data1'], performance['spearman_p'][1, 0]))
 
-        print(performance)
+    # also classify
+    if args['task'] > 1:
+
+        Nclasses = np.unique(ytrain).shape[0]
+
+
+        pca1 = PCA(n_components=32, whiten=False, svd_solver='full')
+        pca1.fit(omic1_train_file)
+
+        X1train = pca1.transform(omic1_train_file)
+        X1valid = pca1.transform(omic1_valid_file)
+        X1test = pca1.transform(omic1_test_file)
+
+        pca2 = PCA(n_components=32, whiten=False, svd_solver='full')
+        pca2.fit(omic2_train_file)
+
+        X2train = pca2.transform(omic2_train_file)
+        X2valid = pca2.transform(omic2_valid_file)
+        X2test = pca2.transform(omic2_test_file)
+
+
+        Xtrain = np.hstack((X1train, X2train))
+        Xvalid = np.hstack((X1valid, X2valid))
+        Xtest = np.hstack((X1test, X2test))
+
+        assert Xtrain.shape[1] == Xtest.shape[1]
+        # assert x_train.shape[1] == 50 * len(omic1_train_file)
+
+        _, acc, pr, rc, f1, mcc, confMat = classification(X1train, ytrain, X1valid, yvalid, X1test, ytest, alphas, args['clf_criterion'])
+
+        logger.info('Test performance, classification task, modality 1')
+        logger.info('ACC: %.4f\tPR: %.4f\tRC: %.4f\tF1: %.4f\tMCC: %.4f' % (acc, np.mean(pr), np.mean(rc), np.mean(f1), mcc))
+        performanceClf1 = {'acc': acc, 'precision': pr, 'recall': rc, 'f1': f1, 'mcc': mcc, 'confMat': confMat}
+
+        _, acc, pr, rc, f1, mcc, confMat = classification(X2train, ytrain, X2valid, yvalid, X2test, ytest, alphas, args['clf_criterion'])
+
+        logger.info('Test performance, classification task, modality 2')
+        logger.info('ACC: %.4f\tPR: %.4f\tRC: %.4f\tF1: %.4f\tMCC: %.4f' % (acc, np.mean(pr), np.mean(rc), np.mean(f1), mcc))
+
+        performanceClf2 = {'acc': acc, 'precision': pr, 'recall': rc, 'f1': f1, 'mcc': mcc, 'confMat': confMat}
+        _, acc, pr, rc, f1, mcc, confMat = classification(Xtrain, ytrain, Xvalid, yvalid, Xtest, ytest, alphas, args['clf_criterion'])
+
+        performanceClf12 = {'acc': acc, 'precision': pr, 'recall': rc, 'f1': f1, 'mcc': mcc, 'confMat': confMat}
+
+        logger.info('Test performance, classification task, both modalities')
+        logger.info('ACC: %.4f\tPR: %.4f\tRC: %.4f\tF1: %.4f\tMCC: %.4f' % (acc, np.mean(pr), np.mean(rc), np.mean(f1), mcc))
+
+        performance['omic1'] = performanceClf1
+        performance['omic2'] = performanceClf2
+        performance['omic1+2'] = performanceClf12
 
     with open(os.path.join(save_dir, args['name'] + 'results_pickle'), 'wb') as f:
         pickle.dump(performance, f)

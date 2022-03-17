@@ -141,7 +141,7 @@ def run(args: dict) -> None:
 
 
     # Imputation
-    if args['task'] == 1:
+    if args['task'] > 0:
 
         dataTrain1 = torch.tensor(omic1_train_file, device=device)
         dataTrain2 = torch.tensor(omic2_train_file, device=device)
@@ -198,7 +198,7 @@ def run(args: dict) -> None:
         b = args['batch_size']
         for data in train_loader:
             b1, b2 = (data[0][0], data[1][0])
-            z1_tmp, z2_tmp, x1_hat_tmp, x2_hat_tmp, x1_cross_hat_tmp, x2_cross_hat_tmp = net.embedAndReconstruct(b1, b2)
+            z1_tmp, z2_tmp, x1_hat_tmp, x2_hat_tmp, x1_cross_hat_tmp, x2_cross_hat_tmp = net.embedAndReconstruct(b1.double(), b2.double())
 
             z1train[ind:ind+b] = z1_tmp.cpu().detach().numpy()
             z2train[ind:ind+b] = z2_tmp.cpu().detach().numpy()
@@ -214,7 +214,7 @@ def run(args: dict) -> None:
         ind = 0
         for data in valid_loader:
             b1, b2 = (data[0][0], data[1][0])
-            z1_tmp, z2_tmp, x1_hat_tmp, x2_hat_tmp, x1_cross_hat_tmp, x2_cross_hat_tmp = net.embedAndReconstruct(b1, b2)
+            z1_tmp, z2_tmp, x1_hat_tmp, x2_hat_tmp, x1_cross_hat_tmp, x2_cross_hat_tmp = net.embedAndReconstruct(b1.double(), b2.double())
 
             z1validation[ind:ind+b] = z1_tmp.cpu().detach().numpy()
             z2validation[ind:ind+b] = z2_tmp.cpu().detach().numpy()
@@ -231,7 +231,7 @@ def run(args: dict) -> None:
         ind = 0
         for data in test_loader:
             b1, b2 = (data[0][0], data[1][0])
-            z1_tmp, z2_tmp, x1_hat_tmp, x2_hat_tmp, x1_cross_hat_tmp, x2_cross_hat_tmp = net.embedAndReconstruct(b1, b2)
+            z1_tmp, z2_tmp, x1_hat_tmp, x2_hat_tmp, x1_cross_hat_tmp, x2_cross_hat_tmp = net.embedAndReconstruct(b1.double(), b2.double())
 
             z1test[ind:ind+b] = z1_tmp.cpu().detach().numpy()
             z2test[ind:ind+b] = z2_tmp.cpu().detach().numpy()
@@ -250,12 +250,12 @@ def run(args: dict) -> None:
         zrand = zrand.double()
 
 
-        X1sample = net.decoder(zrand).cpu().detach().numpy()
-        X2sample = net.decoder2(zrand).cpu().detach().numpy()
+        X1sample = net.decoder(zrand).cpu().detach()
+        X2sample = net.decoder2(zrand).cpu().detach()
 
         from src.util.evaluate import evaluate_imputation, evaluate_classification, evaluate_generation
         logger.info('Evaluating...')
-
+        
         logger.info('Training performance, reconstruction error, modality 1')
         mse_train, spearman_train, r2_train = evaluate_imputation(dataTrain1.cpu().detach().numpy(), x1_hat_train, dataTrain1.shape[1])
         logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse_train, spearman_train, r2_train))
@@ -305,7 +305,7 @@ def run(args: dict) -> None:
         logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse_train, spearman_train, r2_train))
 
         logger.info('Generation coherence')
-        acc = evaluate_generation(omic1, omic2, labels, X1sample, X2sample)
+        acc = evaluate_generation(X1sample, X2sample, args['data1'], args['data2'])
         logger.info('Concordance: %.4f: ' % acc)
 
         logger.info('Saving embeddings...')
@@ -315,97 +315,38 @@ def run(args: dict) -> None:
             embDict = {'z1train': z1train, 'z1validation': z1validation, 'z1test': z1test, 'z2train': z2train, 'z2validation': z2validation, 'z2test': z2test}
             pickle.dump(embDict, f)
 
+    # classification
+    if args['task'] > 1:
+        classLabels = np.load(args['labels'])
+        labelNames = np.load(args['labelnames'])
 
-        # sys.exit(0)
-        #
-        # datasetTest = MultiOmicsDataset(dataTest1, dataTest2)
-        #
-        # extract_loader = DataLoader(datasetTest, batch_size=dataTest1.shape[0], shuffle=False, num_workers=0,
-        #                             drop_last=False)
-        #
-        # # Compute imputation loss
-        # sample_names = np.load(args['sample_names']).astype(str)[test_ind]
-        # z1, z2 = impute(net=net,
-        #                 model_file=modelCheckpoint,
-        #                 loader=extract_loader, device=device, save_dir=save_dir, sample_names=sample_names,
-        #                 num_features1=args['num_features1'], num_features2=args['num_features2'], multimodal=True)
-        #
+        ytrain = classLabels[train_ind]
+        yvalid = classLabels[val_ind]
+        ytest = classLabels[test_ind]
+
+        logger.info('Test performance, classification task, modality 1')
+        _, acc, pr, rc, f1, mcc, confMat = classification(z1train, ytrain, z1validation, yvalid, z1test, ytest, np.array([1e-4, 1e-3, 1e-2, 0.1, 0.5, 1.0, 2.0, 5.0, 10., 20.]), 'mcc')
+        performance1 = [acc, pr, rc, f1, mcc, confMat]
+        logger.info('ACC: %.4f\tPR: %.4f\tRC: %.4f\tF1: %.4f\tMCC: %.4f' % (performance1[0], np.mean(performance1[1]), np.mean(performance1[2]), np.mean(performance1[3]), performance1[4]))
 
 
-        # not really needed for now
-        # labels = np.load(args['labels']).astype(int)
-        # labeltypes = np.load(args['labelnames'])
-        #
-        # test_labels = labeltypes[[labels[test_ind]]]
-        #
-        # z1_plot = UMAPPlotter(z1, test_labels, "CGAE Z1: Task {} | {} & {} \n"
-        #                                        "Epochs: {}, Latent Dimension: {}, LR: {}, Batch size: {}"
-        #                       .format(args['task'], args['data1'], args['data2'],
-        #                               args['epochs'], args['latent_dim'], args['enc1_lr'], args['batch_size']),
-        #                       save_dir + "/{} UMAP_Z1.png".format('CGAE'))
-        # z1_plot.plot()
-        #
-        # z2_plot = UMAPPlotter(z2, test_labels, "CGAE Z2: Task {} | {} & {} \n"
-        #                                        "Epochs: {}, Latent Dimension: {}, LR: {}, Batch size: {}"
-        #                       .format(args['task'], args['data1'], args['data2'],
-        #                               args['epochs'], args['latent_dim'], args['enc1_lr'], args['batch_size']),
-        #                       save_dir + "/{} UMAP_Z2.png".format('CGAE'))
-        # z2_plot.plot()
+        pr1 = {'acc': performance1[0], 'pr': performance1[1], 'rc': performance1[2], 'f1': performance1[3], 'mcc': performance1[4], 'confmat': performance1[5]}
 
-    # supervised task for SC and synthetic data
-    # for TCGA we still need to figure out a solution here (maybe call this task 3 and have another if in which we just save the embeddings (or call r2py)?)
-    if args['task'] == 2:
-        logger.info("Classification")
+        logger.info('Test performance, classification task, modality 2')
+        _, acc, pr, rc, f1, mcc, confMat = classification(z2train, ytrain, z2validation, yvalid, z2test, ytest, np.array([1e-4, 1e-3, 1e-2, 0.1, 0.5, 1.0, 2.0, 5.0, 10., 20.]), args['clf_criterion'])
+        performance2 = [acc, pr, rc, f1, mcc, confMat]
+        logger.info('ACC: %.4f\tPR: %.4f\tRC: %.4f\tF1: %.4f\tMCC: %.4f' % (performance2[0], np.mean(performance2[1]), np.mean(performance2[2]), np.mean(performance2[3]), performance2[4]))
 
-        dataTest1 = torch.tensor(omic1_test_file, device=device)
-        dataTest2 = torch.tensor(omic2_test_file, device=device)
+        pr2 = {'acc': performance2[0], 'pr': performance2[1], 'rc': performance2[2], 'f1': performance2[3], 'mcc': performance2[4], 'confmat': performance2[5]}
 
-        datasetTest = MultiOmicsDataset(dataTest1, dataTest2)
+        logger.info('Test performance, classification task, both modalities')
+        _, acc, pr, rc, f1, mcc, confMat = classification(np.hstack((z1train, z2train)), ytrain, np.hstack((z1validation, z2validation)), yvalid, np.hstack((z1test, z2test)), ytest, np.array([1e-4, 1e-3, 1e-2, 0.1, 0.5, 1.0, 2.0, 5.0, 10., 20.]), args['clf_criterion'])
+        performance12 = [acc, pr, rc, f1, mcc, confMat]
+        logger.info('ACC: %.4f\tPR: %.4f\tRC: %.4f\tF1: %.4f\tMCC: %.4f' % (performance12[0], np.mean(performance12[1]), np.mean(performance12[2]), np.mean(performance12[3]), performance12[4]))
 
-
-        train_loader = DataLoader(datasetTrain, batch_size=dataTrain1.shape[0], shuffle=False, num_workers=0,
-                                       drop_last=False)
-        valid_loader = DataLoader(datasetValidation, batch_size=dataValidation1.shape[0], shuffle=False, num_workers=0,
-                                  drop_last=False)
-        test_loader = DataLoader(datasetTest, batch_size=dataTest1.shape[0], shuffle=False, num_workers=0,
-                          drop_last=False)
-
-
-        z1train, z2train = extract(net, modelCheckpoint, train_loader, save_dir, multimodal=True)
-        z1valid, z2valid = extract(net, modelCheckpoint, valid_loader, save_dir, multimodal=True)
-        z1test, z2test = extract(net, modelCheckpoint, test_loader, save_dir, multimodal=True)
-
-        logger.info("Using omic 1")
-        predictions1, performance1 = classification(z1train, ytrain, z1valid, yvalid, z1test, ytest, np.array([1e-5, 1e-3, 1e-2, 0.1, 0.5, 1.0, 2.0, 5.0, 10., 20.]), args['clf_criterion'])
-
-        pr1 = {'acc': performance1[0], 'pr': performance1[1], 'rc': performance1[2], 'f1': performance1[3], 'mcc': performance1[4], 'confmat': performance1[5], 'pred': predictions1}
-
-        logger.info("Using omic 2")
-        predictions2, performance2 = classification(z2train, ytrain, z2valid, yvalid, z2test, ytest, np.array([1e-5, 1e-3, 1e-2, 0.1, 0.5, 1.0, 2.0, 5.0, 10., 20.]), args['clf_criterion'])
-        pr2 = {'acc': performance2[0], 'pr': performance2[1], 'rc': performance2[2], 'f1': performance2[3], 'mcc': performance2[4], 'confmat': performance2[5], 'pred': predictions2}
+        pr12 = {'acc': performance12[0], 'pr': performance12[1], 'rc': performance12[2], 'f1': performance12[3], 'mcc': performance12[4], 'confmat': performance12[5]}
 
 
         logger.info("Saving results")
         with open(save_dir + "/CGAE_task2_results.pkl", 'wb') as f:
-            pickle.dump({'omic1': pr1, 'omic2': pr2}, f)
-
-
-        # plots not needed for now
-        # z1, z2 = extract(net=net, model_file=modelCheckpoint,
-        #                  loader=extract_loader, save_dir=save_dir, multimodal=True)
-        #
-        # prediction_test_labels = np.load(args['ctype_test_file_labels'])
-        #
-        # z1_plot = UMAPPlotter(z1, prediction_test_labels, "CGAE Z1: Task {} on {} | {} & {} \n"
-        #                                                   "Epochs: {}, Latent Dimension: {}, LR: {}, Batch size: {}"
-        #                       .format(args['task'], args['ctype'], args['data1'], args['data2'],
-        #                               args['epochs'], args['latent_dim'], args['lr'], args['batch_size']),
-        #                       save_dir + "/{} UMAP.png".format('CGAE'))
-        # z1_plot.plot()
-        #
-        # z2_plot = UMAPPlotter(z2, prediction_test_labels, "CGAE Z2: Task {} on {} | {} & {} \n"
-        #                                                   "Epochs: {}, Latent Dimension: {}, LR: {}, Batch size: {}"
-        #                       .format(args['task'], args['ctype'], args['data1'], args['data2'],
-        #                               args['epochs'], args['latent_dim'], args['lr'], args['batch_size']),
-        #                       save_dir + "/{} UMAP.png".format('CGAE'))
-        # z2_plot.plot()
+            pickle.dump({'omic1': pr1, 'omic2': pr2, 'omic1+2': pr12}, f)

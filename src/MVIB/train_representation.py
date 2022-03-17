@@ -13,6 +13,7 @@ from src.util.umapplotter import UMAPPlotter
 from tensorboardX import SummaryWriter
 from src.util.early_stopping import EarlyStopping
 from src.util.evaluate import save_factorizations_to_csv
+from src.baseline.baseline import classification
 import pickle
 
 def run(args: dict) -> None:
@@ -145,7 +146,7 @@ def run(args: dict) -> None:
             pickle.dump(lossDict, f)
 
 
-    if args['task'] == 1:
+    if args['task'] > 0:
         logger.info("Classification")
 
         dataTrain1 = torch.tensor(omic1_train_file, device=device)
@@ -183,8 +184,8 @@ def run(args: dict) -> None:
         ind = 0
         b = args['batch_size']
         for data in train_loader:
-            b1, b2 = data[0]
-            z1_tmp, z2_tmp, x1_hat_tmp, x2_hat_tmp, x1_cross_hat_tmp, x2_cross_hat_tmp = net.embedAndReconstruct(b1, b2)
+            b1, b2 = (data[0][0], data[1][0])
+            z1_tmp, z2_tmp = net.embedAndReconstruct(b1.double(), b2.double())
 
             z1train[ind:ind+b] = z1_tmp.cpu().detach().numpy()
             z2train[ind:ind+b] = z2_tmp.cpu().detach().numpy()
@@ -193,8 +194,8 @@ def run(args: dict) -> None:
 
         ind = 0
         for data in valid_loader:
-            b1, b2 = data[0]
-            z1_tmp, z2_tmp, x1_hat_tmp, x2_hat_tmp, x1_cross_hat_tmp, x2_cross_hat_tmp = net.embedAndReconstruct(b1, b2)
+            b1, b2 = (data[0][0], data[1][0])
+            z1_tmp, z2_tmp = net.embedAndReconstruct(b1.double(), b2.double())
 
             z1validation[ind:ind+b] = z1_tmp.cpu().detach().numpy()
             z2validation[ind:ind+b] = z2_tmp.cpu().detach().numpy()
@@ -204,8 +205,8 @@ def run(args: dict) -> None:
 
         ind = 0
         for data in test_loader:
-            b1, b2 = data[0]
-            z1_tmp, z2_tmp, x1_hat_tmp, x2_hat_tmp, x1_cross_hat_tmp, x2_cross_hat_tmp = net.embedAndReconstruct(b1, b2)
+            b1, b2 = (data[0][0], data[1][0])
+            z1_tmp, z2_tmp = net.embedAndReconstruct(b1.double(), b2.double())
 
             z1test[ind:ind+b] = z1_tmp.cpu().detach().numpy()
             z2test[ind:ind+b] = z2_tmp.cpu().detach().numpy()
@@ -215,53 +216,6 @@ def run(args: dict) -> None:
         from src.util.evaluate import evaluate_imputation, evaluate_classification
         logger.info('Evaluating...')
 
-        # logger.info('Training performance, reconstruction error, modality 1')
-        # mse_train, spearman_train, r2_train = evaluate_imputation(dataTrain1.cpu().detach().numpy(), x1_hat_train)
-        # logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse_train, spearman_train, r2_train))
-        #
-        # logger.info('Training performance, reconstruction error, modality 2')
-        # mse_train, spearman_train, r2_train = evaluate_imputation(dataTrain2.cpu().detach().numpy(), x2_hat_train)
-        # logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse_train, spearman_train, r2_train))
-        #
-        # logger.info('Training performance, imputation error, modality 1')
-        # mse_train, spearman_train, r2_train = evaluate_imputation(dataTrain1.cpu().detach().numpy(), x1_cross_hat_train)
-        # logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse_train, spearman_train, r2_train))
-        #
-        # logger.info('Training performance, imputation error, modality 2')
-        # mse_train, spearman_train, r2_train = evaluate_imputation(dataTrain2.cpu().detach().numpy(), x2_cross_hat_train)
-        # logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse_train, spearman_train, r2_train))
-        #
-        # logger.info('Validation performance, reconstruction error, modality 1')
-        # mse_train, spearman_train, r2_train = evaluate_imputation(dataValidation1.cpu().detach().numpy(), x1_hat_validation)
-        # logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse_train, spearman_train, r2_train))
-        #
-        # logger.info('Validation performance, reconstruction error, modality 2')
-        # mse_train, spearman_train, r2_train = evaluate_imputation(dataValidation2.cpu().detach().numpy(), x2_hat_validation)
-        # logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse_train, spearman_train, r2_train))
-        #
-        # logger.info('Validation performance, imputation error, modality 1')
-        # mse_train, spearman_train, r2_train = evaluate_imputation(dataValidation1.cpu().detach().numpy(), x1_cross_hat_validation)
-        # logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse_train, spearman_train, r2_train))
-        #
-        # logger.info('Validation performance, imputation error, modality 2')
-        # mse_train, spearman_train, r2_train = evaluate_imputation(dataValidation2.cpu().detach().numpy(), x2_cross_hat_validation)
-        # logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse_train, spearman_train, r2_train))
-        #
-        # logger.info('Test performance, reconstruction error, modality 1')
-        # mse_train, spearman_train, r2_train = evaluate_imputation(dataTest1.cpu().detach().numpy(), x1_hat_test)
-        # logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse_train, spearman_train, r2_train))
-        #
-        # logger.info('Test performance, reconstruction error, modality 2')
-        # mse_train, spearman_train, r2_train = evaluate_imputation(dataTest2.cpu().detach().numpy(), x2_hat_test)
-        # logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse_train, spearman_train, r2_train))
-        #
-        # logger.info('Test performance, imputation error, modality 1')
-        # mse_train, spearman_train, r2_train = evaluate_imputation(dataTest1.cpu().detach().numpy(), x1_cross_hat_test)
-        # logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse_train, spearman_train, r2_train))
-        #
-        # logger.info('Test performance, imputation error, modality 2')
-        # mse_train, spearman_train, r2_train = evaluate_imputation(dataTest2.cpu().detach().numpy(), x2_cross_hat_test)
-        # logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse_train, spearman_train, r2_train))
 
         logger.info('Saving embeddings...')
 
@@ -269,37 +223,38 @@ def run(args: dict) -> None:
             embDict = {'z1train': z1train, 'z1validation': z1validation, 'z1test': z1test, 'z2train': z2train, 'z2validation': z2validation, 'z2test': z2test}
             pickle.dump(embDict, f)
 
+    # classification
+    if args['task'] > 1:
+        classLabels = np.load(args['labels'])
+        labelNames = np.load(args['labelnames'])
 
-        # sys.exit(0)
-        #
-        # dataTest1 = torch.tensor(omic1_test_file, device=device)
-        # dataTest2 = torch.tensor(omic2_test_file, device=device)
-        #
-        # datasetTest = MultiOmicsDataset(dataTest1, dataTest2)
-        #
-        #
-        # train_loader = DataLoader(datasetTrain, batch_size=dataTrain1.shape[0], shuffle=False, num_workers=0,
-        #                                drop_last=False)
-        # valid_loader = DataLoader(datasetValidation, batch_size=dataValidation1.shape[0], shuffle=False, num_workers=0,
-        #                           drop_last=False)
-        # test_loader = DataLoader(datasetTest, batch_size=dataTest1.shape[0], shuffle=False, num_workers=0,
-        #                   drop_last=False)
-        #
-        #
-        # z1train, z2train = extract(net, modelCheckpoint, train_loader, save_dir, multimodal=True)
-        # z1valid, z2valid = extract(net, modelCheckpoint, valid_loader, save_dir, multimodal=True)
-        # z1test, z2test = extract(net, modelCheckpoint, test_loader, save_dir, multimodal=True)
-        #
-        # logger.info("Using omic 1")
-        # predictions1, performance1 = classification(z1train, ytrain, z1valid, yvalid, z1test, ytest, np.array([1e-5, 1e-3, 1e-2, 0.1, 0.5, 1.0, 2.0, 5.0, 10., 20.]), args['clf_criterion'])
-        #
-        # pr1 = {'acc': performance1[0], 'pr': performance1[1], 'rc': performance1[2], 'f1': performance1[3], 'mcc': performance1[4], 'confmat': performance1[5], 'pred': predictions1}
-        #
-        # logger.info("Using omic 2")
-        # predictions2, performance2 = classification(z2train, ytrain, z2valid, yvalid, z2test, ytest, np.array([1e-5, 1e-3, 1e-2, 0.1, 0.5, 1.0, 2.0, 5.0, 10., 20.]), args['clf_criterion'])
-        # pr2 = {'acc': performance2[0], 'pr': performance2[1], 'rc': performance2[2], 'f1': performance2[3], 'mcc': performance2[4], 'confmat': performance2[5], 'pred': predictions2}
-        #
-        #
-        # logger.info("Saving results")
-        # with open(save_dir + "/CGAE_task2_results.pkl", 'wb') as f:
-        #     pickle.dump({'omic1': pr1, 'omic2': pr2}, f)
+        ytrain = classLabels[train_ind]
+        yvalid = classLabels[val_ind]
+        ytest = classLabels[test_ind]
+
+        logger.info('Test performance, classification task, modality 1')
+        _, acc, pr, rc, f1, mcc, confMat = classification(z1train, ytrain, z1validation, yvalid, z1test, ytest, np.array([1e-4, 1e-3, 1e-2, 0.1, 0.5, 1.0, 2.0, 5.0, 10., 20.]), 'mcc')
+        performance1 = [acc, pr, rc, f1, mcc, confMat]
+        logger.info('ACC: %.4f\tPR: %.4f\tRC: %.4f\tF1: %.4f\tMCC: %.4f' % (performance1[0], np.mean(performance1[1]), np.mean(performance1[2]), np.mean(performance1[3]), performance1[4]))
+
+
+        pr1 = {'acc': performance1[0], 'pr': performance1[1], 'rc': performance1[2], 'f1': performance1[3], 'mcc': performance1[4], 'confmat': performance1[5]}
+
+        logger.info('Test performance, classification task, modality 2')
+        _, acc, pr, rc, f1, mcc, confMat = classification(z2train, ytrain, z2validation, yvalid, z2test, ytest, np.array([1e-4, 1e-3, 1e-2, 0.1, 0.5, 1.0, 2.0, 5.0, 10., 20.]), args['clf_criterion'])
+        performance2 = [acc, pr, rc, f1, mcc, confMat]
+        logger.info('ACC: %.4f\tPR: %.4f\tRC: %.4f\tF1: %.4f\tMCC: %.4f' % (performance2[0], np.mean(performance2[1]), np.mean(performance2[2]), np.mean(performance2[3]), performance2[4]))
+
+        pr2 = {'acc': performance2[0], 'pr': performance2[1], 'rc': performance2[2], 'f1': performance2[3], 'mcc': performance2[4], 'confmat': performance2[5]}
+
+        logger.info('Test performance, classification task, both modalities')
+        _, acc, pr, rc, f1, mcc, confMat = classification(np.hstack((z1train, z2train)), ytrain, np.hstack((z1validation, z2validation)), yvalid, np.hstack((z1test, z2test)), ytest, np.array([1e-4, 1e-3, 1e-2, 0.1, 0.5, 1.0, 2.0, 5.0, 10., 20.]), args['clf_criterion'])
+        performance12 = [acc, pr, rc, f1, mcc, confMat]
+        logger.info('ACC: %.4f\tPR: %.4f\tRC: %.4f\tF1: %.4f\tMCC: %.4f' % (performance12[0], np.mean(performance12[1]), np.mean(performance12[2]), np.mean(performance12[3]), performance12[4]))
+
+        pr12 = {'acc': performance12[0], 'pr': performance12[1], 'rc': performance12[2], 'f1': performance12[3], 'mcc': performance12[4], 'confmat': performance12[5]}
+
+
+        logger.info("Saving results")
+        with open(save_dir + "/MVIB_task2_results.pkl", 'wb') as f:
+            pickle.dump({'omic1': pr1, 'omic2': pr2, 'omic1+2': pr12}, f)

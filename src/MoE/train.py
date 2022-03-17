@@ -17,6 +17,7 @@ import src.util.logger as logger
 from src.util.early_stopping import EarlyStopping
 from src.util.umapplotter import UMAPPlotter
 from src.util.evaluate import evaluate_imputation, save_factorizations_to_csv
+from src.baseline.baseline import classification
 
 import numpy as np
 from sklearn.metrics import mean_squared_error
@@ -313,7 +314,7 @@ def run(args) -> None:
 
 
     # Imputation
-    if args['task'] == 1:
+    if args['task'] > 0:
         dataTrain1 = torch.tensor(omic1_train_file, device=device)
         dataTrain2 = torch.tensor(omic2_train_file, device=device)
 
@@ -369,7 +370,7 @@ def run(args) -> None:
         b = args['batch_size']
         for data in train_loader:
             b1, b2 = (data[0][0], data[1][0])
-            z1_tmp, z2_tmp, x1_hat_tmp, x2_hat_tmp, x1_cross_hat_tmp, x2_cross_hat_tmp = model.embedAndReconstruct(b1, b2)
+            z1_tmp, z2_tmp, x1_hat_tmp, x2_hat_tmp, x1_cross_hat_tmp, x2_cross_hat_tmp = model.embedAndReconstruct(b1.double(), b2.double())
 
             z1train[ind:ind+b] = z1_tmp.cpu().detach().numpy()
             z2train[ind:ind+b] = z2_tmp.cpu().detach().numpy()
@@ -385,7 +386,7 @@ def run(args) -> None:
         ind = 0
         for data in valid_loader:
             b1, b2 = (data[0][0], data[1][0])
-            z1_tmp, z2_tmp, x1_hat_tmp, x2_hat_tmp, x1_cross_hat_tmp, x2_cross_hat_tmp = model.embedAndReconstruct(b1, b2)
+            z1_tmp, z2_tmp, x1_hat_tmp, x2_hat_tmp, x1_cross_hat_tmp, x2_cross_hat_tmp = model.embedAndReconstruct(b1.double(), b2.double())
 
             z1validation[ind:ind+b] = z1_tmp.cpu().detach().numpy()
             z2validation[ind:ind+b] = z2_tmp.cpu().detach().numpy()
@@ -402,7 +403,7 @@ def run(args) -> None:
         ind = 0
         for data in test_loader:
             b1, b2 = (data[0][0], data[1][0])
-            z1_tmp, z2_tmp, x1_hat_tmp, x2_hat_tmp, x1_cross_hat_tmp, x2_cross_hat_tmp = model.embedAndReconstruct(b1, b2)
+            z1_tmp, z2_tmp, x1_hat_tmp, x2_hat_tmp, x1_cross_hat_tmp, x2_cross_hat_tmp = model.embedAndReconstruct(b1.double(), b2.double())
 
             z1test[ind:ind+b] = z1_tmp.cpu().detach().numpy()
             z2test[ind:ind+b] = z2_tmp.cpu().detach().numpy()
@@ -418,8 +419,8 @@ def run(args) -> None:
         zrand = Independent(Laplace(torch.zeros(model.z_dim).to(torch.device('cuda:0')), torch.ones(model.z_dim).to(torch.device('cuda:0'))), 1).sample([2000])
         zrand = zrand.double()
 
-        X1sample = model.decoder(zrand).cpu().detach().numpy()
-        X2sample = model.decoder2(zrand).cpu().detach().numpy()
+        X1sample = model.decoder(zrand).cpu().detach()
+        X2sample = model.decoder2(zrand).cpu().detach()
 
 
         from src.util.evaluate import evaluate_imputation, evaluate_classification, evaluate_generation
@@ -474,7 +475,7 @@ def run(args) -> None:
         logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse_train, spearman_train, r2_train))
 
         logger.info('Generation coherence')
-        acc = evaluate_generation(omic1, omic2, labels, X1sample, X2sample)
+        acc = evaluate_generation(X1sample, X2sample, args['data1'], args['data2'])
         logger.info('Concordance: %.4f: ' % acc)
 
 
@@ -484,116 +485,42 @@ def run(args) -> None:
             embDict = {'z1train': z1train, 'z1validation': z1validation, 'z1test': z1test, 'z2train': z2train, 'z2validation': z2validation, 'z2test': z2test}
             pickle.dump(embDict, f)
 
-        # sys.exit(0)
-        # dataTest1 = torch.tensor(omic1_test_file, device=device)
-        # dataTest2 = torch.tensor(omic2_test_file, device=device)
-        #
-        #
-        # # 1 batch (whole test set)
-        # impute_loader = torch.utils.data.DataLoader(impute_dataset, batch_size=len(impute_dataset), shuffle=False)
-        #
-        # omic1_from_joint, omic2_from_joint, \
-        # omic1_from_omic1, omic2_from_omic1, \
-        # omic1_from_omic2, omic2_from_omic2 = impute(model, impute_loader, use_cuda=args['cuda'])
-        #
-        # # Reconstruction losses
-        # omic1_joint_reconstruction_loss = evaluate_imputation(omic1_from_joint, impute_dataset.omic1_data, args['num_features1'], 'mse')
-        # omic1_reconstruction_loss = evaluate_imputation(omic1_from_omic1, impute_dataset.omic1_data, args['num_features1'], 'mse')
-        #
-        # omic2_joint_reconstruction_loss = evaluate_imputation(omic2_from_joint, impute_dataset.omic2_data, args['num_features2'], 'mse')
-        # omic2_reconstruction_loss = evaluate_imputation(omic2_from_omic2, impute_dataset.omic2_data, args['num_features2'], 'mse')
-        # logger.info("Reconstruction loss for {} from {} : {}".
-        #             format(args['data1'], "both omics", omic1_joint_reconstruction_loss))
-        # logger.info("Reconstruction loss for {} from {} : {}".
-        #             format(args['data1'], args['data1'], omic1_reconstruction_loss))
-        # logger.info("Reconstruction loss for {} from {} : {}".
-        #             format(args['data2'], "both omics", omic2_joint_reconstruction_loss))
-        # logger.info("Reconstruction loss for {} from {} : {}".
-        #             format(args['data2'], args['data2'], omic2_reconstruction_loss))
-        #
-        # # Imputation losses
-        # NR_MODALITIES = 2
-        #
-        # # mse[i,j]: performance of using modality i to predict modality j
-        # mse = np.zeros((NR_MODALITIES, NR_MODALITIES), float)
-        # rsquared = np.eye(NR_MODALITIES)
-        # spearman = np.zeros((NR_MODALITIES, NR_MODALITIES, 2), float) # ,2 since we report mean and median
-        # spearman_p = np.zeros((NR_MODALITIES, NR_MODALITIES), float)
-        #
-        # # From x to y
-        # mse[0, 1], rsquared[0, 1], spearman[0, 1], spearman_p[0, 1] =\
-        #     evaluate_imputation(impute_dataset.omic2_data, omic2_from_omic1, args['num_features2'], 'mse'),\
-        #     evaluate_imputation(impute_dataset.omic2_data, omic2_from_omic1, args['num_features2'], 'rsquared'),\
-        #     evaluate_imputation(impute_dataset.omic2_data, omic2_from_omic1, args['num_features2'], 'spearman_corr'), \
-        #     evaluate_imputation(impute_dataset.omic2_data, omic2_from_omic1, args['num_features2'], 'spearman_p')
-        # mse[1, 0], rsquared[1, 0], spearman[1, 0], spearman_p[1, 0] = \
-        #     evaluate_imputation(impute_dataset.omic1_data, omic1_from_omic2, args['num_features1'], 'mse'),\
-        #     evaluate_imputation(impute_dataset.omic1_data, omic1_from_omic2, args['num_features1'], 'rsquared'),\
-        #     evaluate_imputation(impute_dataset.omic1_data, omic1_from_omic2, args['num_features1'], 'spearman_corr'), \
-        #     evaluate_imputation(impute_dataset.omic1_data, omic1_from_omic2, args['num_features1'], 'spearman_p')
-        #
-        # performance = {'mse': mse, 'rsquared': rsquared, 'spearman_corr': spearman, 'spearman_p': spearman_p}
-        # print(performance)
-        # with open(save_dir + "/MoE_task1_results.pkl", 'wb') as f:
-        #     pickle.dump(performance, f)
-        #
-        # logger.info("Imputation loss for {} from {} : {}".
-        #             format(args['data1'], args['data2'], mse[0, 1]))
-        # logger.info("Imputation loss for {} from {} : {}".
-        #             format(args['data2'], args['data1'], mse[1, 0]))
-        #
-        # # Get embeddings for UMAP
-        # for omic1, omic2 in impute_loader:  # Runs once since there is 1 batch
-        #
-        #     if args['cuda']:
-        #         omic1 = omic1.cuda()
-        #         omic2 = omic2.cuda()
-        #
-        #     z = model.extract(omic1, omic2)
-        #
-        #     if args['cuda']:
-        #         z = z.detach().cpu().numpy()
-        #     else:
-        #         z = z.detach().numpy()
-        #
-        #     np.save("{}/task1_z.npy".format(save_dir), z)
-        #     sample_names = np.load(args['sample_names'], allow_pickle=True).astype(str)
-        #     save_factorizations_to_csv(z, sample_names[tcga_data.get_data_splits('test')], save_dir, 'task1_z')
-        #
-        #     labels, label_types, test_ind = tcga_data.get_labels_partition("test")
-        #
-        #     labels = labels[test_ind].astype(int)
-        #     sample_labels = label_types[[labels]]
 
-            # plot = UMAPPlotter(z, sample_labels, "{}: Task {} | {} & {} \n"
-            #                                      "Epochs: {}, Latent Dimension: {}, LR: {}, Batch size: {}"
-            #                    .format('MoE' if args['mixture'] else 'PoE', args['task'], args['data1'], args['data2'],
-            #                            29, args['latent_dim'], args['lr'], args['batch_size']),
-            #                    save_dir + "/{} UMAP.png".format('MoE' if args['mixture'] else 'PoE', 'MoE' if args['mixture'] else 'PoE'))
-            #
-            # plot.plot()
+    if args['task'] > 1:
+        classLabels = np.load(args['labels'])
+        labelNames = np.load(args['labelnames'])
 
-    if args['task'] == 2:
-        print(model)
-        logger.success("Extract z1 and z2 for classification of {}".format(args['ctype']))
-        # Test sets are stratified data from cancer type into stages
-        GEtrainctype = np.load(args['x_ctype_train_file'])
-        GEvalidctype = np.load(args['x_ctype_valid_file'])
-        MEtrainctype = np.load(args['y_ctype_train_file'])
-        MEvalidctype = np.load(args['y_ctype_valid_file'])
+        ytrain = classLabels[train_ind]
+        yvalid = classLabels[val_ind]
+        ytest = classLabels[test_ind]
 
-        dataExtract1 = np.float32(np.vstack((GEtrainctype, GEvalidctype, np.load(args['x_ctype_test_file']))))
-        dataExtract2 = np.float32(np.vstack((MEtrainctype, MEvalidctype, np.load(args['y_ctype_test_file']))))
+        logger.info('Test performance, classification task, modality 1')
+        _, acc, pr, rc, f1, mcc, confMat = classification(z1train, ytrain, z1validation, yvalid, z1test, ytest, np.array([1e-4, 1e-3, 1e-2, 0.1, 0.5, 1.0, 2.0, 5.0, 10., 20.]), 'mcc')
+        performance1 = [acc, pr, rc, f1, mcc, confMat]
+        logger.info('ACC: %.4f\tPR: %.4f\tRC: %.4f\tF1: %.4f\tMCC: %.4f' % (performance1[0], np.mean(performance1[1]), np.mean(performance1[2]), np.mean(performance1[3]), performance1[4]))
 
-        datasetExtract = datasets.TCGADataset(dataExtract1, dataExtract2)
 
-        extract_loader = torch.utils.data.DataLoader(datasetExtract, batch_size=dataExtract1.shape[0], shuffle=False)
+        pr1 = {'acc': performance1[0], 'pr': performance1[1], 'rc': performance1[2], 'f1': performance1[3], 'mcc': performance1[4], 'confmat': performance1[5]}
 
-        for batch_idx, (GE, ME) in enumerate(extract_loader):
-            z = model.extract(GE, ME)
-            z = z.detach().numpy()
+        logger.info('Test performance, classification task, modality 2')
+        _, acc, pr, rc, f1, mcc, confMat = classification(z2train, ytrain, z2validation, yvalid, z2test, ytest, np.array([1e-4, 1e-3, 1e-2, 0.1, 0.5, 1.0, 2.0, 5.0, 10., 20.]), args['clf_criterion'])
+        performance2 = [acc, pr, rc, f1, mcc, confMat]
+        logger.info('ACC: %.4f\tPR: %.4f\tRC: %.4f\tF1: %.4f\tMCC: %.4f' % (performance2[0], np.mean(performance2[1]), np.mean(performance2[2]), np.mean(performance2[3]), performance2[4]))
 
-            np.save("{}/task2_z.npy".format(save_dir), z)
+        pr2 = {'acc': performance2[0], 'pr': performance2[1], 'rc': performance2[2], 'f1': performance2[3], 'mcc': performance2[4], 'confmat': performance2[5]}
+
+        logger.info('Test performance, classification task, both modalities')
+        _, acc, pr, rc, f1, mcc, confMat = classification(np.hstack((z1train, z2train)), ytrain, np.hstack((z1validation, z2validation)), yvalid, np.hstack((z1test, z2test)), ytest, np.array([1e-4, 1e-3, 1e-2, 0.1, 0.5, 1.0, 2.0, 5.0, 10., 20.]), args['clf_criterion'])
+        performance12 = [acc, pr, rc, f1, mcc, confMat]
+        logger.info('ACC: %.4f\tPR: %.4f\tRC: %.4f\tF1: %.4f\tMCC: %.4f' % (performance12[0], np.mean(performance12[1]), np.mean(performance12[2]), np.mean(performance12[3]), performance12[4]))
+
+        pr12 = {'acc': performance12[0], 'pr': performance12[1], 'rc': performance12[2], 'f1': performance12[3], 'mcc': performance12[4], 'confmat': performance12[5]}
+
+
+        logger.info("Saving results")
+        with open(save_dir + "/MoE_task2_results.pkl", 'wb') as f:
+            pickle.dump({'omic1': pr1, 'omic2': pr2, 'omic1+2': pr12}, f)
+
 
         # Extract Z from all data from the chosen cancer type
         # Do predictions separately

@@ -346,9 +346,7 @@ def run(args) -> None:
 
 
     # Imputation
-    if args['task'] == 1:
-        # Correct me if I'm wrong, but we can just get the x1_cross_hat and x2_cross_hat
-        # from the model.forward
+    if args['task'] > 0:
 
 
         # Fetch Datasets
@@ -445,8 +443,8 @@ def run(args) -> None:
         zrand = zrand.double()
 
 
-        X1sample = model.omic1_decoder(zrand).cpu().detach().numpy()
-        X2sample = model.omic2_decoder(zrand).cpu().detach().numpy()
+        X1sample = model.omic1_decoder(zrand).cpu().detach()
+        X2sample = model.omic2_decoder(zrand).cpu().detach()
 
 
         data1 = np.load(args['data_path1'])
@@ -517,7 +515,7 @@ def run(args) -> None:
         logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse_train, spearman_train, r2_train))
 
         logger.info('Generation coherence')
-        acc = evaluate_generation(data1, data2, labels, X1sample, X2sample)
+        acc = evaluate_generation(X1sample, X2sample, args['data1'], args['data2'])
         logger.info('Concordance: %.4f: ' % acc)
 
 
@@ -527,105 +525,8 @@ def run(args) -> None:
             embDict = {'ztrain': ztrain, 'zvalidation': zvalidation, 'ztest': ztest}
             pickle.dump(embDict, f)
 
+    if args['task'] > 1:
 
-        #
-        # sys.exit(0)
-        # impute_dataset = tcga_data.get_data_partition("test")
-        #
-        # # Deallocate tensors still on GPU from training
-        # if args['cuda']:
-        #     torch.cuda.empty_cache()
-        #
-        #
-        # # 1 batch (whole test set)
-        # impute_loader = torch.utils.data.DataLoader(impute_dataset, batch_size=len(impute_dataset), shuffle=False)
-        #
-        # omic1_from_joint, omic2_from_joint, \
-        # omic1_from_omic1, omic2_from_omic1, \
-        # omic1_from_omic2, omic2_from_omic2 = impute(model, impute_loader, use_cuda=args['cuda'])
-        #
-        # # Reconstruction losses
-        # omic1_joint_reconstruction_loss = evaluate_imputation(omic1_from_joint, impute_dataset.omic1_data, args['num_features1'], 'mse')
-        # omic1_reconstruction_loss = evaluate_imputation(omic1_from_omic1, impute_dataset.omic1_data, args['num_features1'], 'mse')
-        #
-        # omic2_joint_reconstruction_loss = evaluate_imputation(omic2_from_joint, impute_dataset.omic2_data, args['num_features2'], 'mse')
-        # omic2_reconstruction_loss = evaluate_imputation(omic2_from_omic2, impute_dataset.omic2_data, args['num_features2'], 'mse')
-        # logger.info("Reconstruction loss for {} from {} : {}".
-        #             format(args['data1'], "both omics", omic1_joint_reconstruction_loss))
-        # logger.info("Reconstruction loss for {} from {} : {}".
-        #             format(args['data1'], args['data1'], omic1_reconstruction_loss))
-        # logger.info("Reconstruction loss for {} from {} : {}".
-        #             format(args['data2'], "both omics", omic2_joint_reconstruction_loss))
-        # logger.info("Reconstruction loss for {} from {} : {}".
-        #             format(args['data2'], args['data2'], omic2_reconstruction_loss))
-        #
-        # # Imputation losses
-        # NR_MODALITIES = 2
-        #
-        # # mse[i,j]: performance of using modality i to predict modality j
-        # mse = np.zeros((NR_MODALITIES, NR_MODALITIES), float)
-        # rsquared = np.eye(NR_MODALITIES)
-        # spearman = np.zeros((NR_MODALITIES, NR_MODALITIES, 2), float) # ,2 since we report mean and median
-        # spearman_p = np.zeros((NR_MODALITIES, NR_MODALITIES), float)
-        #
-        # # From x to y
-        # mse[0, 1], rsquared[0, 1], spearman[0, 1], spearman_p[0, 1] =\
-        #     evaluate_imputation(impute_dataset.omic2_data, omic2_from_omic1, args['num_features2'], 'mse'),\
-        #     evaluate_imputation(impute_dataset.omic2_data, omic2_from_omic1, args['num_features2'], 'rsquared'),\
-        #     evaluate_imputation(impute_dataset.omic2_data, omic2_from_omic1, args['num_features2'], 'spearman_corr'), \
-        #     evaluate_imputation(impute_dataset.omic2_data, omic2_from_omic1, args['num_features2'], 'spearman_p')
-        # mse[1, 0], rsquared[1, 0], spearman[1, 0], spearman_p[1, 0] = \
-        #     evaluate_imputation(impute_dataset.omic1_data, omic1_from_omic2, args['num_features1'], 'mse'),\
-        #     evaluate_imputation(impute_dataset.omic1_data, omic1_from_omic2, args['num_features1'], 'rsquared'),\
-        #     evaluate_imputation(impute_dataset.omic1_data, omic1_from_omic2, args['num_features1'], 'spearman_corr'), \
-        #     evaluate_imputation(impute_dataset.omic1_data, omic1_from_omic2, args['num_features1'], 'spearman_p')
-        #
-        # performance = {'mse': mse, 'rsquared': rsquared, 'spearman_corr': spearman, 'spearman_p': spearman_p}
-        # print(performance)
-        # with open(save_dir + "/PoE_results_pickle", 'wb') as f:
-        #     pickle.dump(performance, f)
-        #
-        # logger.info("Imputation loss for {} from {} : {}".
-        #             format(args['data1'], args['data2'], mse[0, 1]))
-        # logger.info("Imputation loss for {} from {} : {}".
-        #             format(args['data2'], args['data1'], mse[1, 0]))
-        #
-        # # Get embeddings for UMAP
-        # for omic1, omic2 in impute_loader:  # Runs once since there is 1 batch
-        #
-        #     if args['cuda']:
-        #         omic1 = omic1.cuda()
-        #         omic2 = omic2.cuda()
-        #
-        #     z = model.extract(omic1, omic2)
-        #
-        #     if args['cuda']:
-        #         z = z.detach().cpu().numpy()
-        #     else:
-        #         z = z.detach().numpy()
-        #
-        #     np.save("{}/task1_z.npy".format(save_dir), z)
-        #     sample_names = np.load(args['sample_names'], allow_pickle=True).astype(str)
-        #     save_factorizations_to_csv(z, sample_names[tcga_data.get_data_splits('test')], save_dir, 'task1_z')
-        #
-        #     labels, label_types, test_ind = tcga_data.get_labels_partition("test")
-        #
-        #     labels = labels[test_ind].astype(int)
-        #     sample_labels = label_types[tuple([labels])]
-        #
-        #     plot = UMAPPlotter(z, sample_labels, "PoE: Task {} | {} & {} \n"
-        #                                          "Epochs: {}, Latent Dimension: {}, LR: {}, Batch size: {}"
-        #                        .format(args['task'], args['data1'], args['data2'],
-        #                                29, args['latent_dim'], args['lr'], args['batch_size']),
-        #                        save_dir + "/PoE_UMAP.png")
-        #
-        #     plot.plot()
-
-    if args['task'] == 2:
-        print(model)
-        logger.success("Extract z1 and z2 for classification")
-
-        train_dataset = tcga_data.get_data_partition("train")
         y, _, trnInd = tcga_data.get_labels_partition("train")
         ytrain = y[trnInd]
         train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=len(train_dataset), shuffle=False)
@@ -641,39 +542,11 @@ def run(args) -> None:
         test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=len(test_dataset), shuffle=False)
 
 
-        for GE, ME in train_loader:
-            if args['cuda']:
-                GE = GE.cuda()
-                ME = ME.cuda()
-
-            ztrain = model.extract(GE, ME)
-
-        for GE, ME in valid_loader:
-            if args['cuda']:
-                GE = GE.cuda()
-                ME = ME.cuda()
-
-            zvalid = model.extract(GE, ME)
-
-        for GE, ME in test_loader:
-            if args['cuda']:
-                GE = GE.cuda()
-                ME = ME.cuda()
-
-            ztest = model.extract(GE, ME)
-
-        if args['cuda']:
-            ztrain = ztrain.detach().cpu().numpy()
-            zvalid = zvalid.detach().cpu().numpy()
-            ztest = ztest.detach().cpu().numpy()
-        else:
-            ztrain = ztrain.detach().numpy()
-            zvalid = zvalid.detach().numpy()
-            ztest = ztest.detach().numpy()
-
-
-        predictions, performance = classification(ztrain, ytrain, zvalid, yvalid, ztest, ytest, np.array([1e-5, 1e-3, 1e-2, 0.1, 0.5, 1.0, 2.0, 5.0, 10., 20.]), args['clf_criterion'])
-        pr = {'acc': performance[0], 'pr': performance[1], 'rc': performance[2], 'f1': performance[3], 'mcc': performance[4], 'confmat': performance[5], 'pred': predictions}
+        logger.info('Test performance, classification task, both modalities')
+        predictions, acc, pr, rc, f1, mcc, confMat = classification(ztrain, ytrain, zvalidation, yvalid, ztest, ytest, np.array([1e-5, 1e-3, 1e-2, 0.1, 0.5, 1.0, 2.0, 5.0, 10., 20.]), args['clf_criterion'])
+        performance = [acc, pr, rc, f1, mcc, confMat]
+        pr = {'acc': performance[0], 'pr': performance[1], 'rc': performance[2], 'f1': performance[3], 'mcc': performance[4], 'confmat': performance[5]}
+        logger.info('ACC: %.4f\tPR: %.4f\tRC: %.4f\tF1: %.4f\tMCC: %.4f' % (performance[0], np.mean(performance[1]), np.mean(performance[2]), np.mean(performance[3]), performance[4]))
 
 
         logger.info("Saving results")
