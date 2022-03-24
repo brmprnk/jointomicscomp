@@ -19,41 +19,12 @@ def identity(x):
 	return x
 
 
-class Scheduler:
-	def __init__(self, start_value, end_value, n_iterations, start_iteration=0):
-		self.start_value = start_value
-		self.end_value = end_value
-		self.n_iterations = n_iterations
-		self.start_iteration = start_iteration
-		self.m = (end_value - start_value) / n_iterations
-
-	def __call__(self, iteration):
-		if iteration > self.start_iteration + self.n_iterations:
-			return self.end_value
-		elif iteration <= self.start_iteration:
-			return self.start_value
-		else:
-			return (iteration - self.start_iteration) * self.m + self.start_value
-
-
-class ExponentialScheduler(Scheduler):
-	def __init__(self, start_value, end_value, n_iterations, start_iteration=0, base=10):
-		self.base = base
-
-		super(ExponentialScheduler, self).__init__(start_value=math.log(start_value, base), end_value=math.log(end_value, base), n_iterations=n_iterations, start_iteration=start_iteration)
-
-	def __call__(self, iteration):
-		linear_value = super(ExponentialScheduler, self).__call__(iteration)
-		return self.base ** linear_value
-
-
-
 ########################################################################################
 # basic components
 
 # fully-connected layers
 class FullyConnectedModule(nn.Module):
-	def __init__(self, input_dim, hidden_dim=[100], use_batch_norm=False, dropoutP=0.0, lastActivation='relu', outputScale=1.):
+	def __init__(self, input_dim, hidden_dim=[100], use_batch_norm=False, dropoutP=0.0, lastActivation='none', outputScale=1.):
 		super(FullyConnectedModule, self).__init__()
 
 		self.z_dim = hidden_dim[-1]
@@ -109,7 +80,7 @@ class FullyConnectedModule(nn.Module):
 
 
 class ProbabilisticFullyConnectedModule(FullyConnectedModule):
-	def __init__(self, input_dim, hidden_dim=[100], distribution='normal', use_batch_norm=False, dropoutP=0.0, lastActivation='relu', outputScale=1.):
+	def __init__(self, input_dim, hidden_dim=[100], distribution='normal', use_batch_norm=False, dropoutP=0.0, lastActivation='none', outputScale=1.):
 
 		self.distribution = distribution
 		if self.distribution != 'cbernoulli':
@@ -128,6 +99,11 @@ class ProbabilisticFullyConnectedModule(FullyConnectedModule):
 			self.p1Transform = torch.exp
 			self.p2Transform = torch.exp
 			self.D = torch.distributions.Beta
+		elif self.distribution == 'lognormal':
+			self.p1Transform = identity
+			self.p2Transform = torch.exp
+			self.D = torch.distributions.LogNormal
+
 		elif self.distribution == 'cbernoulli':
 			self.D = torch.distributions.ContinuousBernoulli
 		elif self.distribution == 'laplace':
@@ -158,27 +134,10 @@ class ProbabilisticFullyConnectedModule(FullyConnectedModule):
 				raise NotImplementedError('Wrong activation for lamda parameter of ContinuousBernoulli')
 
 
-########################################################################################
-# auto encoder stuff
-#
-# def train_step(self, data):
-# 	# Set all the models in training mode
-# 	self.train(True)
-#
-# 	# Move the data to the appropriate device
-# 	device = self.get_device()
-#
-# 	for i, item in enumerate(data):
-# 		data[i] = item.to(device)
-#
-# 	# Perform the training step and update the iteration count
-# 	self._train_step(data)
-#
-
 
 # base class
 class RepresentationLearner(nn.Module):
-	def __init__(self, input_dim, enc_hidden_dim=[100], use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder_lr=1e-4, probabilistic_encoder=False, enc_lastActivation='relu', enc_outputScale=1., enc_distribution='normal'):
+	def __init__(self, input_dim, enc_hidden_dim=[100], use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder_lr=1e-4, probabilistic_encoder=False, enc_lastActivation='none', enc_outputScale=1., enc_distribution='normal'):
 
 		super(RepresentationLearner, self).__init__()
 
@@ -270,7 +229,7 @@ class RepresentationLearner(nn.Module):
 
 
 class MultiOmicRepresentationLearner(RepresentationLearner):
-	def __init__(self, input_dim1, input_dim2, enc_hidden_dim=[100], use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', probabilistic_encoder=False, encoder1_lr=1e-4, enc1_lastActivation='relu', enc1_outputScale=1., encoder2_lr=1e-4, enc2_lastActivation='relu', enc2_outputScale=1., enc_distribution='normal'):
+	def __init__(self, input_dim1, input_dim2, enc_hidden_dim=[100], use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', probabilistic_encoder=False, encoder1_lr=1e-4, enc1_lastActivation='none', enc1_outputScale=1., encoder2_lr=1e-4, enc2_lastActivation='none', enc2_outputScale=1., enc_distribution='normal'):
 		super(MultiOmicRepresentationLearner, self).__init__(input_dim1, enc_hidden_dim, use_batch_norm, dropoutP, optimizer_name, encoder1_lr, probabilistic_encoder, enc1_lastActivation, enc1_outputScale, enc_distribution)
 
 
@@ -289,109 +248,18 @@ class MultiOmicRepresentationLearner(RepresentationLearner):
 		return z1, z2
 
 
-
-class AutoEncoder(RepresentationLearner):
-	def __init__(self, input_dim, enc_hidden_dim=[100], dec_hidden_dim=[], loss='bce', use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder_lr=1e-4, decoder_lr=1e-4, enc_lastActivation='relu', enc_outputScale=1.):
-
-		super(AutoEncoder, self).__init__(input_dim, enc_hidden_dim, use_batch_norm, dropoutP, optimizer_name, encoder_lr, probabilistic_encoder=False, enc_lastActivation=enc_lastActivation, enc_outputScale=enc_outputScale)
-
-		# Intialization of the decoder and loss function
-		if loss == 'bce':
-			self.decoder = FullyConnectedModule(self.z_dim, dec_hidden_dim + [self._input_dim], self._use_batch_norm, self._dropoutP, lastActivation='none')
-			self.loss_fun = nn.BCEWithLogitsLoss(reduction='none')
-		elif loss == 'mse':
-			self.decoder = FullyConnectedModule(self.z_dim, dec_hidden_dim + [self._input_dim], self._use_batch_norm, self._dropoutP, lastActivation='sigmoid')
-			self.loss_fun = nn.MSELoss(reduction='none')
-		else:
-			raise NotImplementedError('AutoEncoder class supports only \'bce\' and \'mse\'')
-
-		self.opt.add_param_group({'params': self.decoder.parameters(), 'lr': decoder_lr})
-
-	def compute_loss(self, x):
-		z = self.encoder(x)
-		x_hat = self.decoder(z)
-
-		loss = self.loss_fun(x_hat, x)
-		loss = torch.sum(torch.mean(loss, 1))
-
-		return loss
-
-	def evaluate(self, x):
-		metrics = dict()
-		with torch.no_grad():
-			x_hat = self.decoder(self.encoder(x))
-
-			if self.decoder.lastActivation is None:
-				metrics['mse'] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(torch.sigmoid(x_hat), x), 1)).item()
-				metrics['bce'] = torch.mean(torch.sum(torch.nn.BCEWithLogitsLoss(reduction='none')(x_hat, x), 1)).item()
-				# metrics['mse'] = torch.nn.MSELoss(reduction='mean')(torch.sigmoid(x_hat), x).item()
-				# metrics['bce'] = torch.nn.BCEWithLogitsLoss(reduction='mean')(x_hat, x).item()
-
-			else:
-				metrics['mse'] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(x_hat, x), 1)).item()
-				metrics['bce'] = torch.mean(torch.sum(torch.nn.BCELoss(reduction='none')(x_hat, x), 1)).item()
-				# metrics['mse'] = torch.nn.MSELoss(reduction='mean')(x_hat, x).item()
-				# metrics['bce'] = torch.nn.BCELoss(reduction='mean')(x_hat, x).item()
-
-			metrics['loss'] = torch.mean(torch.sum(self.loss_fun(x_hat, x), 1))
-
-		return metrics
-
-
-
-
-class LikelihoodAutoEncoder(RepresentationLearner):
-	def __init__(self, input_dim, enc_hidden_dim=[100], dec_hidden_dim=[], distribution='beta', use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder_lr=1e-4, decoder_lr=1e-4, enc_lastActivation='relu', enc_outputScale=1.):
-
-		super(LikelihoodAutoEncoder, self).__init__(input_dim, enc_hidden_dim, use_batch_norm, dropoutP, optimizer_name, encoder_lr, probabilistic_encoder=False, enc_lastActivation=enc_lastActivation, enc_outputScale=enc_outputScale)
-
-		# Intialization of the decoder and loss function
-		self.decoder = ProbabilisticFullyConnectedModule(self.z_dim, dec_hidden_dim + [self._input_dim], distribution=distribution, use_batch_norm=self._use_batch_norm, dropoutP=self._dropoutP, lastActivation='sigmoid', outputScale=1.0)
-
-		self.distribution = distribution
-		self.opt.add_param_group({'params': self.decoder.parameters(), 'lr': decoder_lr})
-
-	def compute_loss(self, x):
-		z = self.encoder(x)
-		d = self.decoder(z)
-
-		loss = - torch.sum(torch.mean(d.log_prob(x), 1))
-
-		return loss
-
-	def evaluate(self, x):
-		metrics = dict()
-		with torch.no_grad():
-			parameters = self.decoder(self.encoder(x))
-
-			metrics['LL'] = torch.sum(parameters.log_prob(x)).item()
-			metrics['loss'] = -metrics['LL']
-
-			x_hat = parameters.mean
-			metrics['mse'] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(x_hat, x), 1)).item()
-			metrics['bce'] = torch.mean(torch.sum(torch.nn.BCELoss(reduction='none')(x_hat, x), 1)).item()
-
-
-		return metrics
-
-
 class VariationalAutoEncoder(RepresentationLearner):
-	def __init__(self, input_dim, enc_hidden_dim=[100], dec_hidden_dim=[], loss='bce', use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder_lr=1e-4, decoder_lr=1e-4, enc_lastActivation='relu', enc_outputScale=1., beta_start_value=1., beta_end_value=1., beta_n_iterations=100, beta_start_iteration=1e10):
 
+	def __init__(self, input_dim, enc_hidden_dim=[100], dec_hidden_dim=[], likelihood='normal', use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder_lr=1e-4, decoder_lr=1e-4, enc_lastActivation='relu', enc_outputScale=1., beta=1.):
 		super(VariationalAutoEncoder, self).__init__(input_dim, enc_hidden_dim, use_batch_norm, dropoutP, optimizer_name, encoder_lr, True, enc_lastActivation, enc_outputScale)
 
 		# Intialization of the decoder and loss function
-		if loss == 'bce':
-			self.decoder = FullyConnectedModule(self.z_dim, dec_hidden_dim + [self._input_dim], self._use_batch_norm, self._dropoutP, lastActivation='none')
-			self.loss_fun = nn.BCEWithLogitsLoss(reduction='none')
-		elif loss == 'mse':
-			self.decoder = FullyConnectedModule(self.z_dim, dec_hidden_dim + [self._input_dim], self._use_batch_norm, self._dropoutP, lastActivation='sigmoid')
-			self.loss_fun = nn.MSELoss(reduction='none')
-		else:
-			raise NotImplementedError('VariationalAutoEncoder class supports only \'bce\' and \'mse\'')
+
+		self.decoder = ProbabilisticFullyConnectedModule(self.z_dim, dec_hidden_dim + [self._input_dim], likelihood, self._use_batch_norm, self._dropoutP, lastActivation='none')
+
 
 		self.opt.add_param_group({'params': self.decoder.parameters(), 'lr': decoder_lr})
-		self.beta_scheduler = ExponentialScheduler(start_value=beta_start_value, end_value=beta_end_value, n_iterations=beta_n_iterations, start_iteration=beta_start_iteration)
+		self.beta = beta
 
 
 	def compute_loss(self, x):
@@ -402,11 +270,10 @@ class VariationalAutoEncoder(RepresentationLearner):
 
 		x_hat = self.decoder(z.rsample())
 
-		reconstruction_loss = torch.sum(torch.mean(self.loss_fun(x_hat, x), 1))
-
+		reconstruction_loss = - torch.sum(torch.mean(d.log_prob(x), 1))
 		kl = -0.5 * torch.sum(torch.mean(1 + torch.log(zsigma ** 2) - (zmean ** 2) - (zsigma ** 2), 1))
 
-		b = self.beta_scheduler(self._epoch)
+		b = self.beta
 
 		loss = reconstruction_loss + b * kl
 
@@ -425,211 +292,30 @@ class VariationalAutoEncoder(RepresentationLearner):
 
 			x_hat = self.decoder(z.rsample())
 
-			if self.decoder.lastActivation is None:
-				metrics['mse'] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(torch.sigmoid(x_hat), x), 1)).item()
-				metrics['bce'] = torch.mean(torch.sum(torch.nn.BCEWithLogitsLoss(reduction='none')(x_hat, x), 1)).item()
-
-			else:
-				metrics['mse'] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(x_hat, x), 1)).item()
-				metrics['bce'] = torch.mean(torch.sum(torch.nn.BCELoss(reduction='none')(x_hat, x), 1)).item()
+			metrics['LL'] = torch.sum(x_hat.log_prob(x)).item()
+			metrics['mse'] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(x_hat.mean, x), 1)).item()
 
 			kl = -0.5 * torch.sum(torch.mean(1 + torch.log(zsigma ** 2) - (zmean ** 2) - (zsigma ** 2), 1))
 			metrics['KL'] = kl.item()
 
-			b = self.beta_scheduler(self._epoch)
+			b = self.beta
 
 			metrics['b*KL'] = metrics['KL'] * b
 
-			metrics['loss'] = (torch.mean(torch.sum(self.loss_fun(x_hat, x), 1))).item() + metrics['b*KL']
+			metrics['loss'] = metrics['b*KL'] - metrics['LL']
 
 
 		return metrics
 
-
-class CrossGeneratingAutoencoder(MultiOmicRepresentationLearner):
-	def __init__(self, input_dim1, input_dim2, enc_hidden_dim=[100], dec_hidden_dim=[], loss1='bce', loss2='bce', use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder1_lr=1e-4, decoder1_lr=1e-4, enc1_lastActivation='relu', enc1_outputScale=1., encoder2_lr=1e-4, decoder2_lr=1e-4, enc2_lastActivation='relu', enc2_outputScale=1., crossGenerationCoef=1., zconstraint='l2', zconstraintCoef=1.):
-		super(CrossGeneratingAutoencoder, self).__init__(input_dim1, input_dim2, enc_hidden_dim, use_batch_norm, dropoutP, optimizer_name, False, encoder1_lr, enc1_lastActivation, enc1_outputScale, encoder2_lr, enc2_lastActivation, enc2_outputScale)
-		if loss1 == 'bce':
-			self.decoder = FullyConnectedModule(self.z_dim, dec_hidden_dim + [input_dim1], self._use_batch_norm, self._dropoutP, lastActivation='none')
-			self.loss_fun = nn.BCEWithLogitsLoss(reduction='none')
-		elif loss1 == 'mse':
-			self.decoder = FullyConnectedModule(self.z_dim, dec_hidden_dim + [input_dim1], self._use_batch_norm, self._dropoutP, lastActivation='sigmoid')
-			self.loss_fun = nn.MSELoss(reduction='none')
-		elif loss1 == 'cbernoulli':
-			self.decoder = ProbabilisticFullyConnectedModule(self.z_dim, dec_hidden_dim + [input_dim1], distribution='cbernoulli', use_batch_norm=self._use_batch_norm, dropoutP=self._dropoutP, lastActivation='sigmoid', outputScale=1.0)
-			self.loss_fun = 'nll'
-		else:
-			raise NotImplementedError
-
-		if loss2 == 'bce':
-			self.decoder2 = FullyConnectedModule(self.z_dim, dec_hidden_dim + [input_dim2], self._use_batch_norm, self._dropoutP, lastActivation='none')
-			self.loss_fun2 = nn.BCEWithLogitsLoss(reduction='none')
-		elif loss2 == 'mse':
-			self.decoder2 = FullyConnectedModule(self.z_dim, dec_hidden_dim + [input_dim1], self._use_batch_norm, self._dropoutP, lastActivation='sigmoid')
-			self.loss_fun2 = nn.MSELoss(reduction='none')
-		elif loss2 == 'cbernoulli':
-			self.decoder2 = ProbabilisticFullyConnectedModule(self.z_dim, dec_hidden_dim + [input_dim2], distribution='cbernoulli', use_batch_norm=self._use_batch_norm, dropoutP=self._dropoutP, lastActivation='sigmoid', outputScale=1.0)
-			self.loss_fun2 = 'nll'
-		else:
-			raise NotImplementedError
-
-		self.opt.add_param_group({'params': self.decoder.parameters(), 'lr': decoder1_lr})
-		self.opt.add_param_group({'params': self.decoder2.parameters(), 'lr': decoder2_lr})
-
-		self.zconstraint = zconstraint
-		self.zconstraintCoef = zconstraintCoef
-		self.crossPenaltyCoef = crossGenerationCoef
-
-	def compute_loss(self, x1, x2):
-		z1 = self.encoder(x1)
-		x1_hat = self.decoder(z1)
-
-		z2 = self.encoder2(x2)
-		x2_hat = self.decoder2(z2)
-
-		cross1_hat = self.decoder(z2)
-		cross2_hat = self.decoder2(z1)
-
-		if self.loss_fun == 'nll':
-			rec1 = - torch.sum(torch.mean(x1_hat.log_prob(x1), 1))
-			cross_rec1 = - torch.sum(torch.mean(cross1_hat.log_prob(x1), 1))
-		else:
-			rec1 = self.loss_fun(x1_hat, x1)
-			rec1 = torch.sum(torch.mean(rec1, 1))
-
-			cross_rec1 = self.loss_fun(cross1_hat, x1)
-			cross_rec1 = torch.sum(torch.mean(cross_rec1, 1))
-
-		if self.loss_fun2 == 'nll':
-			rec2 = - torch.sum(torch.mean(x2_hat.log_prob(x2), 1))
-			cross_rec2 = - torch.sum(torch.mean(cross2_hat.log_prob(x2), 1))
-		else:
-			rec2 = self.loss_fun(x2_hat, x2)
-			rec2 = torch.sum(torch.mean(rec2, 1))
-
-			cross_rec2 = self.loss_fun(cross2_hat, x2)
-			cross_rec2 = torch.sum(torch.mean(cross_rec2, 1))
-
-		if self.zconstraint == 'l2':
-			similarityConstraint = nn.MSELoss(reduction='none')(z1, z2)
-			similarityConstraint = torch.sum(torch.mean(similarityConstraint, 1))
-		elif self.zconstraint == 'l1':
-			similarityConstraint = nn.L1Loss(reduction='none')(z1, z2)
-			similarityConstraint = torch.sum(torch.mean(similarityConstraint, 1))
-		elif self.zconstraint == 'cosine':
-			similarityConstraint =  torch.sum(1 - torch.cosine_similarity(z1,z2))
-
-		loss = rec1 + rec2 + self.crossPenaltyCoef * (cross_rec1 + cross_rec2) + self.zconstraintCoef * similarityConstraint
-		return loss
-
-	def evaluate(self, x1, x2):
-		metrics = dict()
-		with torch.no_grad():
-			z1 = self.encoder(x1)
-			x1_hat = self.decoder(z1)
-
-			z2 = self.encoder2(x2)
-			x2_hat = self.decoder2(z2)
-
-			cross1_hat = self.decoder(z2)
-			cross2_hat = self.decoder2(z1)
-
-
-			metrics['z-L2'] = nn.MSELoss(reduction='none')(z1, z2)
-			metrics['z-L2'] = torch.mean(torch.sum(metrics['z-L2'], 1)).item()
-			metrics['z-L1'] = nn.L1Loss(reduction='none')(z1, z2)
-			metrics['z-L1'] = torch.mean(torch.sum(metrics['z-L1'], 1)).item()
-			metrics['z-cos'] = torch.mean(1 - torch.cosine_similarity(z1,z2)).item()
-
-
-			if self.zconstraint == 'l2':
-				similarityConstraint = metrics['z-L2']
-
-			elif self.zconstraint == 'l1':
-				similarityConstraint = metrics['z-L1']
-
-			elif self.zconstraint == 'cosine':
-				similarityConstraint =  metrics['z-cos']
-
-
-			if self.loss_fun == 'nll':
-				metrics['LL/1'] = torch.mean(torch.sum(x1_hat.log_prob(x1), 1)).item()
-				metrics['cross-LL/1'] = torch.mean(torch.sum(cross1_hat.log_prob(x1), 1)).item()
-
-				x1_hat = x1_hat.mean
-				cross1_hat = cross1_hat.mean
-				l1 = -metrics['LL/1']
-				cl1 = -metrics['cross-LL/1']
-			else:
-				l1 = torch.mean(torch.sum(self.loss_fun(x1_hat, x1), 1)).item()
-				cl1 = torch.mean(torch.sum(self.loss_fun(cross1_hat, x1), 1)).item()
-
-			if self.loss_fun2 == 'nll':
-				metrics['LL/2'] = torch.sum(x2_hat.log_prob(x2)).item()
-				metrics['cross-LL/2'] = torch.mean(torch.sum(cross2_hat.log_prob(x2), 1)).item()
-				x2_hat = x2_hat.mean
-				cross2_hat = cross2_hat.mean
-				l2 = -metrics['LL/2']
-				cl2 = -metrics['cross-LL/2']
-			else:
-				l2 = torch.mean(torch.sum(self.loss_fun2(x2_hat, x2), 1)).item()
-				cl2 = torch.mean(torch.sum(self.loss_fun2(cross2_hat, x2), 1)).item()
-
-
-			if self.decoder.lastActivation is None:
-				metrics['mse/1'] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(torch.sigmoid(x1_hat), x1), 1)).item()
-				metrics['mse/2'] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(torch.sigmoid(x2_hat), x2), 1)).item()
-				metrics['bce/1'] = torch.mean(torch.sum(torch.nn.BCEWithLogitsLoss(reduction='none')(x1_hat, x1), 1)).item()
-				metrics['bce/2'] = torch.mean(torch.sum(torch.nn.BCEWithLogitsLoss(reduction='none')(x2_hat, x2), 1)).item()
-
-				metrics['cross-mse/1'] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(torch.sigmoid(cross1_hat), x1), 1)).item()
-				metrics['cross-mse/2'] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(torch.sigmoid(cross2_hat), x2), 1)).item()
-				metrics['cross-bce/1'] = torch.mean(torch.sum(torch.nn.BCEWithLogitsLoss(reduction='none')(cross1_hat, x1), 1)).item()
-				metrics['cross-bce/2'] = torch.mean(torch.sum(torch.nn.BCEWithLogitsLoss(reduction='none')(cross2_hat, x2), 1)).item()
-
-			else:
-				metrics['mse/1'] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(x1_hat, x1), 1)).item()
-				metrics['mse/2'] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(x2_hat, x2), 1)).item()
-				metrics['bce/1'] = torch.mean(torch.sum(torch.nn.BCELoss(reduction='none')(x1_hat, x1), 1)).item()
-				metrics['bce/2'] = torch.mean(torch.sum(torch.nn.BCELoss(reduction='none')(x2_hat, x2), 1)).item()
-
-				metrics['cross-mse/1'] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(cross1_hat, x1), 1)).item()
-				metrics['cross-mse/2'] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(cross2_hat, x2), 1)).item()
-				metrics['cross-bce/1'] = torch.mean(torch.sum(torch.nn.BCELoss(reduction='none')(cross1_hat, x1), 1)).item()
-				metrics['cross-bce/2'] = torch.mean(torch.sum(torch.nn.BCELoss(reduction='none')(cross2_hat, x2), 1)).item()
-
-		metrics['loss'] = l1 + l2 + self.crossPenaltyCoef * (cl1 + cl2) + self.zconstraintCoef * similarityConstraint
-
-		return metrics
 
 
 class CrossGeneratingVariationalAutoencoder(MultiOmicRepresentationLearner):
-	def __init__(self, input_dim1, input_dim2, enc_hidden_dim=[100], dec_hidden_dim=[], loss1='bce', loss2='bce', use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder1_lr=1e-4, decoder1_lr=1e-4, enc1_lastActivation='none', enc1_outputScale=1., encoder2_lr=1e-4, decoder2_lr=1e-4, enc2_lastActivation='none', enc2_outputScale=1., enc_distribution='normal', beta=1.0, zconstraintCoef=1.0, crossPenaltyCoef=1.0):
+	def __init__(self, input_dim1, input_dim2, enc_hidden_dim=[100], dec_hidden_dim=[], likelihood1='normal', likelihood2='normal', use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder1_lr=1e-4, decoder1_lr=1e-4, enc1_lastActivation='none', enc1_outputScale=1., encoder2_lr=1e-4, decoder2_lr=1e-4, enc2_lastActivation='none', enc2_outputScale=1., enc_distribution='normal', beta=1.0, zconstraintCoef=1.0, crossPenaltyCoef=1.0):
 		super(CrossGeneratingVariationalAutoencoder, self).__init__(input_dim1, input_dim2, enc_hidden_dim, use_batch_norm, dropoutP, optimizer_name, True, encoder1_lr, enc1_lastActivation, enc1_outputScale, encoder2_lr, enc2_lastActivation, enc2_outputScale, enc_distribution)
 
-		if loss1 == 'bce':
-			self.decoder = FullyConnectedModule(self.z_dim, dec_hidden_dim + [input_dim1], self._use_batch_norm, self._dropoutP, lastActivation='none')
-			self.loss_fun = nn.BCEWithLogitsLoss(reduction='none')
-		elif loss1 == 'mse':
-			self.decoder = FullyConnectedModule(self.z_dim, dec_hidden_dim + [input_dim1], self._use_batch_norm, self._dropoutP, lastActivation='none')
-			self.loss_fun = nn.MSELoss(reduction='none')
-		elif loss1 == 'cbernoulli':
-			self.decoder = ProbabilisticFullyConnectedModule(self.z_dim, dec_hidden_dim + [input_dim1], distribution='cbernoulli', use_batch_norm=self._use_batch_norm, dropoutP=self._dropoutP, lastActivation='sigmoid', outputScale=1.0)
-			self.loss_fun = 'nll'
-		else:
-			raise NotImplementedError
+		self.decoder = ProbabilisticFullyConnectedModule(self.z_dim, dec_hidden_dim + [input_dim1], distribution=likelihood1, use_batch_norm=self._use_batch_norm, dropoutP=self._dropoutP, lastActivation='none', outputScale=1.0)
+		self.decoder2 = ProbabilisticFullyConnectedModule(self.z_dim, dec_hidden_dim + [input_dim2], distribution=likelihood2, use_batch_norm=self._use_batch_norm, dropoutP=self._dropoutP, lastActivation='none', outputScale=1.0)
 
-		if loss2 == 'bce':
-			self.decoder2 = FullyConnectedModule(self.z_dim, dec_hidden_dim + [input_dim2], self._use_batch_norm, self._dropoutP, lastActivation='none')
-			self.loss_fun2 = nn.BCEWithLogitsLoss(reduction='none')
-		elif loss2 == 'mse':
-			self.decoder2 = FullyConnectedModule(self.z_dim, dec_hidden_dim + [input_dim2], self._use_batch_norm, self._dropoutP, lastActivation='none')
-			self.loss_fun2 = nn.MSELoss(reduction='none')
-		elif loss2 == 'cbernoulli':
-			self.decoder2 = ProbabilisticFullyConnectedModule(self.z_dim, dec_hidden_dim + [input_dim2], distribution='cbernoulli', use_batch_norm=self._use_batch_norm, dropoutP=self._dropoutP, lastActivation='sigmoid', outputScale=1.0)
-			self.loss_fun2 = 'nll'
-		else:
-			raise NotImplementedError
 
 		self.opt.add_param_group({'params': self.decoder.parameters(), 'lr': decoder1_lr})
 		self.opt.add_param_group({'params': self.decoder2.parameters(), 'lr': decoder2_lr})
@@ -658,25 +344,13 @@ class CrossGeneratingVariationalAutoencoder(MultiOmicRepresentationLearner):
 		cross1_hat = self.decoder(z2sample)
 		cross2_hat = self.decoder2(z1sample)
 
-		if self.loss_fun == 'nll':
-			rec1 = - torch.sum(torch.mean(x1_hat.log_prob(x1), 1))
-			cross_rec1 = - torch.mean(torch.sum(cross1_hat.log_prob(x1), 1))
-		else:
-			rec1 = self.loss_fun(x1_hat, x1)
-			rec1 = torch.sum(torch.mean(rec1, 1))
 
-			cross_rec1 = self.loss_fun(cross1_hat, x1)
-			cross_rec1 = torch.sum(torch.mean(cross_rec1, 1))
+		rec1 = - torch.sum(torch.mean(x1_hat.log_prob(x1), 1))
+		cross_rec1 = - torch.mean(torch.sum(cross1_hat.log_prob(x1), 1))
 
-		if self.loss_fun2 == 'nll':
-			rec2 = - torch.sum(torch.mean(x2_hat.log_prob(x2), 1))
-			cross_rec2 = - torch.sum(torch.mean(cross2_hat.log_prob(x2), 1))
-		else:
-			rec2 = self.loss_fun2(x2_hat, x2)
-			rec2 = torch.sum(torch.mean(rec2, 1))
 
-			cross_rec2 = self.loss_fun2(cross2_hat, x2)
-			cross_rec2 = torch.sum(torch.mean(cross_rec2, 1))
+		rec2 = - torch.sum(torch.mean(x2_hat.log_prob(x2), 1))
+		cross_rec2 = - torch.sum(torch.mean(cross2_hat.log_prob(x2), 1))
 
 
 		# KL divergence
@@ -736,51 +410,29 @@ class CrossGeneratingVariationalAutoencoder(MultiOmicRepresentationLearner):
 
 
 			# likelihood/loss
-			if self.loss_fun == 'nll':
-				metrics['LL/1'] = torch.mean(torch.sum(x1_hat.log_prob(x1), 1)).item()
-				metrics['cross-LL/1'] = torch.mean(torch.sum(cross1_hat.log_prob(x1), 1)).item()
+			metrics['LL/1'] = torch.mean(torch.sum(x1_hat.log_prob(x1), 1)).item()
+			metrics['cross-LL/1'] = torch.mean(torch.sum(cross1_hat.log_prob(x1), 1)).item()
 
-				x1_hat = x1_hat.mean
-				cross1_hat = cross1_hat.mean
-				l1 = -metrics['LL/1']
-				cl1 = -metrics['cross-LL/1']
-			else:
-				l1 = torch.mean(torch.sum(self.loss_fun(x1_hat, x1), 1)).item()
-				cl1 = torch.mean(torch.sum(self.loss_fun(cross1_hat, x1), 1)).item()
-
-			if self.loss_fun2 == 'nll':
-				metrics['LL/2'] = torch.sum(x2_hat.log_prob(x2)).item()
-				metrics['cross-LL/2'] = torch.mean(torch.sum(cross2_hat.log_prob(x2), 1)).item()
-				x2_hat = x2_hat.mean
-				cross2_hat = cross2_hat.mean
-				l2 = -metrics['LL/2']
-				cl2 = -metrics['cross-LL/2']
-			else:
-				l2 = torch.mean(torch.sum(self.loss_fun2(x2_hat, x2), 1)).item()
-				cl2 = torch.mean(torch.sum(self.loss_fun2(cross2_hat, x2), 1)).item()
+			x1_hat = x1_hat.mean
+			cross1_hat = cross1_hat.mean
+			l1 = -metrics['LL/1']
+			cl1 = -metrics['cross-LL/1']
 
 
-			if self.decoder.lastActivation is None:
-				metrics['mse/1'] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(torch.sigmoid(x1_hat), x1), 1)).item()
-				metrics['mse/2'] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(torch.sigmoid(x2_hat), x2), 1)).item()
-				# metrics['bce/1'] = torch.mean(torch.sum(torch.nn.BCEWithLogitsLoss(reduction='none')(x1_hat, x1), 1)).item()
-				# metrics['bce/2'] = torch.mean(torch.sum(torch.nn.BCEWithLogitsLoss(reduction='none')(x2_hat, x2), 1)).item()
+			metrics['LL/2'] = torch.sum(x2_hat.log_prob(x2)).item()
+			metrics['cross-LL/2'] = torch.mean(torch.sum(cross2_hat.log_prob(x2), 1)).item()
 
-				metrics['cross-mse/1'] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(torch.sigmoid(cross1_hat), x1), 1)).item()
-				metrics['cross-mse/2'] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(torch.sigmoid(cross2_hat), x2), 1)).item()
-				# metrics['cross-bce/1'] = torch.mean(torch.sum(torch.nn.BCEWithLogitsLoss(reduction='none')(cross1_hat, x1), 1)).item()
-				# metrics['cross-bce/2'] = torch.mean(torch.sum(torch.nn.BCEWithLogitsLoss(reduction='none')(cross2_hat, x2), 1)).item()
+			x2_hat = x2_hat.mean
+			cross2_hat = cross2_hat.mean
+			l2 = -metrics['LL/2']
+			cl2 = -metrics['cross-LL/2']
 
-			else:
-				metrics['mse/1'] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(x1_hat, x1), 1)).item()
-				metrics['mse/2'] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(x2_hat, x2), 1)).item()
-				# metrics['bce/1'] = torch.mean(torch.sum(torch.nn.BCELoss(reduction='none')(x1_hat, x1), 1)).item()
-				# metrics['bce/2'] = torch.mean(torch.sum(torch.nn.BCELoss(reduction='none')(x2_hat, x2), 1)).item()
 
-				metrics['cross-mse/1'] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(cross1_hat, x1), 1)).item()
-				metrics['cross-mse/2'] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(cross2_hat, x2), 1)).item()
-				# metrics['cross-bce/1'] = torch.mean(torch.sum(torch.nn.BCELoss(reduction='none')(cross1_hat, x1), 1)).item()
-				# metrics['cross-bce/2'] = torch.mean(torch.sum(torch.nn.BCELoss(reduction='none')(cross2_hat, x2), 1)).item()
+			metrics['mse/1'] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(x1_hat, x1), 1)).item()
+			metrics['mse/2'] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(x2_hat, x2), 1)).item()
+
+			metrics['cross-mse/1'] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(cross1_hat, x1), 1)).item()
+			metrics['cross-mse/2'] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(cross2_hat, x2), 1)).item()
 
 		metrics['loss'] = l1 + l2 + self.crossPenaltyCoef * (cl1 + cl2) + self.zconstraintCoef * similarityConstraint + self.beta * (metrics['KL/1'] + metrics['KL/2'])
 
