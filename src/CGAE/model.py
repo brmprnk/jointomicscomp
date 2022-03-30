@@ -13,18 +13,16 @@ from src.util.evaluate import evaluate_imputation, save_factorizations_to_csv
 from src.MoE.model import MixtureOfExperts
 
 class MultiOmicsDataset():
-    def __init__(self, data1, data2):
-        self.d1 = TensorDataset(data1)
+    def __init__(self, data):
+        self.data = [TensorDataset(d) for d in data]
         # load the 2nd data view
-        self.d2 = TensorDataset(data2)
-        self.length = data1.shape[0]
+        self.length = data[0].shape[0]
 
     def __len__(self):
         return self.length
 
     def __getitem__(self, index):
-        # get the index-th element of the 3 matrices
-        return self.d1.__getitem__(index), self.d2.__getitem__(index)
+        return [d1.__getitem__(index) for d1 in self.data]
 
 def multiomic_collate(batch):
     d1 = [x[0] for x in batch]
@@ -46,7 +44,7 @@ def evaluateUsingBatches(net, device, dataloader, multimodal=False):
                 x1 = trd[0][0].to(device).double()
                 x2 = trd[1][0].to(device).double()
                 # evaluate method averages across samples, multiply with #samples to get total
-                metrics = net.evaluate(x1, x2)
+                metrics = net.evaluate([x1, x2])
                 for kk in metrics:
                     metrics[kk] *= x1.shape[0]
 
@@ -59,15 +57,15 @@ def evaluateUsingBatches(net, device, dataloader, multimodal=False):
             else:
                 x1 = trd[0][0].to(device).double()
                 x2 = trd[1][0].to(device).double()
-                tmpmetrics = net.evaluate(x1, x2)
+                tmpmetrics = net.evaluate([x1, x2])
                 shape = x1.shape[0]
 
             for kk in metrics:
                 metrics[kk] += tmpmetrics[kk] * shape
 
-        for kk in metrics:
-            # now divide by total number of points to get the average across all samples
-            metrics[kk] /= len(dataloader.dataset)
+    for kk in metrics:
+        # now divide by total number of points to get the average across all samples
+        metrics[kk] /= len(dataloader.dataset)
 
 
     return metrics
@@ -119,7 +117,7 @@ def train(device, net, num_epochs, train_loader, train_loader_eval, valid_loader
                 if not multimodal:
                     current_loss = net.compute_loss(data[0].to(device).double())
                 else:
-                    current_loss = net.compute_loss(data[0][0].to(device).double(), data[1][0].to(device).double())
+                    current_loss = net.compute_loss([data[0][0].to(device).double(), data[1][0].to(device).double()])
 
                 # Backward pass and optimize
                 current_loss.backward()

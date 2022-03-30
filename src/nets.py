@@ -24,7 +24,7 @@ def identity(x):
 
 # fully-connected layers
 class FullyConnectedModule(nn.Module):
-	def __init__(self, input_dim, hidden_dim=[100], use_batch_norm=False, dropoutP=0.0, lastActivation='none', outputScale=1.):
+	def __init__(self, input_dim, hidden_dim=[100], use_batch_norm=False, dropoutP=0.0, lastActivation='none'):
 		super(FullyConnectedModule, self).__init__()
 
 		self.z_dim = hidden_dim[-1]
@@ -52,7 +52,6 @@ class FullyConnectedModule(nn.Module):
 		else:
 			raise NotImplementedError('Use \'relu\' for encoder or \'sigmoid\' for decoder')
 
-		self.outputScale = outputScale
 
 
 	def forward(self, x):
@@ -76,11 +75,11 @@ class FullyConnectedModule(nn.Module):
 				if self.lastActivation is not None:
 					x = self.lastActivation(x)
 
-		return x * self.outputScale
+		return x
 
 
 class ProbabilisticFullyConnectedModule(FullyConnectedModule):
-	def __init__(self, input_dim, hidden_dim=[100], distribution='normal', use_batch_norm=False, dropoutP=0.0, lastActivation='none', outputScale=1.):
+	def __init__(self, input_dim, hidden_dim=[100], distribution='normal', use_batch_norm=False, dropoutP=0.0, lastActivation='none'):
 
 		self.distribution = distribution
 		if self.distribution != 'cbernoulli':
@@ -88,7 +87,7 @@ class ProbabilisticFullyConnectedModule(FullyConnectedModule):
 			newlist[-1] = newlist[-1] * 2
 			hidden_dim = newlist
 
-		super(ProbabilisticFullyConnectedModule, self).__init__(input_dim, hidden_dim, use_batch_norm, dropoutP, lastActivation, outputScale)
+		super(ProbabilisticFullyConnectedModule, self).__init__(input_dim, hidden_dim, use_batch_norm, dropoutP, lastActivation)
 
 
 		if self.distribution == 'normal':
@@ -137,7 +136,7 @@ class ProbabilisticFullyConnectedModule(FullyConnectedModule):
 
 # base class
 class RepresentationLearner(nn.Module):
-	def __init__(self, input_dim, enc_hidden_dim=[100], use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder_lr=1e-4, probabilistic_encoder=False, enc_lastActivation='none', enc_outputScale=1., enc_distribution='normal'):
+	def __init__(self, input_dim, enc_hidden_dim=[100], use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder_lr=1e-4, probabilistic_encoder=True, enc_distribution='normal'):
 
 		super(RepresentationLearner, self).__init__()
 
@@ -152,9 +151,9 @@ class RepresentationLearner(nn.Module):
 
 		# Intialization of the encoder
 		if probabilistic_encoder:
-			self.encoder = ProbabilisticFullyConnectedModule(input_dim, enc_hidden_dim, enc_distribution, use_batch_norm, dropoutP, enc_lastActivation, enc_outputScale)
+			self.encoder = ProbabilisticFullyConnectedModule(input_dim, enc_hidden_dim, enc_distribution, use_batch_norm, dropoutP, 'none')
 		else:
-			self.encoder = FullyConnectedModule(input_dim, enc_hidden_dim, use_batch_norm, dropoutP, enc_lastActivation, enc_outputScale)
+			self.encoder = FullyConnectedModule(input_dim, enc_hidden_dim, use_batch_norm, dropoutP, 'none')
 
 		self.opt = init_optimizer(optimizer_name, [
 			{'params': self.encoder.parameters(), 'lr': encoder_lr},
@@ -228,35 +227,66 @@ class RepresentationLearner(nn.Module):
 			return z.mean
 
 
-class MultiOmicRepresentationLearner(RepresentationLearner):
-	def __init__(self, input_dim1, input_dim2, enc_hidden_dim=[100], use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', probabilistic_encoder=False, encoder1_lr=1e-4, enc1_lastActivation='none', enc1_outputScale=1., encoder2_lr=1e-4, enc2_lastActivation='none', enc2_outputScale=1., enc_distribution='normal'):
-		super(MultiOmicRepresentationLearner, self).__init__(input_dim1, enc_hidden_dim, use_batch_norm, dropoutP, optimizer_name, encoder1_lr, probabilistic_encoder, enc1_lastActivation, enc1_outputScale, enc_distribution)
+class MultiOmicRepresentationLearner(nn.Module):
+	def __init__(self, input_dims, enc_hidden_dim=[100], use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', probabilistic_encoder=True, encoder_lr=1e-4, enc_distribution='normal', cpu=False):
+		# check input arguments
+		super(MultiOmicRepresentationLearner, self).__init__()
 
-
-		# Intialization of 2nd encoder
-		if probabilistic_encoder:
-			self.encoder2 = ProbabilisticFullyConnectedModule(input_dim2, enc_hidden_dim, enc_distribution, use_batch_norm, dropoutP, enc2_lastActivation, enc2_outputScale)
+		if cpu:
+			self.device = torch.device('cpu')
 		else:
-			self.encoder2 = FullyConnectedModule(input_dim2, enc_hidden_dim, use_batch_norm, dropoutP, enc2_lastActivation, enc2_outputScale)
+			self.device = torch.device('cuda:0')
 
-		self.opt.add_param_group({'params': self.encoder2.parameters(), 'lr': encoder2_lr})
+		self.n_modalities = len(input_dims)
 
-	def encode(self, x1, x2):
-		z1 = self.encoder(x1)
-		z2 = self.encoder2(x2)
+		if type(encoder_lr) == float:
+			encoder_lr = [encoder_lr] * self.n_modalities
 
-		return z1, z2
+
+		self._epoch = 0
+		self.loss_items = {}
+
+		self._input_dims = input_dims
+		self._dropoutP = dropoutP
+		self._use_batch_norm = use_batch_norm
+
+		self.z_dim = enc_hidden_dim[-1]
+
+		# Intialization of the encoder
+		if probabilistic_encoder:
+			self.encoders = [ProbabilisticFullyConnectedModule(input_dim, enc_hidden_dim, enc_distribution, use_batch_norm, dropoutP, 'none').double().to(self.device) for input_dim in input_dims]
+		else:
+			self.encoders = [FullyConnectedModule(input_dim, enc_hidden_dim, use_batch_norm, dropoutP, 'none').double().to(self.device) for input_dim in input_dims]
+
+
+		for i, (enc, lr) in enumerate(zip(self.encoders, encoder_lr)):
+			if i == 0:
+				self.opt = init_optimizer(optimizer_name, [{'params': enc.parameters(), 'lr': lr}])
+			else:
+				self.opt.add_param_group({'params': enc.parameters(), 'lr': lr})
+
+
+	def increment_epoch(self):
+		self._epoch += 1
+
+	def get_device(self):
+		return list(self.parameters())[0].device
+
+
+	def encode(self, x):
+		z = [enc(xi) for enc, xi in zip(self.encoders, xi)]
+
+		return z
 
 
 class VariationalAutoEncoder(RepresentationLearner):
 
-	def __init__(self, input_dim, enc_hidden_dim=[100], dec_hidden_dim=[], likelihood='normal', use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder_lr=1e-4, decoder_lr=1e-4, enc_lastActivation='relu', enc_outputScale=1., beta=1.):
-		super(VariationalAutoEncoder, self).__init__(input_dim, enc_hidden_dim, use_batch_norm, dropoutP, optimizer_name, encoder_lr, True, enc_lastActivation, enc_outputScale)
+	def __init__(self, input_dim, enc_hidden_dim=[100], dec_hidden_dim=[], likelihood='normal', use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder_lr=1e-4, decoder_lr=1e-4, beta=1.):
+		super(VariationalAutoEncoder, self).__init__(input_dim, enc_hidden_dim, use_batch_norm, dropoutP, optimizer_name, encoder_lr)
 
 		# Intialization of the decoder and loss function
 
 		self.decoder = ProbabilisticFullyConnectedModule(self.z_dim, dec_hidden_dim + [self._input_dim], likelihood, self._use_batch_norm, self._dropoutP, lastActivation='none')
-
 
 		self.opt.add_param_group({'params': self.decoder.parameters(), 'lr': decoder_lr})
 		self.beta = beta
@@ -310,131 +340,112 @@ class VariationalAutoEncoder(RepresentationLearner):
 
 
 class CrossGeneratingVariationalAutoencoder(MultiOmicRepresentationLearner):
-	def __init__(self, input_dim1, input_dim2, enc_hidden_dim=[100], dec_hidden_dim=[], likelihood1='normal', likelihood2='normal', use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder1_lr=1e-4, decoder1_lr=1e-4, enc1_lastActivation='none', enc1_outputScale=1., encoder2_lr=1e-4, decoder2_lr=1e-4, enc2_lastActivation='none', enc2_outputScale=1., enc_distribution='normal', beta=1.0, zconstraintCoef=1.0, crossPenaltyCoef=1.0):
-		super(CrossGeneratingVariationalAutoencoder, self).__init__(input_dim1, input_dim2, enc_hidden_dim, use_batch_norm, dropoutP, optimizer_name, True, encoder1_lr, enc1_lastActivation, enc1_outputScale, encoder2_lr, enc2_lastActivation, enc2_outputScale, enc_distribution)
+	def __init__(self, input_dims, enc_hidden_dim=[100], dec_hidden_dim=[], likelihoods='normal', use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder_lr=1e-4, decoder_lr=1e-4, enc_distribution='normal', beta=1.0, zconstraintCoef=1.0, crossPenaltyCoef=1.0):
+		super(CrossGeneratingVariationalAutoencoder, self).__init__(input_dims, enc_hidden_dim, use_batch_norm, dropoutP, optimizer_name, True, encoder_lr, enc_distribution)
 
-		self.decoder = ProbabilisticFullyConnectedModule(self.z_dim, dec_hidden_dim + [input_dim1], distribution=likelihood1, use_batch_norm=self._use_batch_norm, dropoutP=self._dropoutP, lastActivation='none', outputScale=1.0)
-		self.decoder2 = ProbabilisticFullyConnectedModule(self.z_dim, dec_hidden_dim + [input_dim2], distribution=likelihood2, use_batch_norm=self._use_batch_norm, dropoutP=self._dropoutP, lastActivation='none', outputScale=1.0)
+		if type(likelihoods) == str:
+			likelihoods = [likelihoods] * self.n_modalities
 
+		self.decoders = [ProbabilisticFullyConnectedModule(self.z_dim, dec_hidden_dim + [input_dim1], distribution=ll, use_batch_norm=self._use_batch_norm, dropoutP=self._dropoutP, lastActivation='none').double().to(self.device) for input_dim1, ll in zip(input_dims, likelihoods)]
+		if type(decoder_lr) == float:
+			decoder_lr = [decoder_lr] * self.n_modalities
 
-		self.opt.add_param_group({'params': self.decoder.parameters(), 'lr': decoder1_lr})
-		self.opt.add_param_group({'params': self.decoder2.parameters(), 'lr': decoder2_lr})
+		for lr, dec in zip(decoder_lr, self.decoders):
+			self.opt.add_param_group({'params': dec.parameters(), 'lr': lr})
 
 		self.zconstraintCoef = zconstraintCoef
 		self.crossPenaltyCoef = crossPenaltyCoef
 		self.beta = beta
 
 
-	def compute_loss(self, x1, x2):
-		#qz_x in MoE
-		z1 = self.encoder(x1)
-		z1mean = z1.mean
-		z1std = z1.stddev
-		z1sample = z1.rsample()
+	def compute_loss(self, x):
 
-		x1_hat = self.decoder(z1sample)
-
-		z2 = self.encoder2(x2)
-		z2mean = z2.mean
-		z2std = z2.stddev
-		z2sample = z2.rsample()
-
-		x2_hat = self.decoder2(z2sample)
-
-		cross1_hat = self.decoder(z2sample)
-		cross2_hat = self.decoder2(z1sample)
+		# encode all modalities
+		z = [enc(xi) for xi, enc in zip(x, self.encoders)]
+		# sample from each z
+		zsample = [zi.rsample() for zi in z]
 
 
-		rec1 = - torch.sum(torch.mean(x1_hat.log_prob(x1), 1))
-		cross_rec1 = - torch.mean(torch.sum(cross1_hat.log_prob(x1), 1))
+		zmean = [zi.mean for zi in z]
+		zstd = [zi.stddev for zi in z]
+
+		# decode each modality from all z's
+		x_hat = [[dec(zi) for dec in self.decoders] for zi in zsample]
+
+		# calculate loss
+		loss = 0.0
+		for i in range(self.n_modalities):
+			for j in range(self.n_modalities):
+				if i == j:
+					loss -= torch.sum(torch.mean(x_hat[i][j].log_prob(x[j]), 1))
+				else:
+					loss -= torch.sum(torch.mean(x_hat[i][j].log_prob(x[j]), 1)) * self.crossPenaltyCoef
+
+					if i > j:
+						# wasserstein has to be calculated only once for each pair of modalities
+						similarityConstraint = nn.MSELoss(reduction='none')(zmean[i], zmean[j]) + nn.MSELoss(reduction='none')(zstd[i], zstd[j])
+						similarityConstraint = torch.sum(torch.mean(similarityConstraint, 1))
+						loss += self.zconstraintCoef * similarityConstraint
+
+			# KL divergence to prior for each modality's z
+			loss -= 0.5 * self.beta * torch.sum(torch.mean(1 + torch.log(zstd[i] ** 2) - (zmean[i] ** 2) - (zstd[i] ** 2), 1))
 
 
-		rec2 = - torch.sum(torch.mean(x2_hat.log_prob(x2), 1))
-		cross_rec2 = - torch.sum(torch.mean(cross2_hat.log_prob(x2), 1))
-
-
-		# KL divergence
-		kl1 = -0.5 * torch.sum(torch.mean(1 + torch.log(z1std ** 2) - (z1mean ** 2) - (z1std ** 2), 1))
-		kl2 = -0.5 * torch.sum(torch.mean(1 + torch.log(z2std ** 2) - (z2mean ** 2) - (z2std ** 2), 1))
-
-
-		# wasserstein-2 distance between two z's
-		similarityConstraint = nn.MSELoss(reduction='none')(z1mean, z2mean) + nn.MSELoss(reduction='none')(z1std, z2std)
-		similarityConstraint = torch.sum(torch.mean(similarityConstraint, 1))
-
-		loss = rec1 + rec2 + self.beta * (kl1 + kl2) + self.crossPenaltyCoef * (cross_rec1 + cross_rec2) + self.zconstraintCoef * similarityConstraint
 		return loss
 
 
-	def evaluate(self, x1, x2):
+	def evaluate(self, x):
 		metrics = dict()
 		with torch.no_grad():
-			# encode, sample, decode
-			z1 = self.encoder(x1)
-			z1mean = z1.mean
-			z1std = z1.stddev
-			z1sample = z1.rsample()
+			# encode all modalities
+			z = [enc(xi) for xi, enc in zip(x, self.encoders)]
+			# sample from each z
+			zsample = [zi.rsample() for zi in z]
 
-			x1_hat = self.decoder(z1sample)
+			zmean = [zi.mean for zi in z]
+			zstd = [zi.stddev for zi in z]
 
-			z2 = self.encoder2(x2)
-			z2mean = z2.mean
-			z2std = z2.stddev
-			z2sample = z2.rsample()
+			# decode each modality from all z's
+			x_hat = [[dec(zi) for dec in self.decoders] for zi in zmean]
 
-			x2_hat = self.decoder2(z2sample)
+			loss = 0.0
+			for i in range(self.n_modalities):
+				klkey = 'KL/%d' % (i+1)
+				for j in range(self.n_modalities):
+					llkey = 'LL%d/%d' % (j+1, i+1)
+					msekey = 'MSE%d/%d' % (j+1, i+1)
+					w2key = 'z-W2/%d-%d' % (i+1, j+1)
+					l2key = 'z-L2/%d-%d' % (i+1, j+1)
+					coskey = 'z-cos/%d-%d' % (i+1, j+1)
 
-			# decode from the other sample
-			cross1_hat = self.decoder(z2sample)
-			cross2_hat = self.decoder2(z1sample)
+					metrics[llkey] = torch.mean(torch.sum(x_hat[i][j].log_prob(x[j]), 1)).item()
+					metrics[msekey] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(x_hat[i][j].mean, x[j]), 1)).item()
 
-			# similarity between 2 z's
-			metrics['z-L2'] = nn.MSELoss(reduction='none')(z1sample, z2sample)
-			metrics['z-L2'] = torch.mean(torch.sum(metrics['z-L2'], 1)).item()
+					if i == j:
+						loss -= metrics[llkey]
+					else:
+						loss -= metrics[llkey] * self.crossPenaltyCoef
 
-			metrics['z-L1'] = nn.L1Loss(reduction='none')(z1sample, z2sample)
-			metrics['z-L1'] = torch.mean(torch.sum(metrics['z-L1'], 1)).item()
-			metrics['z-cos'] = torch.mean(1 - torch.cosine_similarity(z1sample,z2sample)).item()
+						if i > j:
+							# wasserstein has to be calculated only once for each pair of modalities
+							similarityConstraint = nn.MSELoss(reduction='none')(zmean[i], zmean[j]) + nn.MSELoss(reduction='none')(zstd[i], zstd[j])
+							similarityConstraint = torch.mean(torch.sum(similarityConstraint, 1)).item()
 
-			w2 = nn.MSELoss(reduction='none')(z1mean, z2mean) + nn.MSELoss(reduction='none')(z1std, z2std)
-			metrics['z-W2'] = torch.mean(torch.sum(w2, 1)).item()
-			similarityConstraint = metrics['z-W2']
+							metrics[w2key] = similarityConstraint
+							loss += self.zconstraintCoef * similarityConstraint
 
+							l2 = nn.MSELoss(reduction='none')(zmean[i], zmean[j])
+							metrics[l2key] = torch.mean(torch.sum(l2, 1)).item()
 
-			# KL divergence between each z and N(0,I)
-			kl1 = -0.5 * torch.mean(torch.sum(1 + torch.log(z1std ** 2) - (z1mean ** 2) - (z1std ** 2), 1))
-			kl2 = -0.5 * torch.mean(torch.sum(1 + torch.log(z2std ** 2) - (z2mean ** 2) - (z2std ** 2), 1))
-
-			metrics['KL/1'] = kl1.item()
-			metrics['KL/2'] = kl2.item()
-
-
-			# likelihood/loss
-			metrics['LL/1'] = torch.mean(torch.sum(x1_hat.log_prob(x1), 1)).item()
-			metrics['cross-LL/1'] = torch.mean(torch.sum(cross1_hat.log_prob(x1), 1)).item()
-
-			x1_hat = x1_hat.mean
-			cross1_hat = cross1_hat.mean
-			l1 = -metrics['LL/1']
-			cl1 = -metrics['cross-LL/1']
+							metrics[coskey] = torch.mean(1 - torch.cosine_similarity(zmean[i],zmean[j])).item()
 
 
-			metrics['LL/2'] = torch.sum(x2_hat.log_prob(x2)).item()
-			metrics['cross-LL/2'] = torch.mean(torch.sum(cross2_hat.log_prob(x2), 1)).item()
-
-			x2_hat = x2_hat.mean
-			cross2_hat = cross2_hat.mean
-			l2 = -metrics['LL/2']
-			cl2 = -metrics['cross-LL/2']
+				# KL divergence to prior for each modality's z
+				metrics[klkey] = 0.5 * torch.mean(torch.sum(1 + torch.log(zstd[i] ** 2) - (zmean[i] ** 2) - (zstd[i] ** 2), 1)).item()
+				loss -= self.beta * metrics[klkey]
 
 
-			metrics['mse/1'] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(x1_hat, x1), 1)).item()
-			metrics['mse/2'] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(x2_hat, x2), 1)).item()
-
-			metrics['cross-mse/1'] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(cross1_hat, x1), 1)).item()
-			metrics['cross-mse/2'] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(cross2_hat, x2), 1)).item()
-
-		metrics['loss'] = l1 + l2 + self.crossPenaltyCoef * (cl1 + cl2) + self.zconstraintCoef * similarityConstraint + self.beta * (metrics['KL/1'] + metrics['KL/2'])
+		metrics['loss'] = loss
 
 		return metrics
 
@@ -478,8 +489,8 @@ class MIEstimator(FullyConnectedModule):
 
 
 class MVIB(MultiOmicRepresentationLearner):
-	def __init__(self, input_dim1, input_dim2, enc_hidden_dim=[100], mi_net_arch=[100, 1], use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder1_lr=1e-4, enc1_lastActivation='none', enc1_outputScale=1., encoder2_lr=1e-4, enc2_lastActivation='none', enc2_outputScale=1., mi_net_lr=1e-4, beta=1.0):
-		super().__init__(input_dim1, input_dim2, enc_hidden_dim, use_batch_norm, dropoutP, optimizer_name, True, encoder1_lr, enc1_lastActivation, enc1_outputScale, encoder2_lr, enc2_lastActivation, enc2_outputScale)
+	def __init__(self, input_dim1, input_dim2, enc_hidden_dim=[100], mi_net_arch=[100, 1], use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder1_lr=1e-4, enc1_lastActivation='none', encoder2_lr=1e-4, enc2_lastActivation='none', mi_net_lr=1e-4, beta=1.0):
+		super().__init__(input_dim1, input_dim2, enc_hidden_dim, use_batch_norm, dropoutP, optimizer_name, True, encoder1_lr, enc1_lastActivation, encoder2_lr, enc2_lastActivation)
 
 		if mi_net_arch[-1] != 1:
 			mi_net_arch.append(1)
@@ -662,12 +673,21 @@ class MLP(nn.Module):
 
 
 if __name__ == '__main__':
-	model = MLP(5, 3, 3)
+	#model = MLP(5, 3, 3)
 	device = torch.device('cuda:0')
 
-	model = model.double().to(device)
+	model = CrossGeneratingVariationalAutoencoder([5, 3, 4], enc_hidden_dim=[2, 2], dec_hidden_dim=[2], likelihoods='normal', use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder_lr=1e-4, decoder_lr=1e-4, enc_distribution='normal', beta=1.0, zconstraintCoef=1.0, crossPenaltyCoef=1.0)
+	#model = model.double().to(device)
 
-	x = torch.rand(20, 5)
-	y = torch.zeros(20)
-	y[:10] = 1
-	y[-5:] = 2
+	x1 = torch.rand(20, 5).to(device)
+	x2 = torch.rand(20, 3).to(device)
+	x3 = torch.rand(20, 4).to(device)
+
+	x = [x1.double(), x2.double(), x3.double()]
+
+
+	model.opt.zero_grad()
+	current_loss = model.compute_loss(x)
+	current_loss.backward()
+	model.opt.step()
+	model.evaluate(x)

@@ -18,50 +18,42 @@ def run(args: dict) -> None:
     save_dir = os.path.join(args['save_dir'], '{}'.format('CGAE'))
     os.makedirs(save_dir)
 
+    n_modalities = args['nomics']
 
     # Load in data
-    omic1 = np.load(args['data_path1'])
-    omic2 = np.load(args['data_path2'])
+    omics = [np.load(args['data_path%d' % (i+1)]) for i in range(n_modalities)]
+
     labels = np.load(args['labels'])
     labeltypes = np.load(args['labelnames'])
-
-    assert omic1.shape[0] == omic2.shape[0]
 
     # Use predefined split
     train_ind = np.load(args['train_ind'])
     val_ind = np.load(args['val_ind'])
     test_ind = np.load(args['test_ind'])
 
-    omic1_train_file = omic1[train_ind]
-    omic1_val_file = omic1[val_ind]
-    omic1_test_file = omic1[test_ind]
-    omic2_train_file = omic2[train_ind]
-    omic2_val_file = omic2[val_ind]
-    omic2_test_file = omic2[test_ind]
+    omics_train = [omic[train_ind] for omic in omics]
+    omics_val = [omic[val_ind] for omic in omics]
+    omics_test = [omic[test_ind] for omic in omics]
 
     ytrain = labels[train_ind]
     yvalid = labels[val_ind]
     ytest = labels[test_ind]
 
     # Number of features
-    input_dim1 = args['num_features1']
-    input_dim2 = args['num_features2']
+    input_dims = [args['num_features%d' % (i+1)] for i in range(n_modalities)]
 
-    assert input_dim1 == omic1.shape[1]
-    assert input_dim2 == omic2.shape[1]
+    likelihoods = [args['likelihood%d' % (i+1)] for i in range(n_modalities)]
+
+    # assert input_dim1 == omic1.shape[1]
+    # assert input_dim2 == omic2.shape[1]
 
     encoder_layers = [int(kk) for kk in args['latent_dim'].split('-')]
     decoder_layers = encoder_layers[::-1][1:]
 
-
     # Initialize network model
-    net = CrossGeneratingVariationalAutoencoder(input_dim1, input_dim2, encoder_layers, decoder_layers, args['loss_function'],
-                       args['loss_function'],
-                       args['use_batch_norm'], args['dropout_probability'], args['optimizer'], args['enc1_lr'],
-                       args['dec1_lr'], args['enc1_last_activation'], args['enc1_output_scale'], args['enc2_lr'],
-                       args['dec2_lr'], args['enc2_last_activation'], args['enc2_output_scale'], args['enc_distribution'],
-                       args['beta_start_value'],
-                       args['zconstraintCoef'], args['crossPenaltyCoef']).to(device)
+    net = CrossGeneratingVariationalAutoencoder(input_dims, encoder_layers, decoder_layers, likelihoods,
+                       args['use_batch_norm'], args['dropout_probability'], args['optimizer'], args['lr'],  args['lr'],
+                       args['enc_distribution'], args['beta_start_value'], args['zconstraintCoef'], args['crossPenaltyCoef'])
 
     net = net.double()
 
@@ -88,21 +80,19 @@ def run(args: dict) -> None:
         # Data loading
         logger.info("Loading training and validation data into CrossGeneratingVariationalAutoencoder...")
 
-        dataTrain1 = torch.tensor(omic1_train_file, device=device)
-        dataTrain2 = torch.tensor(omic2_train_file, device=device)
+        dataTrain = [torch.tensor(omic, device=device) for omic in omics_train]
+        dataValidation = [torch.tensor(omic, device=device) for omic in omics_val]
+        dataTest = [torch.tensor(omic, device=device) for omic in omics_test]
 
-        dataValidation1 = torch.tensor(omic1_val_file, device=device)
-        dataValidation2 = torch.tensor(omic2_val_file, device=device)
-
-        datasetTrain = MultiOmicsDataset(dataTrain1, dataTrain2)
-        datasetValidation = MultiOmicsDataset(dataValidation1, dataValidation2)
+        datasetTrain = MultiOmicsDataset(dataTrain)
+        datasetValidation = MultiOmicsDataset(dataValidation)
 
         try:
             validationEvalBatchSize = args['train_loader_eval_batch_size']
             trainEvalBatchSize = args['train_loader_eval_batch_size']
         except KeyError:
-            validationEvalBatchSize = dataValidation1.shape[0]
-            trainEvalBatchSize = dataTrain1.shape[0]
+            validationEvalBatchSize = dataValidation[0].shape[0]
+            trainEvalBatchSize = dataTrain[0].shape[0]
 
 
         train_loader = DataLoader(datasetTrain, batch_size=args['batch_size'], shuffle=True, num_workers=0,
@@ -255,7 +245,7 @@ def run(args: dict) -> None:
 
         from src.util.evaluate import evaluate_imputation, evaluate_classification, evaluate_generation
         logger.info('Evaluating...')
-        
+
         logger.info('Training performance, reconstruction error, modality 1')
         mse_train, spearman_train, r2_train = evaluate_imputation(dataTrain1.cpu().detach().numpy(), x1_hat_train, dataTrain1.shape[1])
         logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse_train, spearman_train, r2_train))

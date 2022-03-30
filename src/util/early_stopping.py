@@ -35,8 +35,13 @@ class EarlyStopping:
         if self.best_score is None:
             self.best_score = score
 
+        if self.best_score > 0:
+            deltaSign = 1.
+        else:
+            deltaSign = -1.
+
         if isinstance(score, torch.Tensor):
-            if torch.gt(score, (self.best_score - (self.best_score * self.delta))):
+            if torch.gt(score, (self.best_score - deltaSign * (self.best_score * self.delta))):
                 self.counter += 1
                 logger.info('EarlyStopping counter: {} out of {}'.format(self.counter, self.patience))
                 if self.counter >= self.patience:
@@ -45,7 +50,7 @@ class EarlyStopping:
                 self.best_score = score
                 self.counter = 0
         else:
-            if score > (self.best_score - (self.best_score * self.delta)):
+            if score > (self.best_score - deltaSign * (self.best_score * self.delta)):
                 self.counter += 1
                 logger.info('EarlyStopping counter: {} out of {}'.format(self.counter, self.patience))
                 if self.counter >= self.patience:
