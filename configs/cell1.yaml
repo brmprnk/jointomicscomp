@@ -13,12 +13,12 @@ GLOBAL_PARAMS:
   data_path2: "/home/bram/jointomicscomp/data/CELL/pbmc_multimodal_ADT_5000MAD.npy"
   data_features1: "/home/bram/jointomicscomp/data/CELL/pbmc_multimodal_RNA_5000MAD_featureNames.npy"
   data_features2: "/home/bram/jointomicscomp/data/CELL/pbmc_multimodal_ADT_5000MAD_featureNames.npy"
-  sample_names: "/home/bram/jointomicscomp/data/CELL/cell_sampleNames.npy"
-  labels: "/home/bram/jointomicscomp/data/CELL/celltype.l2cellType.npy"
-  labelnames: "/home/bram/jointomicscomp/data/CELL/celltype.l2cellTypes.npy"
-  train_ind: "/home/bram/jointomicscomp/data/CELL/trainInd.npy"
-  val_ind: "/home/bram/jointomicscomp/data/CELL/validInd.npy"
-  test_ind: "/home/bram/jointomicscomp/data/CELL/testInd.npy"
+  sample_names: "/home/bram/jointomicscomp/data/CELL/pbmc_multimodal_RNA_5000MAD_sampleNames.npy"
+  labels: "/home/bram/jointomicscomp/data/CELL/pbmc_multimodal_RNA_5000MAD_donorType.npy"
+  labelnames: "/home/bram/jointomicscomp/data/CELL/pbmc_multimodal_RNA_5000MAD_donorTypes.npy"
+  train_ind: "/home/bram/jointomicscomp/data/CELL/task1/trainInd.npy"
+  val_ind: "/home/bram/jointomicscomp/data/CELL/task1/validInd.npy"
+  test_ind: "/home/bram/jointomicscomp/data/CELL/task1/testInd.npy"
 
 BASELINE:
   task: 'impute'               # whether to `impute` one datasource from the other, `classify` (cell type), or `rank` (stage prediction)
@@ -31,8 +31,8 @@ MOFA+:
   scale_views: false           # if views have significantly different ranges, it is good practice to scale each view to unit variance
 
   # Model options
-  pre_trained: ""              # Use a pre-trained model for downstream analysis
-  factors: 128
+  pre_trained: "/home/bram/jointomicscomp/results/train-cite-mofa+-dim32_RNA_ADT/MOFA+/RNA_ADT_trained_MOFA_model.hdf5"              # Use a pre-trained model for downstream analysis
+  factors: 32
   likelihoods: None            # likelihoods per view (options are "gaussian","poisson","bernoulli").
                                #     Default is None, and they are infered automatically
   spikeslab_weights: false     # use spike-slab sparsity prior in the weights? (recommended TRUE)

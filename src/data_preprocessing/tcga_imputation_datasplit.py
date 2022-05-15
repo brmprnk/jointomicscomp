@@ -44,10 +44,16 @@ split2 = StratifiedShuffleSplit(n_splits=1, test_size=1 / 9)
 sss2 = split2.split(XtrainValid, ytrainValid)
 
 # sss2 is a generator object, so use this weird syntax
+trainInd = 0
+validInd = 0
 for i, j in sss2:
     trainInd = i
     validInd = j
 
-np.save(data_dir + "trainInd.npy", trainInd)
-np.save(data_dir + "validInd.npy", validInd)
-np.save(data_dir + "testInd.npy", testInd)
+# trainInd and validInd are split from the trainValidInd, so the actual indices are gotten through the following:
+final_trainInd = trainValidInd[trainInd]
+final_validInd = trainValidInd[validInd]
+
+np.save(data_dir + "new_trainInd.npy", final_trainInd)
+np.save(data_dir + "new_validInd.npy", final_validInd)
+np.save(data_dir + "new_testInd.npy", testInd)
