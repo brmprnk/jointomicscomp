@@ -9,16 +9,16 @@ GLOBAL_PARAMS:
   early_stopping_patience: 10 # If set to 0 or <0, early stopping is turned off.
   data1: "GE"
   data2: "ME"
-  data_path1: "/home/bram/jointomicscomp/data/GE.npy"
-  data_path2: "/home/bram/jointomicscomp/data/ME.npy"
+  data_path1: "/home/bram/jointomicscomp/data/ge-me-cn-2022-04-16/GE.npy"
+  data_path2: "/home/bram/jointomicscomp/data/ge-me-cn-2022-04-16/ME.npy"
   data_features1: "/home/bram/jointomicscomp/data/GE_featureNames.npy"
   data_features2: "/home/bram/jointomicscomp/data/ME_featureNames.npy"
-  sample_names: "/home/bram/jointomicscomp/data/sampleNames.npy"
-  labels: "/home/bram/jointomicscomp/data/cancerType.npy"
+  sample_names: "/home/bram/jointomicscomp/data/ge-me-cn-2022-04-16/sampleNames.npy"
+  labels: "/home/bram/jointomicscomp/data/ge-me-cn-2022-04-16/cancerType.npy"
   labelnames: "/home/bram/jointomicscomp/data/cancerTypes.npy"
-  train_ind: "/home/bram/jointomicscomp/data/task1/trainInd.npy"
-  val_ind: "/home/bram/jointomicscomp/data/task1/validInd.npy"
-  test_ind: "/home/bram/jointomicscomp/data/task1/testInd.npy"
+  train_ind: "/home/bram/jointomicscomp/data/ge-me-cn-2022-04-16/trainInd.npy"
+  val_ind: "/home/bram/jointomicscomp/data/ge-me-cn-2022-04-16/validInd.npy"
+  test_ind: "/home/bram/jointomicscomp/data/ge-me-cn-2022-04-16/testInd.npy"
 
 BASELINE:
   task: 'impute'               # whether to `impute` one datasource from the other, `classify` (cell type), or `rank` (stage prediction)
@@ -31,7 +31,7 @@ MOFA+:
 
   # Model options
   pre_trained: ""              # Use a pre-trained model for downstream analysis
-  factors: 128
+  factors: 64
   likelihoods: None            # likelihoods per view (options are "gaussian","poisson","bernoulli").
                                #     Default is None, and they are infered automatically
   spikeslab_weights: false     # use spike-slab sparsity prior in the weights? (recommended TRUE)
