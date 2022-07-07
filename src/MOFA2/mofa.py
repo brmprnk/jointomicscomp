@@ -131,7 +131,7 @@ def train_mofa(args: dict, save_file_path: str) -> None:
             features2[i] = args['data2'] + feature
 
         try:
-            ent.set_data_matrix(data_mat, likelihoods=["gaussian", "gaussian"], views_names=[args['data1'], args['data2']],
+            ent.set_data_matrix(data_mat, likelihoods=[args["likelihood1"], args["likelihood2"]], views_names=[args['data1'], args['data2']],
                                 features_names=[features1, features2],
                                 samples_names=[sample_names])
         except AssertionError as e:
@@ -319,7 +319,9 @@ def downstream_analysis(args: dict, save_dir: str) -> None:
     labeltypes = np.load(args['labelnames'], allow_pickle=True).astype(str)
 
     # Get correct labels with names
-    training_labels = np.concatenate((labeltypes[tuple([labels[np.load(args['train_ind'])]])], labeltypes[tuple([labels[np.load(args['val_ind'])]])]))
+    training_labels = np.concatenate(
+        (labeltypes[tuple([labels[np.load(args['train_ind'])]])],
+         labeltypes[tuple([labels[np.load(args['val_ind'])]])]))
 
     training_data_plot = UMAPPlotter(Z.transpose(),
                                      training_labels,
@@ -393,21 +395,15 @@ def downstream_analysis(args: dict, save_dir: str) -> None:
         mse = np.zeros((NR_MODALITIES, NR_MODALITIES), float)
         rsquared = np.eye(NR_MODALITIES)
         spearman = np.zeros((NR_MODALITIES, NR_MODALITIES, 2), float)  # ,2 since we report mean and median
-        spearman_p = np.zeros((NR_MODALITIES, NR_MODALITIES), float)
+        # spearman_p = np.zeros((NR_MODALITIES, NR_MODALITIES), float)
 
-        mse[0, 1], rsquared[0, 1], spearman[0, 1], spearman_p[0, 1] =\
-            evaluate_imputation(omic_data2, Y2_impute, args['num_features2'], 'mse'),\
-            evaluate_imputation(omic_data2, Y2_impute, args['num_features2'], 'rsquared'),\
-            evaluate_imputation(omic_data2, Y2_impute, args['num_features2'], 'spearman_corr'),\
-            evaluate_imputation(omic_data2, Y2_impute, args['num_features2'], 'spearman_p')
+        mse[0, 1], spearman[0, 1], rsquared[0, 1] =\
+            evaluate_imputation(omic_data2, Y2_impute, args['num_features2'], 'mse')
 
-        mse[1, 0], rsquared[1, 0], spearman[1, 0], spearman_p[1, 0] =\
-            evaluate_imputation(omic_data1, Y1_impute, args['num_features1'], 'mse'),\
-            evaluate_imputation(omic_data1, Y1_impute, args['num_features1'], 'rsquared'),\
-            evaluate_imputation(omic_data1, Y1_impute, args['num_features1'], 'spearman_corr'), \
-            evaluate_imputation(omic_data1, Y1_impute, args['num_features1'], 'spearman_p')
+        mse[1, 0], spearman[1, 0], rsquared[1, 0] =\
+            evaluate_imputation(omic_data1, Y1_impute, args['num_features1'], 'mse')
 
-        performance = {'mse': mse, 'rsquared': rsquared, 'spearman_corr': spearman, 'spearman_p': spearman_p}
+        performance = {'mse': mse, 'rsquared': rsquared, 'spearman_corr': spearman}
         logger.info("{}".format(performance))
         with open(os.path.join(save_dir, args['name'] + 'results_pickle'), 'wb') as f:
             pickle.dump(performance, f)

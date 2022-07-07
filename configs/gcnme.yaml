@@ -29,6 +29,10 @@ MOFA+:
   scale_groups: false          # if groups have significantly different ranges, it is good practice to scale each group to unit variance
   scale_views: false           # if views have significantly different ranges, it is good practice to scale each view to unit variance
 
+  likelihood1: "poisson"
+  likelihood2: "gaussian"
+
+
   # Model options
   pre_trained: ""              # Use a pre-trained model for downstream analysis
   factors: 128
