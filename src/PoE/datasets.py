@@ -23,7 +23,7 @@ class TCGAData(object):
         omic1 = np.load(args['data_path1']).astype(np.float64)
         omic2 = np.load(args['data_path2']).astype(np.float64)
         self.labels = np.load(args['labels'])
-        self.labelnames = np.load(args['labelnames'])
+        self.labelnames = np.load(args['labelnames'], allow_pickle=True)
 
         # Use predefined split
         self.train_ind = np.load(args['train_ind'])

@@ -8,8 +8,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
+from torch.distributions import Normal, Independent, Beta
 
-from src.nets import CrossGeneratingVariationalAutoencoder
+from src.nets import CrossGeneratingVariationalAutoencoder, ProbabilisticFullyConnectedModule, identity
 
 
 class PoE(nn.Module):
@@ -27,8 +28,15 @@ class PoE(nn.Module):
         self.omic2_encoder = Encoder(latent_dim[-1], args['num_features2'], latent_dim[:-1], device, args['dropout_probability'], args['use_batch_norm'])
 
         # define p(x_i|z) for i = 1...2
-        self.omic1_decoder = Decoder(latent_dim[-1], args['num_features1'], latent_dim[:-1][::-1], device, args['dropout_probability'], args['use_batch_norm'])
-        self.omic2_decoder = Decoder(latent_dim[-1], args['num_features2'], latent_dim[:-1][::-1], device, args['dropout_probability'], args['use_batch_norm'])
+        if 'n_categories1' in args:
+            self.omic1_decoder = Decoder(latent_dim[-1], args['num_features1'], latent_dim[:-1][::-1], device, args['likelihood1'], args['dropout_probability'], args['use_batch_norm'], args['n_categories1'])
+        else:
+            self.omic1_decoder = Decoder(latent_dim[-1], args['num_features1'], latent_dim[:-1][::-1], device, args['likelihood1'], args['dropout_probability'], args['use_batch_norm'])
+
+        if 'n_categories2' in args:
+            self.omic2_decoder = Decoder(latent_dim[-1], args['num_features2'], latent_dim[:-1][::-1], device, args['likelihood2'], args['dropout_probability'], args['use_batch_norm'], args['n_categories2'])
+        else:
+            self.omic2_decoder = Decoder(latent_dim[-1], args['num_features2'], latent_dim[:-1][::-1], device, args['likelihood2'], args['dropout_probability'], args['use_batch_norm'])
 
         # define q(z|x) = q(z|x_1)...q(z|x_6)
         self.experts = ProductOfExperts()
@@ -100,8 +108,12 @@ class PoE(nn.Module):
             (x1_hat, x2_cross_hat, _, _) = self.forward(omic1=omic1)
             (x1_cross_hat, x2_hat, _, _) = self.forward(omic2=omic2)
 
-            return z, x1_hat, x2_hat, x1_cross_hat, x2_cross_hat
+            z1, _ = self.get_product_params(omic1=omic1, omic2=None)
 
+            z2, _ = self.get_product_params(omic1=None, omic2=omic2)
+
+
+            return z, z1, z2, x1_hat, x2_hat, x1_cross_hat, x2_cross_hat
 
 
 
@@ -186,9 +198,13 @@ class Decoder(nn.Module):
                       number of latent dimension
     """
 
-    def __init__(self, latent_dim, num_features, hidden_dims, device, dropoutP=0., use_batch_norm=True):
+    def __init__(self, latent_dim, num_features, hidden_dims, device, likelihood='normal', dropoutP=0., use_batch_norm=True, n_categories=None):
         super(Decoder, self).__init__()
         self.to(device)
+
+        self.distribution = likelihood
+        self.num_features = num_features
+        self.n_categories = n_categories
 
         input_size = latent_dim
 
@@ -223,13 +239,44 @@ class Decoder(nn.Module):
 
         self.decoder = nn.Sequential(*modules)
 
-        self.final_layer = nn.Sequential(
-            nn.Linear(hidden_dims[-1], num_features))
+        if self.distribution != 'categorical':
+            self.final_layer = nn.Sequential(nn.Linear(hidden_dims[-1], 2 * num_features))
+        else:
+            self.final_layer = nn.Sequential(nn.Linear(hidden_dims[-1], n_categories * num_features))
+
+        if self.distribution == 'normal':
+        	self.p1Transform = identity
+        	self.p2Transform = torch.exp
+        	self.D = torch.distributions.Normal
+        elif self.distribution == 'beta':
+        	self.p1Transform = torch.exp
+        	self.p2Transform = torch.exp
+        	self.D = torch.distributions.Beta
+        elif self.distribution == 'categorical':
+        	self.D = torch.distributions.Categorical
+        elif self.distribution == 'nb':
+            self.p1Transform = torch.exp
+            self.p2Transform = torch.nn.Sigmoid()
+            self.D = torch.distributions.NegativeBinomial
+
+        else:
+        	raise NotImplementedError('%s not supported. Use: \'normal\' or \'beta\'' % self.distribution)
 
     def forward(self, z):
         # the input will be a vector of size |latent_dim|
         result = self.decoder(z)
         result = self.final_layer(result)
+
+        if self.distribution != 'categorical':
+        	p1 = self.p1Transform(result[:, :self.num_features])
+        	p2 = self.p2Transform(result[:, self.num_features:])
+
+        	result = Independent(self.D(p1, p2), 0)
+        else:
+
+            result = torch.reshape(result, (-1, self.num_features, self.n_categories))
+
+            result = self.D(logits=result)
 
         return result
 

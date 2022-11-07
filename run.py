@@ -62,6 +62,10 @@ PARSER.add_argument('-mvib',
 PARSER.add_argument('-cgae',
                     action='store_true',
                     help="Running CGAE Model")
+PARSER.add_argument('-cvae',
+                    action='store_true',
+                    help="Running CGAE Model")
+
 
 
 def main() -> None:
@@ -114,13 +118,14 @@ def main() -> None:
 
     # If no specific model set, run all models and end program
     if not args.baseline and not args.mofa and not args.moe and not args.poe and not args.mvib and not args.cgae \
-            and not args.mvae_impute:
+            and not args.mvae_impute and not args.cvae:
         run_baseline(config)
         run_mofa(config)
         run_poe(config)
         run_moe(config)
         run_mvib(config)
         run_cgae(config)
+        run_cvae(config)
         return
 
     # Run models individually / combined
@@ -143,6 +148,9 @@ def main() -> None:
 
     if args.cgae:
         run_cgae(config)
+
+    if args.cvae:
+        run_cvae(config)
 
     # Run special function
     if args.mvae_impute:
@@ -252,6 +260,25 @@ def run_cgae(config: dict) -> None:
     cgae_model({**config['GLOBAL_PARAMS'], **config['CGAE']})
 
     logger.info("##########\n")
+
+
+
+def run_cvae(config: dict) -> None:
+    """
+    Setup and run CVAE.
+
+    @param config: Dictionary containing input parameters
+    @return: None
+    """
+    from src.CVAE.main import run as cvae_model
+
+    logger.info("\n##########")
+
+    cvae_model({**config['GLOBAL_PARAMS'], **config['CVAE']})
+
+    logger.info("##########\n")
+
+
 
 
 def mvae_impute(config: dict):

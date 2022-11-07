@@ -1,7 +1,7 @@
 import yaml
 
-models = ['cgae', 'mvib', 'poe', 'moe']
-
+models = ['cgae', 'cvae', 'mvib', 'poe', 'moe']
+#models = ['cgae', 'cvae', 'mvib', 'moe']
 
 lrs = [1e-4, 1e-3]
 enc_archs = ['32', '64', '128-32', '128-64', '256-32', '256-64', '256-256-32', '256-256-64', '256-128-32', '256-128-64']
@@ -57,10 +57,7 @@ for model in models:
                 config['CGAE']['dropout_probability'] = dropoutP
 
                 for learning_rate in lrs:
-                    config['CGAE']['enc1_lr'] = learning_rate
-                    config['CGAE']['enc2_lr'] = learning_rate
-                    config['CGAE']['dec1_lr'] = learning_rate
-                    config['CGAE']['dec2_lr'] = learning_rate
+                    config['CGAE']['lr'] = learning_rate
 
                     for arch in enc_archs:
                         config['CGAE']['latent_dim'] = arch
@@ -70,6 +67,27 @@ for model in models:
 
                         with open(model + '_' + str(counter) + '.yaml', 'w') as writeFile:
                             yaml.safe_dump(config, writeFile)
+
+    elif model == 'cvae':
+
+        for bn in batchnorm:
+            config['CVAE']['use_batch_norm'] = bn
+
+            for dropoutP in dropouts:
+                config['CVAE']['dropout_probability'] = dropoutP
+
+                for learning_rate in lrs:
+                    config['CVAE']['lr'] = learning_rate
+
+                    for arch in enc_archs:
+                        config['CVAE']['latent_dim'] = arch
+                        counter += 1
+
+                        config['GLOBAL_PARAMS']['name'] = baseName + '-' + str(counter)
+
+                        with open(model + '_' + str(counter) + '.yaml', 'w') as writeFile:
+                            yaml.safe_dump(config, writeFile)
+
 
     elif model == 'poe':
 

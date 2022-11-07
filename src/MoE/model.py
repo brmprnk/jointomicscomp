@@ -9,45 +9,11 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
 from  torch.distributions import Laplace, Independent
-from src.nets import CrossGeneratingVariationalAutoencoder
+from src.nets import CrossGeneratingVariationalAutoencoder, getPointEstimate
 
 def log_mean_exp(value, dim=0, keepdim=False):
     return torch.logsumexp(value, dim, keepdim=keepdim) - math.log(value.size(dim))
 
-def _m_dreg_looser(model, x1, x2):
-    """DREG estimate for log p_\theta(x) for multi-modal vae -- fully vectorised
-    This version is the looser bound---with the average over modalities outside the log
-    """
-    qz_xs, px_zs, zss = model(x1, x2)
-
-    qz_xs_ = [Independent(Laplace(qz_xs[0].base_dist.loc.detach(), qz_xs[0].base_dist.scale.detach()), 0), Independent(Laplace(qz_xs[1].base_dist.loc.detach(), qz_xs[1].base_dist.scale.detach()), 0)]
-
-    # replaced by the thing above
-    #qz_xs_ = [vae.qz_x(*[p.detach() for p in vae.qz_x_params]) for vae in model.vaes]
-
-    lpz_1 = model.pz.log_prob(zss[0])
-    lpz_2 = model.pz.log_prob(zss[1])
-
-
-    lqz_x_1 = log_mean_exp(torch.stack([qz_x_.log_prob(zss[0]) for qz_x_ in qz_xs_])).sum(-1)
-    lqz_x_2 = log_mean_exp(torch.stack([qz_x_.log_prob(zss[1]) for qz_x_ in qz_xs_])).sum(-1)
-
-    x = (x1, x2)
-
-    lpx_z_1 = [px_z.log_prob(x[d]).view(*px_z.batch_shape[:2], -1).sum(-1) for d, px_z in enumerate(px_zs[0])]
-    lpx_z_2 = [px_z.log_prob(x[d]).view(*px_z.batch_shape[:2], -1).sum(-1) for d, px_z in enumerate(px_zs[1])]
-
-
-    lpx_z_1 = torch.stack(lpx_z_1).sum(0)
-    lpx_z_2 = torch.stack(lpx_z_2).sum(0)
-
-    lw1 = lpz_1 + lpx_z_1 - lqz_x_1
-    lw2 = lpz_2 + lpx_z_2 - lqz_x_2
-
-    lws = [lw1, lw2]
-
-
-    return torch.stack(lws), torch.stack(zss)
 
 
 
@@ -57,69 +23,50 @@ class MixtureOfExperts(CrossGeneratingVariationalAutoencoder):
     https://arxiv.org/pdf/1911.03393.pdf
     """
 
-    def __init__(self, input_dim1, input_dim2, enc_hidden_dim=[100], dec_hidden_dim=[], loss1='bce', loss2='bce',
-                 use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder1_lr=1e-4, decoder1_lr=1e-4,
-                 enc1_lastActivation='none', enc1_outputScale=1., encoder2_lr=1e-4, decoder2_lr=1e-4,
-                 enc2_lastActivation='none', enc2_outputScale=1., enc_distribution='laplace', beta=1.0, K=20):
-        super(MixtureOfExperts, self).__init__(input_dim1, input_dim2, enc_hidden_dim, dec_hidden_dim, loss1, loss2,
-                                               use_batch_norm, dropoutP,
-                                           optimizer_name, encoder1_lr, decoder1_lr, enc1_lastActivation, enc1_outputScale,
-                                           encoder2_lr, decoder2_lr, enc2_lastActivation, enc2_outputScale, enc_distribution, beta)
+    def __init__(self, input_dims, enc_hidden_dim=[100], dec_hidden_dim=[], likelihoods='normal',
+                 use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder_lr=1e-4, decoder_lr=1e-4,
+                 enc_distribution='laplace', beta=1.0, K=20, llik_scaling=None, n_categories=None):
+        print(n_categories)
+        super(MixtureOfExperts, self).__init__(input_dims, enc_hidden_dim, dec_hidden_dim, likelihoods, use_batch_norm, dropoutP, optimizer_name, encoder_lr, decoder_lr, enc_distribution, beta, n_categories=n_categories)
 
-        self.input_dim1 = input_dim1
-        self.input_dim2 = input_dim2
+        if llik_scaling is None:
+            self.llik_scaling = torch.ones(self.n_modalities).double().to(self.device)
+        else:
+            self.llik_scaling = llik_scaling
 
+        self.input_dims = input_dims
         # nr of samples to draw for IWAE
         self.K = K
 
         self.pz = Independent(Laplace(torch.zeros(enc_hidden_dim[-1]).to(torch.device('cuda:0')), torch.ones(enc_hidden_dim[-1]).to(torch.device('cuda:0'))), 1)
-        grad = {'requires_grad': False}
-        self._pz_params = nn.ParameterList([
-            nn.Parameter(torch.zeros(1, enc_hidden_dim[-1]), requires_grad=False),  # mu
-            nn.Parameter(torch.zeros(1, enc_hidden_dim[-1]), requires_grad=False)  # logvar
-        ])
 
-        # Using this, loss is ignored
-        self.px_z = torch.distributions.Normal
-        self.qz_x = torch.distributions.Laplace(torch.zeros(1, enc_hidden_dim[-1]), torch.ones(1, enc_hidden_dim[-1]))
+        assert enc_distribution == 'laplace'
 
-    @property
-    def pz_params(self):
-        eta = 1e-6
-        return self._pz_params[0], \
-               F.softmax(self._pz_params[1], dim=1) * self._pz_params[1].size(1) + eta
 
-    def forward(self, x1, x2):
-        # qz_x in MoE
+    def forward(self, x):
+        qz_xs = []
+        zss = []
 
-        z1 = self.encoder(x1)
-        z1sample = z1.rsample(torch.Size([self.K]))  # zs from MoE
+        px_zs = [[None for _ in range(self.n_modalities)] for _ in range(self.n_modalities)]
 
-        x1_hat = self.decoder(z1sample)
+        for m, (enc, dec) in enumerate(zip(self.encoders, self.decoders)):
+            qz_x = enc(x[m])
+            zs = qz_x.rsample(torch.Size([self.K]))
+            px_z = [dec(zi) for zi in zs]
 
-        z2 = self.encoder2(x2)
-        z2sample = z2.rsample(torch.Size([self.K]))  # zs from MoE
-        x2_hat = self.decoder2(z2sample)
+            qz_xs.append(qz_x)
+            zss.append(zs)
+            px_zs[m][m] = px_z
 
-        # From Mixture of Experts
-        qz_xs = [z1, z2]
-        zss = [z1sample, z2sample]
+        for e, zs in enumerate(zss):
+            for d, dec in enumerate(self.decoders):
+                if e != d:
+                    px_zs[e][d] = [dec(zi) for zi in zs]
 
-        # star_of_z2samples = []
-        # for i in range(K):
-        #     star_of_z2samples.append(self.decoder(z2sample[i]))
 
-        x1_cross_hat = self.decoder(z2sample)
-
-        x2_cross_hat = self.decoder2(z1sample)
-
-        px_zs = [[torch.distributions.Normal(x1_hat, torch.ones(self.input_dim1).to(torch.device('cuda:0'))), torch.distributions.Normal(x2_cross_hat, torch.ones(self.input_dim2).to(torch.device('cuda:0')))],
-                 [torch.distributions.Normal(x1_cross_hat, torch.ones(self.input_dim1).to(torch.device('cuda:0'))), torch.distributions.Normal(x2_hat, torch.ones(self.input_dim2).to(torch.device('cuda:0')))]]
 
         return qz_xs, px_zs, zss
 
-    # def log_mean_exp(self, value, dim=0, keepdim=False):
-    #     return torch.logsumexp(value, dim, keepdim=keepdim) - math.log(value.size(dim))
 
     def is_multidata(dataB):
         return isinstance(dataB, list) or isinstance(dataB, tuple)
@@ -136,17 +83,17 @@ class MixtureOfExperts(CrossGeneratingVariationalAutoencoder):
         return min(B, S)
 
 
-    def compute_loss(self, x1, x2):
+    def compute_loss(self, x):
         """Computes dreg estimate for log p_\theta(x) for multi-modal vae
         This version is the looser bound---with the average over modalities outside the log
 
         This function is called m_dreg_looser in the MMVAE repo's objective.py
 
         """
-        S = self.compute_microbatch_split((x1, x2))
+        S = self.compute_microbatch_split(x)
 
-        x_split = zip(*[_x.split(S) for _x in (x1, x2)])
-        lw, zss = zip(*[_m_dreg_looser(self, _x[0], _x[1]) for _x in x_split])
+        x_split = zip(*[_x.split(S) for _x in x])
+        lw, zss = zip(*[self._m_dreg_looser(_x) for _x in x_split])
         lw = torch.cat(lw, 2)  # concat on batch
         zss = torch.cat(zss, 2)  # concat on batch
 
@@ -158,105 +105,101 @@ class MixtureOfExperts(CrossGeneratingVariationalAutoencoder):
         return -1 * (grad_wt * lw).mean(0).mean(-1).sum()
 
 
-    def evaluate(self, x1, x2):
+    def _m_dreg_looser(self, x):
+        """DREG estimate for log p_\theta(x) for multi-modal vae -- fully vectorised
+        This version is the looser bound---with the average over modalities outside the log
+
+        adapted from MMVAE repo's objective.py
+        """
+        qz_xs, px_zs, zss = self.forward(x)
+
+        qz_xs_ = [Independent(Laplace(qz_xs[i].base_dist.loc.detach(), qz_xs[i].base_dist.scale.detach()), 0) for i in range(self.n_modalities)]
+
+        lws = []
+
+        for i in range(self.n_modalities):
+            lpz = self.pz.log_prob(zss[i])
+
+            lqz_x = log_mean_exp(torch.stack([qz_x_.log_prob(zss[i]) for qz_x_ in qz_xs_])).sum(-1)
+
+            lpx_z = [torch.stack([pp.log_prob(x[d]).mul(self.llik_scaling[d]).sum(-1) for pp in px_z]) for d, px_z in enumerate(px_zs[i])]
+            #lpx_z = []
+
+            lpx_z = torch.stack(lpx_z).sum(0)
+
+            lw = lpz - lqz_x + lpx_z
+
+            lws.append(lw)
+
+
+
+        return torch.stack(lws), torch.stack(zss)
+
+
+
+    def evaluate(self, x):
         metrics = {}
 
         with torch.no_grad():
-            S = self.compute_microbatch_split((x1, x2))
-            assert S == x1.shape[0]
-            qz_xs, px_zs, zss = self.forward(x1, x2)
+            S = self.compute_microbatch_split(x)
+            assert S == x[0].shape[0]
 
-            qz_xs_ = [Independent(Laplace(qz_xs[0].base_dist.loc.detach(), qz_xs[0].base_dist.scale.detach()), 0), Independent(Laplace(qz_xs[1].base_dist.loc.detach(), qz_xs[1].base_dist.scale.detach()), 0)]
+            qz_xs, px_zs, zss = self.forward(x)
 
-            # replaced by the thing above
-            #qz_xs_ = [vae.qz_x(*[p.detach() for p in vae.qz_x_params]) for vae in model.vaes]
+            zmean = [zi.mean for zi in qz_xs]
+            zstd = [zi.stddev for zi in qz_xs]
 
-            lpz_1 = self.pz.log_prob(zss[0])
-            lpz_2 = self.pz.log_prob(zss[1])
+            x_hat = [[dec(zi) for dec in self.decoders] for zi in zmean]
 
-
-            lqz_x_1 = log_mean_exp(torch.stack([qz_x_.log_prob(zss[0]) for qz_x_ in qz_xs_])).sum(-1)
-            lqz_x_2 = log_mean_exp(torch.stack([qz_x_.log_prob(zss[1]) for qz_x_ in qz_xs_])).sum(-1)
-
-            metrics['KL/1'] = -torch.mean(lpz_1 - lqz_x_1)
-            metrics['KL/2'] = -torch.mean(lpz_2 - lqz_x_2)
-
-            metrics['KL/1'] = metrics['KL/1'].item()
-            metrics['KL/2'] = metrics['KL/2'].item()
-
-            x = (x1, x2)
-
-            lpx_z_1 = [px_z.log_prob(x[d]).view(*px_z.batch_shape[:2], -1).sum(-1) for d, px_z in enumerate(px_zs[0])]
-            lpx_z_2 = [px_z.log_prob(x[d]).view(*px_z.batch_shape[:2], -1).sum(-1) for d, px_z in enumerate(px_zs[1])]
-
-            metrics['mse/1'] = -torch.mean(lpx_z_1[0])
-            metrics['cross-mse/1'] = -torch.mean(lpx_z_1[1])
-
-            metrics['mse/2'] = -torch.mean(lpx_z_2[0])
-            metrics['cross-mse/2'] = -torch.mean(lpx_z_2[1])
-
-            metrics['mse/1'] = metrics['mse/1'].item()
-            metrics['mse/2'] = metrics['mse/2'].item()
-            metrics['cross-mse/1'] = metrics['cross-mse/1'].item()
-            metrics['cross-mse/2'] = metrics['cross-mse/2'].item()
-
-            lpx_z_1 = torch.stack(lpx_z_1).sum(0)
-            lpx_z_2 = torch.stack(lpx_z_2).sum(0)
+            qz_xs_ = [Independent(Laplace(qz_xs[i].base_dist.loc.detach(), qz_xs[i].base_dist.scale.detach()), 0) for i in range(self.n_modalities)]
 
             lws = []
 
-            lw1 = lpz_1 + lpx_z_1 - lqz_x_1
-            lw2 = lpz_2 + lpx_z_2 - lqz_x_2
+            loss = 0.0
 
-            lw = torch.stack([lw1, lw2])
+            for i in range(self.n_modalities):
+                lpz = self.pz.log_prob(zss[i])
+
+                lqz_x = log_mean_exp(torch.stack([qz_x_.log_prob(zss[i]) for qz_x_ in qz_xs_])).sum(-1)
+
+                lpx_z = [torch.stack([pp.log_prob(x[d]).mul(self.llik_scaling[d]).sum(-1) for pp in px_z]) for d, px_z in enumerate(px_zs[i])]
+                #lpx_z = []
+
+                lpx_z = torch.stack(lpx_z).sum(0)
+
+                lw = lpz - lqz_x + lpx_z
+
+                lws.append(lw)
+
+            # lw = torch.cat(lw, 2)  # concat on batch
+            # zss = torch.cat(zss, 2)  # concat on batch
 
             grad_wt = (lw - torch.logsumexp(lw, 1, keepdim=True)).exp()
 
-            metrics['lw'] = lw.mean(0).mean(-1).sum().item()
-            metrics['grad_wt'] = grad_wt.mean(0).mean(-1).sum().item()
+            loss = -grad_wt * lw
 
-            metrics['loss'] = -1 * (grad_wt * lw).mean(0).mean(-1).sum()
-            metrics['loss'] = metrics['loss'].item()
+            metrics['lw'] = lw.mean(0).mean(-1).sum()
+            metrics['grad_wt'] = grad_wt.mean(0).mean(-1).sum()
+            metrics['loss'] = loss.mean(0).mean(-1).sum()
+
+            x_hat = [[dec(zi) for dec in self.decoders] for zi in zmean]
+
+            for i in range(self.n_modalities):
+                klkey = 'KL/%d' % (i+1)
+                for j in range(self.n_modalities):
+                    llkey = 'LL%d/%d' % (j+1, i+1)
+                    msekey = 'MSE%d/%d' % (j+1, i+1)
+
+                    metrics[llkey] = torch.mean(torch.sum(x_hat[i][j].log_prob(x[j]), 1)).item()
+                    metrics[msekey] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(getPointEstimate(x_hat[i][j]), x[j]), 1)).item()
+
+
+                # lpz = [self.pz.log_prob(zi) for zi in zmean]
+                #
+                # lqz_x_1 = log_mean_exp(torch.stack([qz_x_.log_prob(zss[0]) for qz_x_ in qz_xs_])).sum(-1)
+                # lqz_x_2 = log_mean_exp(torch.stack([qz_x_.log_prob(zss[1]) for qz_x_ in qz_xs_])).sum(-1)
+                #
+                # metrics['KL/1'] = -torch.mean(lpz_1 - lqz_x_1)
+
 
         return metrics
-
-    def embedAndReconstruct(self, x1, x2):
-        self.eval()
-        with torch.no_grad():
-            z1 = self.encoder(x1)
-            z1m = z1.mean
-
-            x1_hat = self.decoder(z1m)
-
-            z2 = self.encoder2(x2)
-            z2m = z2.mean
-
-            x2_hat = self.decoder2(z2m)
-
-            x1_cross_hat = self.decoder(z2m)
-            x2_cross_hat = self.decoder2(z1m)
-
-            return z1m, z2m, x1_hat, x2_hat, x1_cross_hat, x2_cross_hat
-
-
-
-
-
-if __name__ == '__main__':
-    x1 = torch.rand(100,3)
-    x2 = torch.rand(100,3)
-
-    device = torch.device('cuda:0')
-
-    x1 = x1.to(device)
-    x2 = x2.to(device)
-
-    model = MixtureOfExperts(3, 3, enc_hidden_dim=[5]).to(device)
-
-    l = model.compute_loss(x1, x2)
-
-    x3 = torch.rand(10,3)
-    x4 = torch.rand(10,3)
-
-    x5 = torch.rand(100,3)
-    x6 = torch.rand(100,3)

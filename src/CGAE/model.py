@@ -70,6 +70,43 @@ def evaluateUsingBatches(net, device, dataloader, multimodal=False):
 
     return metrics
 
+def evaluatePerDatapoint(net, device, dataloader, multimodal=False):
+    assert len(dataloader) == len(dataloader.dataset), 'Use batch size 1 for evaluatePerDatapoint'
+    metrics = dict()
+    for i, trd in enumerate(dataloader):
+        if i == 0:
+            if not multimodal:
+                raise NotImplementedError
+                # x = trd[0].to(device).double()
+                # metrics = net.evaluate(x)
+                # for kk in metrics:
+                #     metrics[kk] *= x.shape[0]
+            else:
+                x1 = trd[0][0].to(device).double().reshape(1,-1)
+                x2 = trd[1][0].to(device).double().reshape(1,-1)
+                # evaluate method averages across samples, multiply with #samples to get total
+                tmpmetrics = net.evaluate([x1, x2])
+
+
+                for kk in tmpmetrics:
+                    metrics[kk] = torch.zeros(len(dataloader))
+
+        else:
+
+            if not multimodal:
+                raise NotImplementedError
+            else:
+                x1 = trd[0][0].to(device).double().reshape(1,-1)
+                x2 = trd[1][0].to(device).double().reshape(1,-1)
+                tmpmetrics = net.evaluate([x1, x2])
+                shape = x1.shape[0]
+
+        for kk in metrics:
+            metrics[kk][i] = tmpmetrics[kk]
+
+
+    return metrics
+
 
 def train(device, net, num_epochs, train_loader, train_loader_eval, valid_loader, ckpt_dir, logs_dir, early_stopping,
           save_step=10, multimodal=False):
@@ -78,6 +115,7 @@ def train(device, net, num_epochs, train_loader, train_loader_eval, valid_loader
 
     # Load checkpoint model and optimizer
     start_epoch = load_checkpoint(net, filename=ckpt_dir + '/model_last.pth.tar')
+
 
     # Evaluate validation set before start training
     print("[*] Evaluating epoch %d..." % start_epoch)
@@ -88,12 +126,13 @@ def train(device, net, num_epochs, train_loader, train_loader_eval, valid_loader
         assert 'loss' in metrics
         print("--- Training loss:\t%.4f" % metrics['loss'])
 
-
+    net.eval()
     metrics = evaluateUsingBatches(net, device, valid_loader, multimodal)
+    bestValLoss = metrics['loss']
+    bestValEpoch  = 0
 
     assert 'loss' in metrics
     print("--- Validation loss:\t%.4f" % metrics['loss'])
-    checkpoint_loss = [metrics['loss']]
 
 
     # Start training phase
@@ -124,13 +163,13 @@ def train(device, net, num_epochs, train_loader, train_loader_eval, valid_loader
                 net.opt.step()
 
         # Save last model
-        state = {'epoch': epoch + 1, 'state_dict': net.state_dict(), 'optimizer': net.opt.state_dict()}
+        state = {'epoch': epoch + 1, 'state_dict_enc': [enc.state_dict() for enc in net.encoders], 'state_dict_dec': [dec.state_dict() for dec in net.decoders], 'optimizer': net.opt.state_dict()}
         torch.save(state, ckpt_dir + '/model_last.pth.tar')
 
 
         # Evaluate all training set and validation set at epoch
         print("[*] Evaluating epoch %d..." % (epoch + 1))
-
+        net.eval()
         if not isinstance(net, MixtureOfExperts):
             # skip for MoE, it takes too long
             metricsTrain = evaluateUsingBatches(net, device, train_loader_eval, multimodal)
@@ -140,13 +179,17 @@ def train(device, net, num_epochs, train_loader, train_loader_eval, valid_loader
         metricsValidation = evaluateUsingBatches(net, device, valid_loader, multimodal)
         print("--- Validation loss:\t%.4f" % metricsValidation['loss'])
 
+        if metricsValidation['loss'] < bestValLoss:
+            bestValLoss = metricsValidation['loss']
+            bestValEpoch = epoch + 1
+            torch.save(state, ckpt_dir + '/model_best.pth.tar')
+
 
 
         # Save model at epoch, and record loss at that checkpoint
         if (epoch + 1) % save_step == 0:
             print("[*] Saving model epoch %d..." % (epoch + 1))
             torch.save(state, ckpt_dir + '/model_epoch%d.pth.tar' % (epoch + 1))
-            checkpoint_loss.append(metricsValidation['loss'])
 
         early_stopping(metricsValidation['loss'])
 
@@ -155,6 +198,9 @@ def train(device, net, num_epochs, train_loader, train_loader_eval, valid_loader
                 tf_logger.add_scalar(m + '/train', metricsTrain[m], epoch + 1)
             tf_logger.add_scalar(m + '/validation', metricsValidation[m], epoch + 1)
 
+
+
+
         # Stop training when not improving
         if early_stopping.early_stop:
             logger.info('Early stopping training since loss did not improve for {} epochs.'
@@ -162,7 +208,7 @@ def train(device, net, num_epochs, train_loader, train_loader_eval, valid_loader
             break
 
     print("[*] Finish training.")
-    return checkpoint_loss
+    return bestValLoss, bestValEpoch
 
 
 def impute(net, model_file, loader, device, save_dir, sample_names, num_features1, num_features2, multimodal=False):

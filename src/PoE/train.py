@@ -15,11 +15,21 @@ import src.util.logger as logger
 from src.util.early_stopping import EarlyStopping
 from src.util.umapplotter import UMAPPlotter
 from src.util.evaluate import evaluate_imputation, save_factorizations_to_csv
-from src.baseline.baseline import classification
+from src.baseline.baseline import classification, classificationMLP
 
 import numpy as np
 from sklearn.metrics import mean_squared_error
 
+
+def compute_loss(recon_omic1, omic1, recon_omic2, omic2):
+    metrics = dict()
+
+    if recon_omic1 is not None and omic1 is not None:
+        metrics['loss1'] = -1. * torch.sum(recon_omic1.log_prob(omic1))
+    if recon_omic2 is not None and omic2 is not None:
+        metrics['loss2'] = -1. * torch.sum(recon_omic2.log_prob(omic2))
+
+    return metrics
 
 def loss_function(recon_omic1, omic1, recon_omic2, omic2, mu, log_var, kld_weight) -> dict:
     """
@@ -29,20 +39,23 @@ def loss_function(recon_omic1, omic1, recon_omic2, omic2, mu, log_var, kld_weigh
     :return:
     """
     # Reconstruction loss
-    with open('deleteme.txt', 'w') as fw:
-        fw.write('Omic1: %d x %d\n' % (omic1.shape[0], omic1.shape[1]))
-        fw.write('Omic1 rec: %d x %d\n' % (recon_omic1.shape[0], recon_omic1.shape[1]))
+    # with open('deleteme.txt', 'w') as fw:
+    #     fw.write('Omic1: %d x %d\n' % (omic1.shape[0], omic1.shape[1]))
+    #     fw.write('Omic1 rec: %d x %d\n' % (recon_omic1.shape[0], recon_omic1.shape[1]))
 
 
     recons_loss = 0
     if recon_omic1 is not None and omic1 is not None:
-        recons_loss += F.mse_loss(recon_omic1, omic1)
+        recons_loss -= torch.mean(torch.sum(recon_omic1.log_prob(omic1), dim=1))
     if recon_omic2 is not None and omic2 is not None:
-        recons_loss += F.mse_loss(recon_omic2, omic2)
+        recons_loss -= torch.mean(torch.sum(recon_omic2.log_prob(omic2), dim=1))
 
     recons_loss /= float(2)  # Account for number of modalities
 
     # KLD Loss
+    #with open('deleteme.txt') as fw:
+    #    fw.write('%d x %d - %d %d' % (mu.shape[0], mu.shape[1], mu.shape[-2], mu.shape[-1]))
+
     kld_loss = torch.mean(-0.5 * torch.sum(1 + log_var - mu ** 2 - log_var.exp(), dim=1), dim=0)
 
     # Loss
@@ -293,7 +306,8 @@ def run(args) -> None:
         # Preparation for training
         optimizer = optim.Adam(model.parameters(), lr=args['lr'])
 
-        checkpoint_loss = [test(args, model, val_loader, optimizer, 0, tf_logger)]
+        best_loss = test(args, model, val_loader, optimizer, 0, tf_logger)
+        bestEpoch = 0
 
         # Setup early stopping, terminates training when validation loss does not improve for early_stopping_patience epochs
         early_stopping = EarlyStopping(patience=args['early_stopping_patience'], verbose=True)
@@ -313,7 +327,20 @@ def run(args) -> None:
                     'batch_size': args['batch_size'],
                     'optimizer': optimizer.state_dict(),
                 }, epoch, ckpt_dir)
-                checkpoint_loss.append(validation_loss)
+
+
+            if validation_loss < best_loss:
+                best_loss = validation_loss
+                state = {'state_dict': model.state_dict(),
+                    'best_loss': validation_loss,
+                    'latent_dim': args['latent_dim'],
+                    'epochs': args['epochs'],
+                    'lr': args['lr'],
+                    'batch_size': args['batch_size'],
+                    'optimizer': optimizer.state_dict(),
+                }
+
+                torch.save(state, os.path.join(ckpt_dir, 'model_best.pth.tar'))
 
             early_stopping(validation_loss)
 
@@ -327,21 +354,11 @@ def run(args) -> None:
 
         logger.success("Finished training PoE model.")
 
-        # find best checkpoint based on the validation loss
-        bestEpoch = args['log_save_interval'] * np.argmin(checkpoint_loss)
-
-        logger.info("Using model from epoch %d" % bestEpoch)
-        modelCheckpoint = ckpt_dir + '/model_epoch%d.pth.tar' % (bestEpoch)
-        assert os.path.exists(modelCheckpoint)
-
-
-    # Extract Phase #
 
     if args['task'] == 0:
-        lossDict = {'epoch': bestEpoch, 'val_loss': np.min(checkpoint_loss)}
+        lossDict = {'epoch': bestEpoch, 'val_loss': best_loss}
         with open(save_dir + '/finalValidationLoss.pkl', 'wb') as f:
             pickle.dump(lossDict, f)
-
 
 
 
@@ -358,165 +375,201 @@ def run(args) -> None:
         train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args['batch_size'], shuffle=False, drop_last=False)
         val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=args['batch_size'], shuffle=False, drop_last=False)  #
         test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=args['batch_size'], shuffle=False, drop_last=False)  #
+        test_loader_individual = torch.utils.data.DataLoader(test_dataset, batch_size=1, shuffle=False, drop_last=False)  #
 
         ztrain = np.zeros((len(train_loader.dataset), model.latent_dim))
-
         zvalidation = np.zeros((len(val_loader.dataset), model.latent_dim))
-
         ztest = np.zeros((len(test_loader.dataset), model.latent_dim))
 
-        x1_hat_train = np.zeros((len(train_loader.dataset), args['num_features1']))
-        x2_hat_train = np.zeros((len(train_loader.dataset), args['num_features2']))
+        z1train = np.zeros((len(train_loader.dataset), model.latent_dim))
+        z1validation = np.zeros((len(val_loader.dataset), model.latent_dim))
+        z1test = np.zeros((len(test_loader.dataset), model.latent_dim))
 
-        x1_hat_validation = np.zeros((len(val_loader.dataset), args['num_features1']))
-        x2_hat_validation = np.zeros((len(val_loader.dataset), args['num_features2']))
+        z2train = np.zeros((len(train_loader.dataset), model.latent_dim))
+        z2validation = np.zeros((len(val_loader.dataset), model.latent_dim))
+        z2test = np.zeros((len(test_loader.dataset), model.latent_dim))
 
-        x1_hat_test = np.zeros((len(test_loader.dataset), args['num_features1']))
-        x2_hat_test = np.zeros((len(test_loader.dataset), args['num_features2']))
-
-        x1_cross_hat_train = np.zeros((len(train_loader.dataset), args['num_features1']))
-        x2_cross_hat_train = np.zeros((len(train_loader.dataset), args['num_features2']))
-
-        x1_cross_hat_validation = np.zeros((len(val_loader.dataset), args['num_features1']))
-        x2_cross_hat_validation = np.zeros((len(val_loader.dataset), args['num_features2']))
-
-        x1_cross_hat_test = np.zeros((len(test_loader.dataset), args['num_features1']))
-        x2_cross_hat_test = np.zeros((len(test_loader.dataset), args['num_features2']))
 
         model.eval()
+        with torch.no_grad():
+            ind = 0
+            b = args['batch_size']
+            for (b1, b2) in train_loader:
+                b1 = b1.to(device)
+                b2 = b2.to(device)
 
-        ind = 0
-        b = args['batch_size']
-        for (b1, b2) in train_loader:
-            b1 = b1.to(device)
-            b2 = b2.to(device)
+                z_tmp, z1_tmp, z2_tmp, _, _, _, _ = model.embedAndReconstruct(b1, b2)
 
-            z_tmp, x1_hat_tmp, x2_hat_tmp, x1_cross_hat_tmp, x2_cross_hat_tmp = model.embedAndReconstruct(b1, b2)
+                ztrain[ind:ind+b] = z_tmp.cpu().detach().numpy()
+                z1train[ind:ind+b] = z1_tmp.cpu().detach().numpy()
+                z2train[ind:ind+b] = z2_tmp.cpu().detach().numpy()
 
-            ztrain[ind:ind+b] = z_tmp.cpu().detach().numpy()
+                ind += b
 
-            x1_hat_train[ind:ind+b] = x1_hat_tmp.cpu().detach().numpy()
-            x2_hat_train[ind:ind+b] = x2_hat_tmp.cpu().detach().numpy()
+            ind = 0
+            for (b1, b2) in val_loader:
+                b1 = b1.to(device)
+                b2 = b2.to(device)
 
-            x1_cross_hat_train[ind:ind+b] = x1_cross_hat_tmp.cpu().detach().numpy()
-            x2_cross_hat_train[ind:ind+b] = x2_cross_hat_tmp.cpu().detach().numpy()
+                z_tmp, z1_tmp, z2_tmp, _, _, _, _ = model.embedAndReconstruct(b1, b2)
 
-            ind += b
+                zvalidation[ind:ind+b] = z_tmp.cpu().detach().numpy()
+                z1validation[ind:ind+b] = z1_tmp.cpu().detach().numpy()
+                z2validation[ind:ind+b] = z2_tmp.cpu().detach().numpy()
 
-        ind = 0
-        for (b1, b2) in val_loader:
-            b1 = b1.to(device)
-            b2 = b2.to(device)
-
-            z_tmp, x1_hat_tmp, x2_hat_tmp, x1_cross_hat_tmp, x2_cross_hat_tmp = model.embedAndReconstruct(b1, b2)
-
-            zvalidation[ind:ind+b] = z_tmp.cpu().detach().numpy()
-
-            x1_hat_validation[ind:ind+b] = x1_hat_tmp.cpu().detach().numpy()
-            x2_hat_validation[ind:ind+b] = x2_hat_tmp.cpu().detach().numpy()
-
-            x1_cross_hat_validation[ind:ind+b] = x1_cross_hat_tmp.cpu().detach().numpy()
-            x2_cross_hat_validation[ind:ind+b] = x2_cross_hat_tmp.cpu().detach().numpy()
-
-            ind += b
+                ind += b
 
 
-        ind = 0
-        for (b1, b2) in test_loader:
-            b1 = b1.to(device)
-            b2 = b2.to(device)
+            ind = 0
+            for (b1, b2) in test_loader:
+                b1 = b1.to(device)
+                b2 = b2.to(device)
 
-            z_tmp, x1_hat_tmp, x2_hat_tmp, x1_cross_hat_tmp, x2_cross_hat_tmp = model.embedAndReconstruct(b1, b2)
+                z_tmp, z1_tmp, z2_tmp, _, _, _, _ = model.embedAndReconstruct(b1, b2)
 
-            ztest[ind:ind+b] = z_tmp.cpu().detach().numpy()
+                ztest[ind:ind+b] = z_tmp.cpu().detach().numpy()
+                z1test[ind:ind+b] = z1_tmp.cpu().detach().numpy()
+                z2test[ind:ind+b] = z2_tmp.cpu().detach().numpy()
 
-            x1_hat_test[ind:ind+b] = x1_hat_tmp.cpu().detach().numpy()
-            x2_hat_test[ind:ind+b] = x2_hat_tmp.cpu().detach().numpy()
+                ind += b
 
-            x1_cross_hat_test[ind:ind+b] = x1_cross_hat_tmp.cpu().detach().numpy()
-            x2_cross_hat_test[ind:ind+b] = x2_cross_hat_tmp.cpu().detach().numpy()
+            logger.info('Validation')
+            loss1from2 = 0.0
+            loss2from1 = 0.0
+            loss1from1 = 0.0
+            loss2from2 = 0.0
+            for batch_idx, (omic1, omic2) in enumerate(val_loader):
 
-            ind += b
+                if args['cuda']:
+                    omic1 = omic1.cuda()
+                    omic2 = omic2.cuda()
 
-        # draw random samples from the prior and reconstruct them
-        zrand = torch.distributions.Independent(torch.distributions.Normal(torch.zeros(model.latent_dim), torch.ones(model.latent_dim)), 1).sample([2000]).to(device)
-        zrand = zrand.double()
+                # compute reconstructions using each of the individual modalities
+                (omic1_recon_omic1, omic1_recon_omic2, omic1_mu, omic1_logvar) = model.forward(omic1=omic1)
+
+                (omic2_recon_omic1, omic2_recon_omic2, omic2_mu, omic2_logvar) = model.forward(omic2=omic2)
+
+                lossesOmic1 = compute_loss(omic1_recon_omic1, omic1, omic1_recon_omic2, omic2)
+                lossesOmic2 = compute_loss(omic2_recon_omic1, omic1, omic2_recon_omic2, omic2)
+
+                loss2from1 += lossesOmic1['loss2']
+                loss1from1 += lossesOmic1['loss1']
+
+                loss2from2 += lossesOmic2['loss2']
+                loss1from2 += lossesOmic2['loss1']
 
 
-        X1sample = model.omic1_decoder(zrand).cpu().detach()
-        X2sample = model.omic2_decoder(zrand).cpu().detach()
+
+            loss1from2 /= len(val_loader.dataset)
+            loss1from2 *= -1.
+
+            loss2from1 /= len(val_loader.dataset)
+            loss2from1 *= -1.
+
+            loss2from2 /= len(val_loader.dataset)
+            loss2from2 *= -1.
+
+            loss1from1 /= len(val_loader.dataset)
+            loss1from1 *= -1.
 
 
-        data1 = np.load(args['data_path1'])
-        data2 = np.load(args['data_path2'])
-        labels = np.load(args['labels'])
+            logger.info('LL1/2:\t%.4f' % loss1from2)
+            logger.info('LL2/1:\t%.4f' % loss2from1)
+            logger.info('LL1/1:\t%.4f' % loss1from1)
+            logger.info('LL2/2:\t%.4f' % loss2from2)
 
-        trainInd = np.load(args['train_ind'])
-        validInd = np.load(args['val_ind'])
-        testInd = np.load(args['test_ind'])
 
-        dataTrain1 = data1[trainInd]
-        dataValidation1 = data1[validInd]
-        dataTest1 = data1[testInd]
 
-        dataTrain2 = data2[trainInd]
-        dataValidation2 = data2[validInd]
-        dataTest2 = data2[testInd]
+            logger.info('Test')
+            loss1from2 = 0.0
+            loss2from1 = 0.0
+            loss1from1 = 0.0
+            loss2from2 = 0.0
+            for batch_idx, (omic1, omic2) in enumerate(test_loader):
 
-        from src.util.evaluate import evaluate_imputation, evaluate_classification, evaluate_generation
-        logger.info('Evaluating...')
+                if args['cuda']:
+                    omic1 = omic1.cuda()
+                    omic2 = omic2.cuda()
 
-        logger.info('Training performance, reconstruction error, modality 1')
-        mse_train, spearman_train, r2_train = evaluate_imputation(dataTrain1, x1_hat_train, data1.shape[1])
-        logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse_train, spearman_train, r2_train))
+                # compute reconstructions using each of the individual modalities
+                (omic1_recon_omic1, omic1_recon_omic2, omic1_mu, omic1_logvar) = model.forward(omic1=omic1)
 
-        logger.info('Training performance, reconstruction error, modality 2')
-        mse_train, spearman_train, r2_train = evaluate_imputation(dataTrain2, x2_hat_train, data2.shape[1])
-        logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse_train, spearman_train, r2_train))
+                (omic2_recon_omic1, omic2_recon_omic2, omic2_mu, omic2_logvar) = model.forward(omic2=omic2)
 
-        logger.info('Training performance, imputation error, modality 1')
-        mse_train, spearman_train, r2_train = evaluate_imputation(dataTrain1, x1_cross_hat_train, data1.shape[1])
-        logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse_train, spearman_train, r2_train))
+                lossesOmic1 = compute_loss(omic1_recon_omic1, omic1, omic1_recon_omic2, omic2)
+                lossesOmic2 = compute_loss(omic2_recon_omic1, omic1, omic2_recon_omic2, omic2)
 
-        logger.info('Training performance, imputation error, modality 2')
-        mse_train, spearman_train, r2_train = evaluate_imputation(dataTrain2, x2_cross_hat_train, data2.shape[1])
-        logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse_train, spearman_train, r2_train))
+                loss2from1 += lossesOmic1['loss2']
+                loss1from1 += lossesOmic1['loss1']
 
-        logger.info('Validation performance, reconstruction error, modality 1')
-        mse_train, spearman_train, r2_train = evaluate_imputation(dataValidation1, x1_hat_validation, data1.shape[1])
-        logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse_train, spearman_train, r2_train))
+                loss2from2 += lossesOmic2['loss2']
+                loss1from2 += lossesOmic2['loss1']
 
-        logger.info('Validation performance, reconstruction error, modality 2')
-        mse_train, spearman_train, r2_train = evaluate_imputation(dataValidation2, x2_hat_validation, data2.shape[1])
-        logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse_train, spearman_train, r2_train))
 
-        logger.info('Validation performance, imputation error, modality 1')
-        mse_train, spearman_train, r2_train = evaluate_imputation(dataValidation1, x1_cross_hat_validation, data1.shape[1])
-        logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse_train, spearman_train, r2_train))
 
-        logger.info('Validation performance, imputation error, modality 2')
-        mse_train, spearman_train, r2_train = evaluate_imputation(dataValidation2, x2_cross_hat_validation, data2.shape[1])
-        logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse_train, spearman_train, r2_train))
+            loss1from2 /= len(val_loader.dataset)
+            loss1from2 *= -1.
 
-        logger.info('Test performance, reconstruction error, modality 1')
-        mse_train, spearman_train, r2_train = evaluate_imputation(dataTest1, x1_hat_test, data1.shape[1])
-        logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse_train, spearman_train, r2_train))
+            loss2from1 /= len(val_loader.dataset)
+            loss2from1 *= -1.
 
-        logger.info('Test performance, reconstruction error, modality 2')
-        mse_train, spearman_train, r2_train = evaluate_imputation(dataTest2, x2_hat_test, data2.shape[1])
-        logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse_train, spearman_train, r2_train))
+            loss2from2 /= len(val_loader.dataset)
+            loss2from2 *= -1.
 
-        logger.info('Test performance, imputation error, modality 1')
-        mse_train, spearman_train, r2_train = evaluate_imputation(dataTest1, x1_cross_hat_test, data1.shape[1])
-        logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse_train, spearman_train, r2_train))
+            loss1from1 /= len(val_loader.dataset)
+            loss1from1 *= -1.
 
-        logger.info('Test performance, imputation error, modality 2')
-        mse_train, spearman_train, r2_train = evaluate_imputation(dataTest2, x2_cross_hat_test, data2.shape[1])
-        logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse_train, spearman_train, r2_train))
+            logger.info('LL1/2:\t%.4f' % loss1from2)
+            logger.info('LL2/1:\t%.4f' % loss2from1)
+            logger.info('LL1/1:\t%.4f' % loss1from1)
+            logger.info('LL2/2:\t%.4f' % loss2from2)
 
-        logger.info('Generation coherence')
-        acc = evaluate_generation(X1sample, X2sample, args['data1'], args['data2'])
-        logger.info('Concordance: %.4f: ' % acc)
+
+            loss1from2 = torch.zeros(len(test_loader_individual))
+            loss2from1 = torch.zeros(len(test_loader_individual))
+            for batch_idx, (omic1, omic2) in enumerate(test_loader_individual):
+
+                if args['cuda']:
+                    omic1 = omic1.cuda()
+                    omic2 = omic2.cuda()
+
+                # compute reconstructions using each of the individual modalities
+                (omic1_recon_omic1, omic1_recon_omic2, omic1_mu, omic1_logvar) = model.forward(omic1=omic1.reshape(1,-1))
+
+                (omic2_recon_omic1, omic2_recon_omic2, omic2_mu, omic2_logvar) = model.forward(omic2=omic2.reshape(1,-1))
+
+                lossesOmic1 = compute_loss(omic1_recon_omic1, omic1, omic1_recon_omic2, omic2)
+                lossesOmic2 = compute_loss(omic2_recon_omic1, omic1, omic2_recon_omic2, omic2)
+
+                loss2from1[batch_idx] = lossesOmic1['loss2']
+                loss1from2[batch_idx] = lossesOmic2['loss1']
+
+
+        logger.info('Saving individual performances...')
+
+        with open(save_dir + '/test_performance_per_datapoint.pkl', 'wb') as f:
+            pickle.dump({'LL1/2': loss1from2, 'LL2/1': loss2from1}, f)
+
+
+
+
+
+            # draw random samples from the prior and reconstruct them
+            zrand = torch.distributions.Independent(torch.distributions.Normal(torch.zeros(model.latent_dim), torch.ones(model.latent_dim)), 1).sample([2000]).to(device)
+            zrand = zrand.double()
+            #
+            #
+            X1sample = model.omic1_decoder(zrand).mean.cpu().detach()
+            X2sample = model.omic2_decoder(zrand).mean.cpu().detach()
+            #
+            #
+            #
+            from src.util.evaluate import evaluate_imputation, evaluate_classification, evaluate_generation
+            logger.info('Evaluating...')
+
+            logger.info('Generation coherence')
+            acc = evaluate_generation(X1sample, X2sample, args['data1'], args['data2'])
+            logger.info('Concordance: %.4f: ' % acc)
 
 
         logger.info('Saving embeddings...')
@@ -542,13 +595,55 @@ def run(args) -> None:
         test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=len(test_dataset), shuffle=False)
 
 
-        logger.info('Test performance, classification task, both modalities')
-        predictions, acc, pr, rc, f1, mcc, confMat = classification(ztrain, ytrain, zvalidation, yvalid, ztest, ytest, np.array([1e-5, 1e-3, 1e-2, 0.1, 0.5, 1.0, 2.0, 5.0, 10., 20.]), args['clf_criterion'])
+        logger.info('Test performance, classification task, linear classfifier, modality 1')
+        predictions, acc, pr, rc, f1, mcc, confMat, CIs = classification(z1train, ytrain, z1validation, yvalid, z1test, ytest, np.array([1e-5, 1e-3, 1e-2, 0.1, 0.5, 1.0, 2.0, 5.0, 10., 20.]), args['clf_criterion'])
         performance = [acc, pr, rc, f1, mcc, confMat]
-        pr = {'acc': performance[0], 'pr': performance[1], 'rc': performance[2], 'f1': performance[3], 'mcc': performance[4], 'confmat': performance[5]}
+        pr1 = {'acc': performance[0], 'pr': performance[1], 'rc': performance[2], 'f1': performance[3], 'mcc': performance[4], 'confmat': performance[5], 'CIs': CIs}
         logger.info('ACC: %.4f\tPR: %.4f\tRC: %.4f\tF1: %.4f\tMCC: %.4f' % (performance[0], np.mean(performance[1]), np.mean(performance[2]), np.mean(performance[3]), performance[4]))
+
+        logger.info('Test performance, classification task, linear classfifier, modality 2')
+        predictions, acc, pr, rc, f1, mcc, confMat, CIs = classification(z2train, ytrain, z2validation, yvalid, z2test, ytest, np.array([1e-5, 1e-3, 1e-2, 0.1, 0.5, 1.0, 2.0, 5.0, 10., 20.]), args['clf_criterion'])
+        performance = [acc, pr, rc, f1, mcc, confMat]
+        pr2 = {'acc': performance[0], 'pr': performance[1], 'rc': performance[2], 'f1': performance[3], 'mcc': performance[4], 'confmat': performance[5], 'CIs': CIs}
+        logger.info('ACC: %.4f\tPR: %.4f\tRC: %.4f\tF1: %.4f\tMCC: %.4f' % (performance[0], np.mean(performance[1]), np.mean(performance[2]), np.mean(performance[3]), performance[4]))
+
+        logger.info('Test performance, classification task, linear classifier, both modalities')
+        predictions, acc, pr, rc, f1, mcc, confMat, CIs = classification(ztrain, ytrain, zvalidation, yvalid, ztest, ytest, np.array([1e-5, 1e-3, 1e-2, 0.1, 0.5, 1.0, 2.0, 5.0, 10., 20.]), args['clf_criterion'])
+        performance = [acc, pr, rc, f1, mcc, confMat]
+        pr12 = {'acc': performance[0], 'pr': performance[1], 'rc': performance[2], 'f1': performance[3], 'mcc': performance[4], 'confmat': performance[5], 'CIs': CIs}
+        logger.info('ACC: %.4f\tPR: %.4f\tRC: %.4f\tF1: %.4f\tMCC: %.4f' % (performance[0], np.mean(performance[1]), np.mean(performance[2]), np.mean(performance[3]), performance[4]))
+
+        if 'level' in args:
+            level = args['level']
+            assert level == 'l3'
+        else:
+            level = 'l2'
+
+        # -----------------------------------------------------------------
+        logger.info('Test performance, classification task, non-linear classifier, modality 1')
+        _, acc, pr, rc, f1, mcc, confMat, CIs = classificationMLP(z1train, ytrain, z1validation, yvalid, z1test, ytest, 'type-classifier/eval/' + level + '/poe_' + args['data1'] + '/')
+        performance1 = [acc, pr, rc, f1, mcc, confMat]
+        logger.info('ACC: %.4f\tPR: %.4f\tRC: %.4f\tF1: %.4f\tMCC: %.4f' % (performance1[0], np.mean(performance1[1]), np.mean(performance1[2]), np.mean(performance1[3]), performance1[4]))
+
+
+        mlp_pr1 = {'acc': performance1[0], 'pr': performance1[1], 'rc': performance1[2], 'f1': performance1[3], 'mcc': performance1[4], 'confmat': performance1[5], 'CIs': CIs}
+
+        logger.info('Test performance, classification task, non-linear classifier, modality 2')
+        _, acc, pr, rc, f1, mcc, confMat, CIs = classificationMLP(z2train, ytrain, z2validation, yvalid, z2test, ytest, 'type-classifier/eval/' + level + '/poe_' + args['data2'] + '/')
+        performance2 = [acc, pr, rc, f1, mcc, confMat]
+        logger.info('ACC: %.4f\tPR: %.4f\tRC: %.4f\tF1: %.4f\tMCC: %.4f' % (performance2[0], np.mean(performance2[1]), np.mean(performance2[2]), np.mean(performance2[3]), performance2[4]))
+
+        mlp_pr2 = {'acc': performance2[0], 'pr': performance2[1], 'rc': performance2[2], 'f1': performance2[3], 'mcc': performance2[4], 'confmat': performance2[5], 'CIs': CIs}
+
+        logger.info('Test performance, classification task, non-linear classifier, both modalities')
+        _, acc, pr, rc, f1, mcc, confMat, CIs = classificationMLP(ztrain, ytrain, zvalidation, yvalid, ztest, ytest, 'type-classifier/eval/' + level + '/poe_' + args['data1'] + '_' + args['data2'] + '/')
+        performance12 = [acc, pr, rc, f1, mcc, confMat]
+        logger.info('ACC: %.4f\tPR: %.4f\tRC: %.4f\tF1: %.4f\tMCC: %.4f' % (performance12[0], np.mean(performance12[1]), np.mean(performance12[2]), np.mean(performance12[3]), performance12[4]))
+
+        mlp_pr12 = {'acc': performance12[0], 'pr': performance12[1], 'rc': performance12[2], 'f1': performance12[3], 'mcc': performance12[4], 'confmat': performance12[5], 'CIs': CIs}
+
 
 
         logger.info("Saving results")
         with open(save_dir + "/PoE_task2_results.pkl", 'wb') as f:
-            pickle.dump({'joint': pr}, f)
+            pickle.dump({'omic1': pr1, 'omic2': pr2, 'omic1+2': pr12, 'omic1-mlp': mlp_pr1, 'omic2-mlp': mlp_pr2, 'omic1+2-mlp': mlp_pr12}, f)

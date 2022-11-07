@@ -1,5 +1,6 @@
 GLOBAL_PARAMS:
-  name: "train-tcga-cgae"
+  nomics: 2
+  name: "likelihood-tcga-cgae"
   task: 0
   num_features1: 5000
   num_features2: 5000
@@ -9,35 +10,31 @@ GLOBAL_PARAMS:
   early_stopping_patience: 10 # If set to 0 or <0, early stopping is turned off.
   data1: "GE"
   data2: "CNV"
-  data_path1: "/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/GE.npy"
-  data_path2: "/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/GCN.npy"
-  data_features1: "/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/GE_featureNames.npy"
-  data_features2: "/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/GCN_featureNames.npy"
-  sample_names: "/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/sampleNames.npy"
-  labels: "/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/cancerType.npy"
-  labelnames: "/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/cancerTypes.npy"
-  train_ind: "/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/task1/trainInd.npy"
-  val_ind: "/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/task1/validInd.npy"
-  test_ind: "/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/task1/testInd.npy"
+  data_path1: "/tudelft.net/staff-bulk/ewi/insy/DBL/smakrod/lb/tcga-download/data/datasets/ge-me-cn-2022-04-16/GE.npy"
+  data_path2: "/tudelft.net/staff-bulk/ewi/insy/DBL/smakrod/lb/tcga-download/data/datasets/ge-me-cn-2022-04-16/CN.npy"
+  data_features1: "/tudelft.net/staff-bulk/ewi/insy/DBL/smakrod/lb/tcga-download/data/datasets/ge-me-cn-2022-04-16/genes_GE.npy"
+  data_features2: "/tudelft.net/staff-bulk/ewi/insy/DBL/smakrod/lb/tcga-download/data/datasets/ge-me-cn-2022-04-16/gebes_CN.npy"
+  sample_names: "/tudelft.net/staff-bulk/ewi/insy/DBL/smakrod/lb/tcga-download/data/datasets/ge-me-cn-2022-04-16/sampleNames.npy"
+  labels: "/tudelft.net/staff-bulk/ewi/insy/DBL/smakrod/lb/tcga-download/data/datasets/ge-me-cn-2022-04-16/cancerType.npy"
+  labelnames: "/tudelft.net/staff-bulk/ewi/insy/DBL/smakrod/lb/tcga-download/data/datasets/ge-me-cn-2022-04-16/cancerTypes.npy"
+  train_ind: "/tudelft.net/staff-bulk/ewi/insy/DBL/smakrod/lb/tcga-download/data/datasets/ge-me-cn-2022-04-16/trainInd.npy"
+  val_ind: "/tudelft.net/staff-bulk/ewi/insy/DBL/smakrod/lb/tcga-download/data/datasets/ge-me-cn-2022-04-16/validInd.npy"
+  test_ind: "/tudelft.net/staff-bulk/ewi/insy/DBL/smakrod/lb/tcga-download/data/datasets/ge-me-cn-2022-04-16/testInd.npy"
 
 CGAE:
   epochs: 500
   batch_size: 64
-  latent_dim: '128'
+  latent_dim: '128-64'
   clf_criterion: 'acc'
-  enc1_lr: 0.0001
-  dec1_lr: 0.0001
-  enc2_lr: 0.0001
-  dec2_lr: 0.0001
-  loss_function: 'mse'
+  lr: 0.0001
+  likelihood1: 'normal'
+  likelihood2: 'categorical'
   use_batch_norm: False
   dropout_probability: 0.0
   optimizer: 'Adam'
-  enc1_output_scale: 1.
-  enc2_output_scale: 1.
-  enc1_last_activation: 'none'
-  enc2_last_activation: 'none'
   beta_start_value: 1
   zconstraintCoef: 1
   crossPenaltyCoef: 1
   enc_distribution: 'normal'
+  n_categories1: -1
+  n_categories2: 5
