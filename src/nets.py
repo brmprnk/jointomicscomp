@@ -19,6 +19,13 @@ def identity(x):
 	return x
 
 
+def getPointEstimate(d):
+	if type(d) is torch.distributions.categorical.Categorical:
+		return torch.argmax(d.probs, -1)
+
+	return d.mean
+
+
 ########################################################################################
 # basic components
 
@@ -79,13 +86,22 @@ class FullyConnectedModule(nn.Module):
 
 
 class ProbabilisticFullyConnectedModule(FullyConnectedModule):
-	def __init__(self, input_dim, hidden_dim=[100], distribution='normal', use_batch_norm=False, dropoutP=0.0, lastActivation='none'):
+	def __init__(self, input_dim, hidden_dim=[100], distribution='normal', use_batch_norm=False, dropoutP=0.0, lastActivation='none', n_categories=None):
 
+		self.input_dim = input_dim
+		self.n_categories = n_categories
 		self.distribution = distribution
-		if self.distribution != 'cbernoulli':
+		if self.distribution == 'categorical':
+			assert n_categories is not None
+			newlist = [h for h in hidden_dim]
+			newlist[-1] *= n_categories
+			hidden_dim = newlist
+
+		elif self.distribution != 'cbernoulli' and self.distribution != 'poisson':
 			newlist = [h for h in hidden_dim]
 			newlist[-1] = newlist[-1] * 2
 			hidden_dim = newlist
+
 
 		super(ProbabilisticFullyConnectedModule, self).__init__(input_dim, hidden_dim, use_batch_norm, dropoutP, lastActivation)
 
@@ -102,32 +118,53 @@ class ProbabilisticFullyConnectedModule(FullyConnectedModule):
 			self.p1Transform = identity
 			self.p2Transform = torch.exp
 			self.D = torch.distributions.LogNormal
-
+		elif self.distribution == 'categorical':
+			self.D = torch.distributions.Categorical
 		elif self.distribution == 'cbernoulli':
 			self.D = torch.distributions.ContinuousBernoulli
+		elif self.distribution == 'poisson':
+			self.p1Transform = torch.exp
+			self.D = torch.distributions.Poisson
 		elif self.distribution == 'laplace':
 			self.p1Transform = identity
 			self.p2Transform = torch.exp
 			self.D = torch.distributions.Laplace
+		elif self.distribution == 'nb':
+			self.p1Transform = torch.exp
+			self.p2Transform = torch.nn.Sigmoid()
+			self.D = torch.distributions.NegativeBinomial
 		else:
 			raise NotImplementedError('%s not supported. Use: \'normal\' or \'beta\'' % self.distribution)
 
 		if self.distribution != 'cbernoulli':
-			self.z_dim = self.z_dim // 2
+			if self.distribution != 'categorical':
+				self.z_dim = self.z_dim // 2
+			else:
+				self.z_dim = self.z_dim // self.n_categories
 
 	def forward(self, x):
 		z = super().forward(x)
 
-		if self.distribution != 'cbernoulli':
+		if self.distribution != 'cbernoulli' and self.distribution != 'categorical'and self.distribution != 'poisson':
 			p1 = self.p1Transform(z[:, :self.z_dim])
 			p2 = self.p2Transform(z[:, self.z_dim:])
 
 			return Independent(self.D(p1, p2), 0)
 		else:
+			if self.distribution == 'poisson':
+				p1 = self.p1Transform(z)
+				return Independent(self.D(p1), 0)
+
+
+			if self.distribution == 'categorical':
+				z = torch.reshape(z, (-1, self.z_dim, self.n_categories))
+
 			if self.lastActivation is None:
-				return Independent(self.D(logits=z), 0)
+				#return Independent(self.D(logits=z), 0)
+				return self.D(logits=z)
 			elif self.lastActivation == torch.sigmoid:
-				return Independent(self.D(probs=z), 0)
+				#return Independent(self.D(probs=z), 0)
+				return self.D(probs=z)
 
 			else:
 				raise NotImplementedError('Wrong activation for lamda parameter of ContinuousBernoulli')
@@ -274,7 +311,7 @@ class MultiOmicRepresentationLearner(nn.Module):
 
 
 	def encode(self, x):
-		z = [enc(xi) for enc, xi in zip(self.encoders, xi)]
+		z = [enc(xi) for enc, xi in zip(self.encoders, x)]
 
 		return z
 
@@ -340,13 +377,19 @@ class VariationalAutoEncoder(RepresentationLearner):
 
 
 class CrossGeneratingVariationalAutoencoder(MultiOmicRepresentationLearner):
-	def __init__(self, input_dims, enc_hidden_dim=[100], dec_hidden_dim=[], likelihoods='normal', use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder_lr=1e-4, decoder_lr=1e-4, enc_distribution='normal', beta=1.0, zconstraintCoef=1.0, crossPenaltyCoef=1.0):
+	def __init__(self, input_dims, enc_hidden_dim=[100], dec_hidden_dim=[], likelihoods='normal', use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder_lr=1e-4, decoder_lr=1e-4, enc_distribution='normal', beta=1.0, zconstraintCoef=1.0, crossPenaltyCoef=1.0, n_categories=None):
 		super(CrossGeneratingVariationalAutoencoder, self).__init__(input_dims, enc_hidden_dim, use_batch_norm, dropoutP, optimizer_name, True, encoder_lr, enc_distribution)
 
 		if type(likelihoods) == str:
 			likelihoods = [likelihoods] * self.n_modalities
 
-		self.decoders = [ProbabilisticFullyConnectedModule(self.z_dim, dec_hidden_dim + [input_dim1], distribution=ll, use_batch_norm=self._use_batch_norm, dropoutP=self._dropoutP, lastActivation='none').double().to(self.device) for input_dim1, ll in zip(input_dims, likelihoods)]
+
+		if 'categorical' in likelihoods:
+			assert n_categories is not None
+		else:
+			n_categories = [None for _ in range(self.n_modalities)]
+
+		self.decoders = [ProbabilisticFullyConnectedModule(self.z_dim, dec_hidden_dim + [input_dim1], distribution=ll, use_batch_norm=self._use_batch_norm, dropoutP=self._dropoutP, lastActivation='none', n_categories=n_categories1).double().to(self.device) for input_dim1, ll, n_categories1 in zip(input_dims, likelihoods, n_categories)]
 		if type(decoder_lr) == float:
 			decoder_lr = [decoder_lr] * self.n_modalities
 
@@ -356,6 +399,21 @@ class CrossGeneratingVariationalAutoencoder(MultiOmicRepresentationLearner):
 		self.zconstraintCoef = zconstraintCoef
 		self.crossPenaltyCoef = crossPenaltyCoef
 		self.beta = beta
+
+	def eval(self):
+		self.training = False
+		for enc in self.encoders:
+			enc.eval()
+		for dec in self.decoders:
+			dec.eval()
+
+	def train(self):
+		self.training = True
+		for enc in self.encoders:
+			enc.train()
+		for dec in self.decoders:
+			dec.train()
+
 
 
 	def compute_loss(self, x):
@@ -419,7 +477,7 @@ class CrossGeneratingVariationalAutoencoder(MultiOmicRepresentationLearner):
 					coskey = 'z-cos/%d-%d' % (i+1, j+1)
 
 					metrics[llkey] = torch.mean(torch.sum(x_hat[i][j].log_prob(x[j]), 1)).item()
-					metrics[msekey] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(x_hat[i][j].mean, x[j]), 1)).item()
+					metrics[msekey] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(getPointEstimate(x_hat[i][j]), x[j]), 1)).item()
 
 					if i == j:
 						loss -= metrics[llkey]
@@ -441,36 +499,210 @@ class CrossGeneratingVariationalAutoencoder(MultiOmicRepresentationLearner):
 
 
 				# KL divergence to prior for each modality's z
-				metrics[klkey] = 0.5 * torch.mean(torch.sum(1 + torch.log(zstd[i] ** 2) - (zmean[i] ** 2) - (zstd[i] ** 2), 1)).item()
-				loss -= self.beta * metrics[klkey]
+				metrics[klkey] = -0.5 * torch.mean(torch.sum(1 + torch.log(zstd[i] ** 2) - (zmean[i] ** 2) - (zstd[i] ** 2), 1)).item()
+				loss += self.beta * metrics[klkey]
 
 
 		metrics['loss'] = loss
 
 		return metrics
 
-	def encode(self, x1, x2):
-		z1, z2 = super().encode(x1, x2)
-		return z1.mean, z2.mean
 
-	def embedAndReconstruct(self, x1, x2):
+	def reconstructionPerDataPoint(self, x):
+		metrics = dict()
 		with torch.no_grad():
-			z1, z2 = self.encode(x1, x2)
+			# encode all modalities
+			z = [enc(xi) for xi, enc in zip(x, self.encoders)]
 
-			x1_hat = self.decoder(z1)
-			x2_hat = self.decoder2(z2)
+			zmean = [zi.mean for zi in z]
 
-			x1_cross_hat = self.decoder(z2)
-			x2_cross_hat = self.decoder2(z1)
+			# decode each modality from all z's
+			x_hat = [[dec(zi) for dec in self.decoders] for zi in zmean]
 
-			return z1, z2, x1_hat, x2_hat, x1_cross_hat, x2_cross_hat
+			for i in range(self.n_modalities):
+				for j in range(self.n_modalities):
+					llkey = 'LL%d/%d' % (j+1, i+1)
 
+					metrics[llkey] = torch.sum(x_hat[i][j].log_prob(x[j]), 1)
+
+		return metrics
+
+
+
+	def encode(self, x):
+		z = super().encode(x)
+		return [zi.mean for zi in z]
+
+	def embedAndReconstruct(self, x):
+		with torch.no_grad():
+			z = self.encode(x)
+
+			x_hat = [[dec(zi) for dec in self.decoders] for zi in z]
+
+			return z, x_hat
+
+class ConcatenatedVariationalAutoencoder(MultiOmicRepresentationLearner):
+	def __init__(self, input_dims, enc_hidden_dim=[100], dec_hidden_dim=[], likelihoods='normal', use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder_lr=1e-4, decoder_lr=1e-4, enc_distribution='normal', beta=1.0, n_categories=None):
+		super(ConcatenatedVariationalAutoencoder, self).__init__([sum(input_dims)], enc_hidden_dim, use_batch_norm, dropoutP, optimizer_name, True, encoder_lr, enc_distribution)
+
+		self.n_modalities = len(input_dims)
+		if type(likelihoods) == str:
+			likelihoods = [likelihoods] * self.n_modalities
+
+		if 'categorical' in likelihoods:
+			assert n_categories is not None
+		else:
+			n_categories = [None for _ in range(self.n_modalities)]
+
+		self.decoders = [ProbabilisticFullyConnectedModule(self.z_dim, dec_hidden_dim + [input_dim1], distribution=ll, use_batch_norm=self._use_batch_norm, dropoutP=self._dropoutP, lastActivation='none', n_categories=n_categories1).double().to(self.device) for input_dim1, ll, n_categories1 in zip(input_dims, likelihoods, n_categories)]
+
+		if type(decoder_lr) == float:
+			decoder_lr = [decoder_lr] * self.n_modalities
+
+		for lr, dec in zip(decoder_lr, self.decoders):
+			self.opt.add_param_group({'params': dec.parameters(), 'lr': lr})
+
+		self.beta = beta
+
+	def eval(self):
+		self.training = False
+		for enc in self.encoders:
+			enc.eval()
+		for dec in self.decoders:
+			dec.eval()
+
+	def train(self):
+		self.training = True
+		for enc in self.encoders:
+			enc.train()
+		for dec in self.decoders:
+			dec.train()
+
+
+	def compute_loss(self, x):
+
+		# encode all modalities
+		z = self.encoders[0](torch.cat(x,axis=1))
+		# sample from each z
+		zsample = z.rsample()
+
+
+		zmean = z.mean
+		zstd = z.stddev
+
+		# decode each modality from all z's
+		x_hat = [dec(zsample) for dec in self.decoders]
+
+		# calculate loss
+		loss = 0.0
+		for i in range(self.n_modalities):
+			loss -= torch.sum(torch.mean(x_hat[i].log_prob(x[i]), 1))
+
+
+		# KL divergence to prior
+		loss -= 0.5 * self.beta * torch.sum(torch.mean(1 + torch.log(zstd ** 2) - (zmean ** 2) - (zstd ** 2), 1))
+
+
+		return loss
+
+	def evaluate(self, x):
+
+		metrics = dict()
+		with torch.no_grad():
+
+			# encode all modalities
+			z = self.encoders[0](torch.cat(x,axis=1))
+			# sample from each z
+			zmean = z.mean
+			zstd = z.stddev
+
+			# decode each modality from all z's
+			x_hat = [dec(zmean) for dec in self.decoders]
+
+			# calculate loss
+			loss = 0.0
+			for i in range(self.n_modalities):
+				# evaluate reconstruction of each modality from all data
+				llkey = 'LL%d' % (i+1)
+				msekey = 'MSE%d' % (i+1)
+
+				metrics[llkey] = torch.mean(torch.sum(x_hat[i].log_prob(x[i]), 1)).item()
+				metrics[msekey] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(getPointEstimate(x_hat[i]), x[i]), 1)).item()
+
+				loss -= metrics[llkey]
+
+				# evaluate reconstruction of each modality from one modality
+				y = [xi if j == i else torch.zeros(xi.shape).double().to(self.device) for j, xi in enumerate(x)]
+				zz = self.encoders[0](torch.cat(y, axis=1))
+				zzmean = zz.mean
+				zzstd = zz.stddev
+				xx_hat = [dec(zzmean) for dec in self.decoders]
+
+				for j in range(self.n_modalities):
+					llkey = 'LL%d/%d' % (j+1, i+1)
+					msekey = 'MSE%d/%d' % (j+1, i+1)
+
+					metrics[llkey] = torch.mean(torch.sum(xx_hat[j].log_prob(x[j]), 1)).item()
+					metrics[msekey] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(getPointEstimate(x_hat[j]), x[j]), 1)).item()
+
+
+			metrics['KL'] = -0.5 * self.beta * torch.sum(torch.mean(1 + torch.log(zstd ** 2) - (zmean ** 2) - (zstd ** 2), 1)).item()
+			loss += metrics['KL']
+
+			metrics['loss'] = loss
+
+		return metrics
+
+	def reconstructionPerDataPoint(self, x):
+		metrics = dict()
+		with torch.no_grad():
+			# encode all modalities
+			z = self.encoders[0](torch.cat(x,axis=1))
+			# sample from each z
+			zmean = z.mean
+			zstd = z.stddev
+
+			# decode each modality from all z's
+			x_hat = [dec(zmean) for dec in self.decoders]
+
+			for i in range(self.n_modalities):
+				# evaluate reconstruction of each modality from one modality
+				y = [xi if j == i else torch.zeros(xi.shape).double().to(self.device) for j, xi in enumerate(x)]
+				zz = self.encoders[0](torch.cat(y, axis=1))
+				zzmean = zz.mean
+				zzstd = zz.stddev
+				xx_hat = [dec(zzmean) for dec in self.decoders]
+
+				for j in range(self.n_modalities):
+					llkey = 'LL%d/%d' % (j+1, i+1)
+
+					metrics[llkey] = torch.sum(xx_hat[j].log_prob(x[j]), 1)
+
+
+
+
+		return metrics
+
+
+
+
+
+
+	def encode(self, x):
+		z = self.encoders[0](torch.cat(x,axis=1))
+		return z.mean
+
+	def embedAndReconstruct(self, x):
+		with torch.no_grad():
+			z = self.encode(x)
+
+			x_hat = [dec(z) for dec in self.decoders]
+
+			return z, x_hat
 
 
 
 # Auxiliary network for mutual information estimation
-# change the default to only one hidden layer
-# in the future, make it possible to choose architecture (like OmicsEncoder)
 
 class MIEstimator(FullyConnectedModule):
 	def __init__(self, input_dim, arch, use_batch_norm, dropoutP, lastActivation):
@@ -669,25 +901,67 @@ class MLP(nn.Module):
 		print("[*] Finish training.")
 
 
+class OmicRegressor(ProbabilisticFullyConnectedModule):
+	def __init__(self, input_dim, output_dim, distribution='normal', optimizer_name='Adam', lr=0.0001, n_categories=None):
+		super(OmicRegressor, self).__init__(input_dim, [output_dim], distribution=distribution, use_batch_norm=False, dropoutP=0.0, lastActivation='none', n_categories=n_categories)
+
+		self.opt = init_optimizer(optimizer_name, [
+			{'params': self.parameters(), 'lr': lr},
+		])
+
+	def compute_loss(self, x):
+
+		x0, y0 = x
+		yhat = self.forward(x0)
+		ll = yhat.log_prob(y0)
+
+		loss = - torch.sum(torch.mean(ll, 1))
+
+
+		return loss
+
+	def evaluate(self, x):
+		metrics = dict()
+		with torch.no_grad():
+			x0, y0 = x
+			yhat = self.forward(x0)
+			ll = yhat.log_prob(y0)
+
+			metrics['loss'] = - torch.mean(torch.sum(ll, 1))
+			metrics['MSE'] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(getPointEstimate(yhat), y0), 1)).item()
+
+		return metrics
+
+
+
+
+
+
+
+
 
 
 
 if __name__ == '__main__':
-	#model = MLP(5, 3, 3)
+
 	device = torch.device('cuda:0')
 
-	model = CrossGeneratingVariationalAutoencoder([5, 3, 4], enc_hidden_dim=[2, 2], dec_hidden_dim=[2], likelihoods='normal', use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder_lr=1e-4, decoder_lr=1e-4, enc_distribution='normal', beta=1.0, zconstraintCoef=1.0, crossPenaltyCoef=1.0)
+	#model = ConcatenatedVariationalAutoencoder([5, 3, 4], enc_hidden_dim=[2, 2], dec_hidden_dim=[2], likelihoods=['normal', 'beta', 'categorical'], use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder_lr=1e-4, decoder_lr=1e-4, enc_distribution='normal', beta=1.0, n_categories=[None, None, 5])
+	model = CrossGeneratingVariationalAutoencoder([5, 3, 4], enc_hidden_dim=[2, 2], dec_hidden_dim=[2], likelihoods=['normal', 'beta', 'categorical'], use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder_lr=1e-4, decoder_lr=1e-4, enc_distribution='normal', beta=1.0, n_categories=[None, None, 5])
 	#model = model.double().to(device)
 
 	x1 = torch.rand(20, 5).to(device)
 	x2 = torch.rand(20, 3).to(device)
-	x3 = torch.rand(20, 4).to(device)
+	x3 = torch.randint(0, 5, (20, 4)).to(device)
 
 	x = [x1.double(), x2.double(), x3.double()]
+	#x = [x1.double(), x2.double()]
 
-
+	metrics = model.evaluate(x)
+	print(metrics)
 	model.opt.zero_grad()
 	current_loss = model.compute_loss(x)
 	current_loss.backward()
 	model.opt.step()
-	model.evaluate(x)
+	metrics = model.evaluate(x)
+	print(metrics)

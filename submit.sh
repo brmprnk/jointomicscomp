@@ -7,6 +7,9 @@ DATASETNAME=$3;
 if [ $MODEL == 'cgae' ];
 then
   MODELNAME='CGAE';
+elif [ $MODEL == 'cvae' ];
+then
+  MODELNAME='CVAE';
 elif [ $MODEL == 'poe' ];
 then
   MODELNAME='PoE';
@@ -50,12 +53,12 @@ do
   else
     FIELDS=(${conf//_/ });
     NUMBER=(${FIELDS[1]//./ });
-    RESNAME='train-'$DATASETNAME'-'$MODEL'-'$NUMBER'_'$VIEW1'_'$VIEW2'/'$MODELNAME'/finalValidationLoss.pkl';
+    RESNAME='likelihood-'$DATASETNAME'-'$MODEL'-'$NUMBER'_'$VIEW1'_'$VIEW2'/'$MODELNAME'/finalValidationLoss.pkl';
 
     if [ ! -f $RESPATH$RESNAME ];
     then
       #echo $conf $MODEL;
-      rm -r $RESPATH'train-'$DATASETNAME'-'$MODEL'-'$NUMBER'_'$VIEW1'_'$VIEW2'/';
+      rm -r $RESPATH'likelihood-'$DATASETNAME'-'$MODEL'-'$NUMBER'_'$VIEW1'_'$VIEW2'/';
       sbatch train_joint.sbatch $conf $MODEL;
     else
       echo 'Skipping, result exists: '$conf;

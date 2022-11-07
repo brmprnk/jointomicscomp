@@ -1,0 +1,14 @@
+batch_size: 64
+lr: 0.0001
+epochs: 150
+data_path: /tudelft.net/staff-bulk/ewi/insy/DBL/smakrod/lb/tcga-download/data/datasets/ge-me-cn-2022-04-16/CN.npy
+early_stopping_patience: 10
+labels: /tudelft.net/staff-bulk/ewi/insy/DBL/smakrod/lb/tcga-download/data/datasets/ge-me-cn-2022-04-16/cancerType.npy
+log_save_interval: 10
+num_features1: 5000
+random_seed: 1
+test_ind: /tudelft.net/staff-bulk/ewi/insy/DBL/smakrod/lb/tcga-download/data/datasets/ge-me-cn-2022-04-16/testInd.npy
+train_ind: /tudelft.net/staff-bulk/ewi/insy/DBL/smakrod/lb/tcga-download/data/datasets/ge-me-cn-2022-04-16/trainInd.npy
+val_ind: /tudelft.net/staff-bulk/ewi/insy/DBL/smakrod/lb/tcga-download/data/datasets/ge-me-cn-2022-04-16/validInd.npy
+checkpoint: './type-classifier/CNV/checkpoint'
+log: './type-classifier/CNV/log'

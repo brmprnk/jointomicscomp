@@ -1,5 +1,5 @@
 GLOBAL_PARAMS:
-  name: "train-cite-moe"
+  name: "likelihood-cite-moe"
   task: 0
   num_features1: 5000
   num_features2: 224
@@ -9,8 +9,8 @@ GLOBAL_PARAMS:
   early_stopping_patience: 10 # If set to 0 or <0, early stopping is turned off.
   data1: "RNA"
   data2: "ADT"
-  data_path1: "/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/pbmc_multimodal_RNA_5000MAD.npy"
-  data_path2: "/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/pbmc_multimodal_ADT_5000MAD.npy"
+  data_path1: /tudelft.net/staff-bulk/ewi/insy/DBL/smakrod/lb/tcga-download/data/datasets/ge-me-cn-2022-04-16/RNA.npy
+  data_path2: /tudelft.net/staff-bulk/ewi/insy/DBL/smakrod/lb/tcga-download/data/datasets/ge-me-cn-2022-04-16/ADT.npy
   data_features1: "/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/pbmc_multimodal_RNA_5000MAD_featureNames.npy"
   data_features2: "/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/pbmc_multimodal_ADT_5000MAD_featureNames.npy"
   sample_names: "/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/pbmc_multimodal_RNA_5000MAD_sampleNames.npy"
@@ -19,25 +19,22 @@ GLOBAL_PARAMS:
   train_ind: "/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/task1/trainInd.npy"
   val_ind: "/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/task1/validInd.npy"
   test_ind: "/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/task1/testInd.npy"
+  nomics: 2
 
 
 MoE:
   epochs: 500
   batch_size: 64
   latent_dim: '128-64'
-  enc1_lr: 0.0001
-  dec1_lr: 0.0001
-  enc2_lr: 0.0001
-  dec2_lr: 0.0001
-  loss_function: 'mse'
+  lr: 0.0001
+  likelihood1: 'nb'
+  likelihood2: 'normal'
+  llikescale1: 1.0 
+  llikescale2: 1.0
   train_loader_eval_batch_size: 64
   use_batch_norm: False
   dropout_probability: 0.0
   optimizer: 'Adam'
-  enc1_output_scale: 1.
-  enc2_output_scale: 1.
-  enc1_last_activation: 'none'
-  enc2_last_activation: 'none'
   beta_start_value: 1.
   enc_distribution: 'laplace'
   K: 50

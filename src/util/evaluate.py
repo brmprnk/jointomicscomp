@@ -1,5 +1,7 @@
 from sklearn.metrics import accuracy_score, mean_squared_error, r2_score, precision_recall_fscore_support, \
     matthews_corrcoef, confusion_matrix
+from sklearn.utils import resample
+from sklearn.utils.random import sample_without_replacement
 from scipy.stats import stats
 import numpy as np
 import pandas as pd
@@ -45,15 +47,41 @@ def evaluate_imputation(y_true, y_pred, num_features, criterion='mse', aggregate
     return mse, np.median(correlations), rsquared
 
 
-def evaluate_classification(y_true, y_pred):
-    # returns accuracy, precision, recall, f1, mcc, confusion_matrix
+def evaluate_classification(y_true, y_pred, Nbootstraps=100, bootstrapSeed=1):
+    # returns accuracy, precision, recall, f1, mcc, confusion_matrix and bootstraps
 
+    seeds = sample_without_replacement(n_population=2**32, n_samples=Nbootstraps, random_state=bootstrapSeed, method='auto')
+
+    [acc, pr, rc, f1, mcc, confMat] = calculate_classification_metrics(y_true, y_pred)
+
+    performances = np.zeros((Nbootstraps, 5))
+
+    for i, seed in enumerate(seeds):
+        randomTrue, randomPred = resample(y_true, y_pred, replace=True, random_state=seed)
+        [accR, prR, rcR, f1R, mccR] = calculate_classification_metrics(randomTrue, randomPred)[:5]
+
+        performances[i] = [accR, np.mean(prR), np.mean(rcR), np.mean(f1R), mccR]
+
+    # acc = accuracy_score(y_true, y_pred)
+    # pr, rc, f1, _ = precision_recall_fscore_support(y_true, y_pred)
+    # mcc = matthews_corrcoef(y_true, y_pred)
+    # confMat = confusion_matrix(y_true, y_pred)
+    CIs = np.percentile(performances, [2.5, 97.5], axis=0)
+
+    return [acc, pr, rc, f1, mcc, confMat, CIs]
+
+
+
+def calculate_classification_metrics(y_true, y_pred):
+    # returns accuracy, precision, recall, f1, mcc, confusion_matrix
     acc = accuracy_score(y_true, y_pred)
     pr, rc, f1, _ = precision_recall_fscore_support(y_true, y_pred)
     mcc = matthews_corrcoef(y_true, y_pred)
     confMat = confusion_matrix(y_true, y_pred)
 
     return [acc, pr, rc, f1, mcc, confMat]
+
+
 
 def evaluate_generation(reconstructed1, reconstructed2, datatype1, datatype2):
     if datatype1 == 'RNA' or datatype1 == 'ADT':

@@ -15,9 +15,12 @@ datasets = ['_GE_ME', '_GE_CNV', '_ME_CNV', '_RNA_ADT']
 
 models = ['cgae', 'mvib', 'poe', 'moe']
 modelNames = ['CGAE', 'MVIB', 'PoE', 'MoE']
-nrCombos = {'cgae': 80, 'mvib': 240, 'poe': 80, 'moe': 160}
+nrCombos = {'cgae': 80, 'mvib': 240, 'poe': 80, 'moe': 160, 'cvae':80}
 
-
+models = ['cgae', 'cvae', 'moe', 'poe']
+modelNames = ['CGAE', 'CVAE', 'MoE', 'PoE']
+datasets = ['_GE_ME', '_GE_CNV']
+prefix = ['tcga', 'tcga']
 
 for pr, ds in zip(prefix, datasets):
     print(ds)
@@ -27,7 +30,8 @@ for pr, ds in zip(prefix, datasets):
         bestLoss = np.inf
 
         for i in range(nc):
-            path = resultsDir + 'train-' + pr + '-' + model + '-' + str(i) + ds + '/' + name + '/finalValidationLoss.pkl'
+            #path = resultsDir + 'train-' + pr + '-' + model + '-' + str(i) + ds + '/' + name + '/finalValidationLoss.pkl'
+            path = resultsDir + 'likelihood-' + pr + '-' + model + '-' + str(i) + ds + '/' + name + '/finalValidationLoss.pkl'
 
             try:
                 with open(path, 'rb') as f:
@@ -63,7 +67,7 @@ for pr, ds in zip(prefix, datasets):
             config[name]['clf_criterion'] = 'mcc'
 
         config['GLOBAL_PARAMS']['name'] = 'test' + ds + '_' + model
-        config[name]['pre_trained'] = resultsDir + 'train-' + pr + '-' + model + '-' + str(bestModel) + ds + '/' + name + '/checkpoint/model_epoch' + str(bestEpoch) + '.pth.tar'
+        config[name]['pre_trained'] = resultsDir + 'likelihood-' + pr + '-' + model + '-' + str(bestModel) + ds + '/' + name + '/checkpoint/model_best.pth.tar'
 
 
 

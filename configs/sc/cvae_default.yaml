@@ -1,5 +1,6 @@
 GLOBAL_PARAMS:
-  name: "likelihood-cite-poe"
+  nomics: 2
+  name: "likelihood-cite-cvae"
   task: 0
   num_features1: 5000
   num_features2: 224
@@ -21,18 +22,16 @@ GLOBAL_PARAMS:
   test_ind: "/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/task1/testInd.npy"
   nomics: 2
 
-PoE:
+CVAE:
   epochs: 500
   batch_size: 64
-  latent_dim: '128-64'
-  likelihood1: nb
-  likelihood2: normal
+  latent_dim: '128'
+  lr: 0.0001
+  likelihood1: 'nb'
+  likelihood2: 'normal'
   use_batch_norm: False
   dropout_probability: 0.0
   optimizer: 'Adam'
-  plot: False     # Flag for plotting training and validation losses (loss, recon loss and KL loss)
-  pre_trained: ""
-  lr: 0.0001
+  beta_start_value: 1
+  enc_distribution: 'normal'
   train_loader_eval_batch_size: 64
-  ncat1: -1
-  ncat2: -1

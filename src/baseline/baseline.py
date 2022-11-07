@@ -5,9 +5,95 @@ from sklearn.linear_model import Ridge, SGDClassifier
 from sklearn.decomposition import PCA
 from src.util.evaluate import *
 import src.util.logger as logger
+from src.util.early_stopping import EarlyStopping
 from src.util.umapplotter import UMAPPlotter
 import matplotlib.pyplot as plt
 import seaborn as sns
+from src.nets import OmicRegressor, MLP
+from tensorboardX import SummaryWriter
+from src.CGAE.model import evaluateUsingBatches, MultiOmicsDataset, evaluatePerDatapoint
+from torch.utils.data import DataLoader
+from src.util.trainTypeClassifier import CustomDataset
+
+def trainRegressor(device, net, num_epochs, train_loader, train_loader_eval, valid_loader, ckpt_dir, logs_dir, early_stopping):
+    # Define logger
+    tf_logger = SummaryWriter(logs_dir)
+
+    # Evaluate validation set before start training
+    print("[*] Evaluating epoch 0...")
+    metrics = evaluateUsingBatches(net, device, train_loader_eval, True)
+
+    assert 'loss' in metrics
+    print("--- Training loss:\t%.4f" % metrics['loss'])
+
+    metrics = evaluateUsingBatches(net, device, valid_loader, True)
+    bestValLoss = metrics['loss']
+    bestValEpoch  = 0
+
+    print("--- Validation loss:\t%.4f" % metrics['loss'])
+    print(num_epochs)
+
+    # Start training phase
+    print("[*] Start training...")
+    # Training epochs
+    for epoch in range(num_epochs):
+        net.train()
+
+        print("[*] Epoch %d..." % (epoch + 1))
+        # for param_group in optimizer.param_groups:
+        #	print('--- Current learning rate: ', param_group['lr'])
+
+        for data in train_loader:
+            # Get current batch and transfer to device
+            # data = data.to(device)
+
+            with torch.set_grad_enabled(True):  # no need to specify 'requires_grad' in tensors
+                # Set the parameter gradients to zero
+                net.opt.zero_grad()
+
+                current_loss = net.compute_loss([data[0][0].to(device).double(), data[1][0].to(device).double()])
+
+                # Backward pass and optimize
+                current_loss.backward()
+                net.opt.step()
+
+        # Save last model
+        state = {'epoch': epoch + 1, 'state_dict': net.state_dict()}
+        torch.save(state, ckpt_dir + '/model_last.pth.tar')
+
+        # Evaluate all training set and validation set at epoch
+        print("[*] Evaluating epoch %d..." % (epoch + 1))
+
+        metricsTrain = evaluateUsingBatches(net, device, train_loader_eval, True)
+        print("--- Training loss:\t%.4f" % metricsTrain['loss'])
+
+
+        metricsValidation = evaluateUsingBatches(net, device, valid_loader, True)
+        print("--- Validation loss:\t%.4f" % metricsValidation['loss'])
+
+        if metricsValidation['loss'] < bestValLoss:
+            bestValLoss = metricsValidation['loss']
+            bestValEpoch = epoch + 1
+            torch.save(state, ckpt_dir + '/model_best.pth.tar')
+
+
+        early_stopping(metricsValidation['loss'])
+
+        for m in metricsValidation:
+            tf_logger.add_scalar(m + '/train', metricsTrain[m], epoch + 1)
+            tf_logger.add_scalar(m + '/validation', metricsValidation[m], epoch + 1)
+
+
+        # Stop training when not improving
+        if early_stopping.early_stop:
+            logger.info('Early stopping training since loss did not improve for {} epochs.'
+                        .format(early_stopping.patience))
+            break
+
+    print("[*] Finish training.")
+    return bestValLoss, bestValEpoch
+
+
 
 def impute(x_train, y_train, x_valid, y_valid, x_test, y_test, alphas, num_features, criterion='mse'):
     # returns imputed values as well as evaluation of the imputation based on mse and rsquared
@@ -74,8 +160,77 @@ def classification(x_train, y_train, x_valid, y_valid, x_test, y_test, alphas, c
     bestModel = models[np.argmax(validationPerformance)]
 
     predictions = bestModel.predict(x_test).astype(int)
-    acc, pr, rc, f1, mcc, confMat = evaluate_classification(y_test, predictions)
-    return predictions, acc, pr, rc, f1, mcc, confMat
+    acc, pr, rc, f1, mcc, confMat, CIs = evaluate_classification(y_test, predictions)
+    return predictions, acc, pr, rc, f1, mcc, confMat, CIs
+
+
+
+
+def classificationMLP(x_train, y_train, x_valid, y_valid, x_test, y_test, savedir='./'):
+    # returns the predicted class labels, as well as accuracy measures
+
+
+    trainDataset = CustomDataset(x_train, y_train)
+    validationDataset = CustomDataset(x_valid, y_valid)
+    testDataset = CustomDataset(x_test, y_test)
+
+
+    train_loader = DataLoader(trainDataset, batch_size=64, shuffle=True, num_workers=0, drop_last=False)
+
+    valid_loader = DataLoader(validationDataset, batch_size=64, shuffle=False, num_workers=0, drop_last=False)
+
+    test_loader = DataLoader(testDataset, batch_size=64, shuffle=False, num_workers=0, drop_last=False)
+
+    logger.info('defining model with %d classes' % np.unique(y_train).shape[0])
+    model = MLP(x_train.shape[1], 64, np.unique(y_train).shape[0])
+    model = model.double()
+
+    device = torch.device('cuda:0')
+    model = model.to(device)
+
+    # logger.success('Model ok')
+
+    early_stopping = EarlyStopping(patience=10, verbose=True)
+
+    checkpoint_dir = savedir + 'checkpoint/'
+    log_dir = savedir + 'logs/'
+
+    if not os.path.exists(checkpoint_dir):
+        os.makedirs(checkpoint_dir)
+
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+
+
+    model.optimize(150, 0.0001, train_loader, valid_loader, checkpoint_dir, log_dir, early_stopping)
+
+    checkpoint = torch.load(savedir + 'checkpoint/model_best.pth.tar')
+    model.load_state_dict(checkpoint['state_dict'])
+
+    ypred_test = np.zeros((y_test.shape[0],), int)
+
+    model.eval()
+    with torch.no_grad():
+        testLoss = 0.
+
+        loss_fun = torch.nn.CrossEntropyLoss()
+
+        i = 0
+        b = 64
+        for x, y in test_loader:
+            y_pred = model.forward(x[0].double().to(device))
+
+            ypred_test[i:i+b] = torch.argmax(y_pred, dim=1).cpu().detach().numpy()
+            testLoss += loss_fun(y_pred, y[0].to(device)).item() * x[0].shape[0]
+
+            i += b
+
+        testLoss /= len(train_loader.dataset)
+
+
+    acc, pr, rc, f1, mcc, confMat, CIs = evaluate_classification(y_test, ypred_test)
+    return ypred_test, acc, pr, rc, f1, mcc, confMat, CIs
+
 
 
 def run_baseline(args: dict) -> None:
@@ -88,35 +243,62 @@ def run_baseline(args: dict) -> None:
     save_dir = os.path.join(args['save_dir'], '{}'.format('baseline'))
     os.makedirs(save_dir)
 
-    alphas = np.array([1e-4, 1e-3, 1e-2, 1e-1, 0.5, 1.0, 2.0, 5.0, 10., 20.])
+    device = torch.device('cuda') if torch.cuda.is_available() and args['cuda'] else torch.device('cpu')
+    logger.info("Selected device: {}".format(device))
+    torch.manual_seed(args['random_seed'])
 
+    ckpt_dir = save_dir + '/checkpoint'
+    if not os.path.exists(ckpt_dir):
+        os.makedirs(ckpt_dir)
+    logs_dir = save_dir + '/logs'
+
+
+
+    n_modalities = args['nomics']
+    assert n_modalities == 2
 
     # Load in data
-    omic1 = np.load(args['data_path1']).astype(np.float32)
-    omic2 = np.load(args['data_path2']).astype(np.float32)
+    omics = [np.load(args['data_path%d' % (i+1)]) for i in range(n_modalities)]
 
-    classLabels = np.load(args['labels'])
-    labelNames = np.load(args['labelnames'])
-
+    labels = np.load(args['labels'])
+    labeltypes = np.load(args['labelnames'], allow_pickle=True)
 
     # Use predefined split
     train_ind = np.load(args['train_ind'])
     val_ind = np.load(args['val_ind'])
     test_ind = np.load(args['test_ind'])
 
-    # load features (raw GE/ME/etc or VAE embeddings) from K data sources, N tumors, F features
-    # a pickle file with a list of length K, each element containing a N x F npy array
-    omic1_train_file = omic1[train_ind]
-    omic1_valid_file = omic1[val_ind]
-    omic1_test_file = omic1[test_ind]
+    omics_train = [omic[train_ind] for omic in omics]
+    omics_val = [omic[val_ind] for omic in omics]
+    omics_test = [omic[test_ind] for omic in omics]
 
-    omic2_train_file = omic2[train_ind]
-    omic2_valid_file = omic2[val_ind]
-    omic2_test_file = omic2[test_ind]
+    ytrain = labels[train_ind]
+    yvalid = labels[val_ind]
+    ytest = labels[test_ind]
 
-    ytrain = classLabels[train_ind]
-    yvalid = classLabels[val_ind]
-    ytest = classLabels[test_ind]
+    # Number of features
+    input_dims = [args['num_features%d' % (i+1)] for i in range(n_modalities)]
+
+    likelihoods = [args['likelihood%d' % (i+1)] for i in range(n_modalities)]
+
+
+    # Initialize network model
+    if 'categorical' not in likelihoods:
+        net2from1 = OmicRegressor(input_dims[0], input_dims[1], distribution=likelihoods[1], optimizer_name=args['optimizer'], lr=args['lr'])
+        net2from1 = net2from1.to(device).double()
+
+        net1from2 = OmicRegressor(input_dims[1], input_dims[0], distribution=likelihoods[0], optimizer_name=args['optimizer'], lr=args['lr'])
+        net1from2 = net1from2.to(device).double()
+
+
+    else:
+        n_categories = [args['n_categories%d' % (i+1)] for i in range(n_modalities)]
+
+        net2from1 = OmicRegressor(input_dims[0], input_dims[1], distribution=likelihoods[1], optimizer_name=args['optimizer'], lr=args['lr'], n_categories=n_categories[1])
+        net2from1 = net2from1.to(device).double()
+
+        net1from2 = OmicRegressor(input_dims[1], input_dims[0], distribution=likelihoods[0], optimizer_name=args['optimizer'], lr=args['lr'], n_categories=n_categories[0])
+        net1from2 = net1from2.to(device).double()
 
 
     logger.info("Succesfully loaded in all data")
@@ -124,47 +306,157 @@ def run_baseline(args: dict) -> None:
         logger.success("Running baseline for task {} with data from 1: {} and 2: {}".format(args['task'], args['data1'],
                                                                                             args['data2']))
 
-        NR_MODALITIES = 2
+        # modality 2 from 1
+        dataTrain = [torch.tensor(omic, device=device) for omic in omics_train]
 
-        # mse[i,j]: performance of using modality i to predict modality j
-        mse = np.zeros((NR_MODALITIES, NR_MODALITIES), float)
-        rsquared = np.eye(NR_MODALITIES)
-        spearman = np.zeros((NR_MODALITIES, NR_MODALITIES), float)  # ,2 since we report mean and median
-        spearman_p = np.zeros((NR_MODALITIES, NR_MODALITIES), float)
+        dataValidation = [torch.tensor(omic, device=device) for omic in omics_val]
 
-        # From x to y
-        omic2_from_omic1, mse[0, 1], spearman[0, 1], rsquared[0, 1] = impute(omic1_train_file, omic2_train_file, omic1_valid_file, omic2_valid_file, omic1_test_file, omic2_test_file, alphas, args['num_features2'], 'mse')
-        # From y to x
-        omic1_from_omic2, mse[1, 0], spearman[1, 0], rsquared[1, 0] = impute(omic2_train_file, omic1_train_file, omic2_valid_file, omic1_valid_file, omic2_test_file, omic1_test_file, alphas, args['num_features1'], 'mse')
+        dataTest = [torch.tensor(omic, device=device) for omic in omics_test]
 
-        performance = {'mse': mse, 'rsquared': rsquared, 'spearman_corr': spearman, 'spearman_p': spearman_p}
+        datasetTrain = MultiOmicsDataset(dataTrain)
+        datasetValidation = MultiOmicsDataset(dataValidation)
+        datasetTest = MultiOmicsDataset(dataTest)
 
-        logger.info('Test performance, imputation error, modality 1')
-        logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse[1, 0], spearman[1,0], rsquared[1,0]))
+        try:
+            validationEvalBatchSize = args['train_loader_eval_batch_size']
+            trainEvalBatchSize = args['train_loader_eval_batch_size']
+        except KeyError:
+            validationEvalBatchSize = dataValidation[0].shape[0]
+            trainEvalBatchSize = dataTrain[0].shape[0]
 
-        logger.info('Test performance, imputation error, modality 2')
-        logger.info('MSE: %.4f\tSpearman: %.4f\tR^2: %.4f' % (mse[0, 1], spearman[0,1], rsquared[0,1]))
+
+        train_loader = DataLoader(datasetTrain, batch_size=args['batch_size'], shuffle=True, num_workers=0,
+                                  drop_last=False)
+
+        train_loader_eval = DataLoader(datasetTrain, batch_size=trainEvalBatchSize, shuffle=False, num_workers=0,
+                                       drop_last=False)
+
+        valid_loader = DataLoader(datasetValidation, batch_size=validationEvalBatchSize, shuffle=False, num_workers=0,
+                                  drop_last=False)
+
+        test_loader = DataLoader(datasetTest, batch_size=validationEvalBatchSize, shuffle=False, num_workers=0,
+                                  drop_last=False)
+
+        test_loader_individual = DataLoader(datasetTest, batch_size=1, shuffle=False, num_workers=0,
+                                  drop_last=False)
+
+
+        early_stopping = EarlyStopping(patience=args['early_stopping_patience'], verbose=True)
+
+        bestLoss, bestEpoch = trainRegressor(device=device, net=net2from1, num_epochs=args['epochs'], train_loader=train_loader,
+              train_loader_eval=train_loader_eval, valid_loader=valid_loader,
+              ckpt_dir=ckpt_dir, logs_dir=logs_dir, early_stopping=early_stopping)
+
+
+        logger.info("Using model from epoch %d" % bestEpoch)
+
+        checkpoint = torch.load(ckpt_dir + '/model_best.pth.tar')
+
+        net2from1.load_state_dict(checkpoint['state_dict'])
+
+
+        metricsValidation = evaluateUsingBatches(net2from1, device, valid_loader, True)
+        metricsTest = evaluateUsingBatches(net2from1, device, test_loader, True)
+
+        logger.info('Validation performance, imputation error modality 2 from 1')
+        for m in metricsValidation:
+            logger.info('%s\t%.4f' % (m, metricsValidation[m]))
+
+        logger.info('Test performance, imputation error modality 2 from 1')
+        for m in metricsTest:
+            logger.info('%s\t%.4f' % (m, metricsTest[m]))
+
+        metricsTestIndividual2from1 = evaluatePerDatapoint(net2from1, device, test_loader_individual, True)
+
+
+        # modality 1 from 2
+        dataTrain = [torch.tensor(omic, device=device) for omic in omics_train[::-1]]
+        dataValidation = [torch.tensor(omic, device=device) for omic in omics_val[::-1]]
+        dataTest = [torch.tensor(omic, device=device) for omic in omics_test[::-1]]
+
+        datasetTrain = MultiOmicsDataset(dataTrain)
+        datasetValidation = MultiOmicsDataset(dataValidation)
+        datasetTest = MultiOmicsDataset(dataTest)
+
+        try:
+            validationEvalBatchSize = args['train_loader_eval_batch_size']
+            trainEvalBatchSize = args['train_loader_eval_batch_size']
+        except KeyError:
+            validationEvalBatchSize = dataValidation[0].shape[0]
+            trainEvalBatchSize = dataTrain[0].shape[0]
+
+
+        train_loader = DataLoader(datasetTrain, batch_size=args['batch_size'], shuffle=True, num_workers=0,
+                                  drop_last=False)
+
+        train_loader_eval = DataLoader(datasetTrain, batch_size=trainEvalBatchSize, shuffle=False, num_workers=0,
+                                       drop_last=False)
+
+        valid_loader = DataLoader(datasetValidation, batch_size=validationEvalBatchSize, shuffle=False, num_workers=0,
+                                  drop_last=False)
+
+        test_loader = DataLoader(datasetTest, batch_size=validationEvalBatchSize, shuffle=False, num_workers=0,
+                                  drop_last=False)
+
+        test_loader_individual = DataLoader(datasetTest, batch_size=1, shuffle=False, num_workers=0,
+                                  drop_last=False)
+
+
+        early_stopping = EarlyStopping(patience=args['early_stopping_patience'], verbose=True)
+
+        bestLoss, bestEpoch = trainRegressor(device=device, net=net1from2, num_epochs=args['epochs'], train_loader=train_loader,
+              train_loader_eval=train_loader_eval, valid_loader=valid_loader,
+              ckpt_dir=ckpt_dir, logs_dir=logs_dir, early_stopping=early_stopping)
+
+
+        logger.info("Using model from epoch %d" % bestEpoch)
+
+        checkpoint = torch.load(ckpt_dir + '/model_best.pth.tar')
+
+        net1from2.load_state_dict(checkpoint['state_dict'])
+
+
+        metricsValidation = evaluateUsingBatches(net1from2, device, valid_loader, True)
+        metricsTest = evaluateUsingBatches(net1from2, device, test_loader, True)
+
+        logger.info('Validation performance, imputation error modality 1 from 2')
+        for m in metricsValidation:
+            logger.info('%s\t%.4f' % (m, metricsValidation[m]))
+
+        logger.info('Test performance, imputation error modality 1 from 2')
+        for m in metricsTest:
+            logger.info('%s\t%.4f' % (m, metricsTest[m]))
+
+        metricsTestIndividual1from2 = evaluatePerDatapoint(net1from2, device, test_loader_individual, True)
+
+        with open(os.path.join(save_dir, args['name'] + 'test_performance_per_datapoint.pkl'), 'wb') as f:
+            pickle.dump({'1from2': metricsTestIndividual1from2, '2from1': metricsTestIndividual2from1}, f)
+
+
+        performance = {'imputation_val': metricsValidation, 'imputation_test': metricsTest}
+
 
 
     # also classify
     if args['task'] > 1:
-
+        alphas = np.array([1e-4, 1e-3, 1e-2, 0.1, 0.5, 1.0, 2.0, 5.0, 10., 20.])
         Nclasses = np.unique(ytrain).shape[0]
+        print(Nclasses)
 
 
         pca1 = PCA(n_components=32, whiten=False, svd_solver='full')
-        pca1.fit(omic1_train_file)
+        pca1.fit(omics_train[0])
 
-        X1train = pca1.transform(omic1_train_file)
-        X1valid = pca1.transform(omic1_valid_file)
-        X1test = pca1.transform(omic1_test_file)
+        X1train = pca1.transform(omics_train[0])
+        X1valid = pca1.transform(omics_val[0])
+        X1test = pca1.transform(omics_test[0])
 
         pca2 = PCA(n_components=32, whiten=False, svd_solver='full')
-        pca2.fit(omic2_train_file)
+        pca2.fit(omics_train[1])
 
-        X2train = pca2.transform(omic2_train_file)
-        X2valid = pca2.transform(omic2_valid_file)
-        X2test = pca2.transform(omic2_test_file)
+        X2train = pca2.transform(omics_train[1])
+        X2valid = pca2.transform(omics_val[1])
+        X2test = pca2.transform(omics_test[1])
 
 
         Xtrain = np.hstack((X1train, X2train))
@@ -173,29 +465,118 @@ def run_baseline(args: dict) -> None:
 
         assert Xtrain.shape[1] == Xtest.shape[1]
         # assert x_train.shape[1] == 50 * len(omic1_train_file)
+        print('Train: %d samples, %d labels' % (ytrain.shape[0], np.unique(ytrain).shape[0]))
+        print('Valid: %d samples, %d labels' % (yvalid.shape[0], np.unique(yvalid).shape[0]))
+        print('Test: %d samples, %d labels' % (ytest.shape[0], np.unique(ytest).shape[0]))
 
-        _, acc, pr, rc, f1, mcc, confMat = classification(X1train, ytrain, X1valid, yvalid, X1test, ytest, alphas, args['clf_criterion'])
+        _, acc, pr, rc, f1, mcc, confMat, CIs = classification(X1train, ytrain, X1valid, yvalid, X1test, ytest, alphas, args['clf_criterion'])
 
         logger.info('Test performance, classification task, modality 1')
         logger.info('ACC: %.4f\tPR: %.4f\tRC: %.4f\tF1: %.4f\tMCC: %.4f' % (acc, np.mean(pr), np.mean(rc), np.mean(f1), mcc))
-        performanceClf1 = {'acc': acc, 'precision': pr, 'recall': rc, 'f1': f1, 'mcc': mcc, 'confMat': confMat}
+        performanceClf1 = {'acc': acc, 'precision': pr, 'recall': rc, 'f1': f1, 'mcc': mcc, 'confMat': confMat, 'CIs': CIs}
 
-        _, acc, pr, rc, f1, mcc, confMat = classification(X2train, ytrain, X2valid, yvalid, X2test, ytest, alphas, args['clf_criterion'])
+        print('Precision: %d' % pr.shape[0])
+        print('Recall: %d' % rc.shape[0])
+        print('F1: %d' % f1.shape[0])
+        print('')
+
+        print('Train: %d samples, %d labels' % (ytrain.shape[0], np.unique(ytrain).shape[0]))
+        print('Valid: %d samples, %d labels' % (yvalid.shape[0], np.unique(yvalid).shape[0]))
+        print('Test: %d samples, %d labels' % (ytest.shape[0], np.unique(ytest).shape[0]))
+
+        _, acc, pr, rc, f1, mcc, confMat, CIs = classification(X2train, ytrain, X2valid, yvalid, X2test, ytest, alphas, args['clf_criterion'])
 
         logger.info('Test performance, classification task, modality 2')
         logger.info('ACC: %.4f\tPR: %.4f\tRC: %.4f\tF1: %.4f\tMCC: %.4f' % (acc, np.mean(pr), np.mean(rc), np.mean(f1), mcc))
+        performanceClf2 = {'acc': acc, 'precision': pr, 'recall': rc, 'f1': f1, 'mcc': mcc, 'confMat': confMat, 'CIs': CIs}
 
-        performanceClf2 = {'acc': acc, 'precision': pr, 'recall': rc, 'f1': f1, 'mcc': mcc, 'confMat': confMat}
-        _, acc, pr, rc, f1, mcc, confMat = classification(Xtrain, ytrain, Xvalid, yvalid, Xtest, ytest, alphas, args['clf_criterion'])
+        print('Precision: %d' % pr.shape[0])
+        print('Recall: %d' % rc.shape[0])
+        print('F1: %d' % f1.shape[0])
+        print('')
 
-        performanceClf12 = {'acc': acc, 'precision': pr, 'recall': rc, 'f1': f1, 'mcc': mcc, 'confMat': confMat}
+
+        print('Train: %d samples, %d labels' % (ytrain.shape[0], np.unique(ytrain).shape[0]))
+        print('Valid: %d samples, %d labels' % (yvalid.shape[0], np.unique(yvalid).shape[0]))
+        print('Test: %d samples, %d labels' % (ytest.shape[0], np.unique(ytest).shape[0]))
+
+        _, acc, pr, rc, f1, mcc, confMat, CIs = classification(Xtrain, ytrain, Xvalid, yvalid, Xtest, ytest, alphas, args['clf_criterion'])
+
+        performanceClf12 = {'acc': acc, 'precision': pr, 'recall': rc, 'f1': f1, 'mcc': mcc, 'confMat': confMat, 'CIs': CIs}
 
         logger.info('Test performance, classification task, both modalities')
         logger.info('ACC: %.4f\tPR: %.4f\tRC: %.4f\tF1: %.4f\tMCC: %.4f' % (acc, np.mean(pr), np.mean(rc), np.mean(f1), mcc))
+        print('Precision: %d' % pr.shape[0])
+        print('Recall: %d' % rc.shape[0])
+        print('F1: %d' % f1.shape[0])
+        print('')
+
 
         performance['omic1'] = performanceClf1
         performance['omic2'] = performanceClf2
         performance['omic1+2'] = performanceClf12
 
-    with open(os.path.join(save_dir, args['name'] + 'results_pickle'), 'wb') as f:
-        pickle.dump(performance, f)
+
+        # MLP
+
+        if 'level' in args:
+            level = args['level']
+            assert level == 'l3'
+        else:
+            level = 'l2'
+
+        print('Train: %d samples, %d labels' % (ytrain.shape[0], np.unique(ytrain).shape[0]))
+        print('Valid: %d samples, %d labels' % (yvalid.shape[0], np.unique(yvalid).shape[0]))
+        print('Test: %d samples, %d labels' % (ytest.shape[0], np.unique(ytest).shape[0]))
+
+
+        _, acc, pr, rc, f1, mcc, confMat, CIs = classificationMLP(X1train, ytrain, X1valid, yvalid, X1test, ytest, 'type-classifier/eval/' + level + '/baseline_' + args['data1'] + '/')
+
+        logger.info('Test performance, classification task, modality 1')
+        logger.info('ACC: %.4f\tPR: %.4f\tRC: %.4f\tF1: %.4f\tMCC: %.4f' % (acc, np.mean(pr), np.mean(rc), np.mean(f1), mcc))
+        performanceClf1 = {'acc': acc, 'precision': pr, 'recall': rc, 'f1': f1, 'mcc': mcc, 'confMat': confMat, 'CIs': CIs}
+        print('Precision: %d' % pr.shape[0])
+        print('Recall: %d' % rc.shape[0])
+        print('F1: %d' % f1.shape[0])
+        print('')
+
+
+        print('Train: %d samples, %d labels' % (ytrain.shape[0], np.unique(ytrain).shape[0]))
+        print('Valid: %d samples, %d labels' % (yvalid.shape[0], np.unique(yvalid).shape[0]))
+        print('Test: %d samples, %d labels' % (ytest.shape[0], np.unique(ytest).shape[0]))
+
+        _, acc, pr, rc, f1, mcc, confMat, CIs = classificationMLP(X2train, ytrain, X2valid, yvalid, X2test, ytest, 'type-classifier/eval/' + level + '/baseline_' + args['data2'] + '/')
+
+        logger.info('Test performance, classification task, modality 2')
+        logger.info('ACC: %.4f\tPR: %.4f\tRC: %.4f\tF1: %.4f\tMCC: %.4f' % (acc, np.mean(pr), np.mean(rc), np.mean(f1), mcc))
+        performanceClf2 = {'acc': acc, 'precision': pr, 'recall': rc, 'f1': f1, 'mcc': mcc, 'confMat': confMat, 'CIs': CIs}
+        print('Precision: %d' % pr.shape[0])
+        print('Recall: %d' % rc.shape[0])
+        print('F1: %d' % f1.shape[0])
+        print('')
+
+
+        print('Train: %d samples, %d labels' % (ytrain.shape[0], np.unique(ytrain).shape[0]))
+        print('Valid: %d samples, %d labels' % (yvalid.shape[0], np.unique(yvalid).shape[0]))
+        print('Test: %d samples, %d labels' % (ytest.shape[0], np.unique(ytest).shape[0]))
+
+        _, acc, pr, rc, f1, mcc, confMat, CIs = classificationMLP(Xtrain, ytrain, Xvalid, yvalid, Xtest, ytest, 'type-classifier/eval/' + level + '/baseline_' + args['data1'] + '_' + args['data2'] + '/')
+
+        performanceClf12 = {'acc': acc, 'precision': pr, 'recall': rc, 'f1': f1, 'mcc': mcc, 'confMat': confMat, 'CIs': CIs}
+
+        logger.info('Test performance, classification task, both modalities')
+        logger.info('ACC: %.4f\tPR: %.4f\tRC: %.4f\tF1: %.4f\tMCC: %.4f' % (acc, np.mean(pr), np.mean(rc), np.mean(f1), mcc))
+        print('Precision: %d' % pr.shape[0])
+        print('Recall: %d' % rc.shape[0])
+        print('F1: %d' % f1.shape[0])
+        print('')
+
+
+        performance['mlp_omic1'] = performanceClf1
+        performance['mlp_omic2'] = performanceClf2
+        performance['mlp_omic1+2'] = performanceClf12
+
+
+
+    # with open(os.path.join(save_dir, args['name'] + 'results_pickle'), 'wb') as f:
+    #     pickle.dump(performance, f)

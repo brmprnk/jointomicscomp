@@ -1,0 +1,33 @@
+GLOBAL_PARAMS:
+  cuda: true
+  data1: ME
+  data2: CNV
+  data_features1: /tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/ME_featureNames.npy
+  data_features2: /tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/GCN_featureNames.npy
+  data_path1: /tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/ME.npy
+  data_path2: /tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/GCN.npy
+  early_stopping_patience: 10
+  labelnames: /tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/cancerTypes.npy
+  labels: /tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/cancerType.npy
+  log_save_interval: 10
+  name: test_ME_CNV_poe
+  num_features1: 5000
+  num_features2: 5000
+  random_seed: 1
+  sample_names: /tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/sampleNames.npy
+  task: 1
+  test_ind: /tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/task1/testInd.npy
+  train_ind: /tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/task1/trainInd.npy
+  val_ind: /tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/task1/validInd.npy
+PoE:
+  batch_size: 64
+  clf_criterion: acc
+  dropout_probability: 0.0
+  epochs: 500
+  latent_dim: '64'
+  loss_function: mse
+  lr: 0.001
+  optimizer: Adam
+  plot: false
+  pre_trained: /tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/results/train-tcga-poe-51_ME_CNV/PoE/checkpoint/model_epoch30.pth.tar
+  use_batch_norm: true
