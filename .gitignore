@@ -165,7 +165,26 @@ configs/sc/*.yaml
 !configs/tcga/MECNV/*.py
 !configs/sc/*_default.yaml
 
+type-classifier/*
+!type-classifier/*/checkpoint/model_best.pth.tar
+
 # random stuff
 deleteme.txt
 train-log.txt
+
+# mofa intermediate files
+src/MOFA2/*.tsv
+src/MOFA2/*.pkl
+src/MOFA2/imputation*/*
+
+# MCIA files
+src/MCIA/mcia.R~
+src/MCIA/*.csv
+
+
+figures/*
+embeddings/*
+eval-tcga/*
+TF_activity.tab
+
 

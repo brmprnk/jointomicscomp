@@ -168,8 +168,13 @@ if not os.path.exists(ckpt_dir):
 logs_dir = save_dir + '/logs'
 
 
-dataTrain = [torch.tensor(ztrain, device=device), torch.tensor(X1train, device=device)]
-dataValidation = [torch.tensor(embDict['zvalidation'][1], device=device), torch.tensor(X1valid, device=device)]
+#some times inferences of zs goes wrong and values become huge. remove those samples
+dataTrain = [torch.tensor(ztrain, device=device), torch.tensor(X2train, device=device)]
+
+norm = np.sum(embDict['zvalidation'][1] ** 2, axis=1)
+ii = np.where(norm < 50)[0]
+dataValidation = [torch.tensor(embDict['zvalidation'][1][ii], device=device), torch.tensor(X1valid[ii], device=device)]
+
 dataTest = [torch.tensor(embDict['ztest'][1], device=device), torch.tensor(X1test, device=device)]
 
 datasetTrain = MultiOmicsDataset(dataTrain)
