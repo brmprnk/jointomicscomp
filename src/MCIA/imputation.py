@@ -215,11 +215,11 @@ net1from2.load_state_dict(checkpoint['state_dict'])
 metricsValidation = evaluateUsingBatches(net1from2, device, valid_loader, True)
 metricsTest = evaluateUsingBatches(net1from2, device, test_loader, True)
 
-logger.info('Validation performance, imputation error modality 2 from 1')
+logger.info('Validation performance, imputation error modality 1 from 2')
 for m in metricsValidation:
     logger.info('%s\t%.4f' % (m, metricsValidation[m]))
 
-logger.info('Test performance, imputation error modality 2 from 1')
+logger.info('Test performance, imputation error modality 1 from 2')
 for m in metricsTest:
     logger.info('%s\t%.4f' % (m, metricsTest[m]))
 

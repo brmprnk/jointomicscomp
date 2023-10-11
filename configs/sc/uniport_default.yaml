@@ -1,0 +1,33 @@
+GLOBAL_PARAMS:
+  nomics: 2
+  name: "cite-uniport"
+  task: 0
+  num_features1: 5000
+  num_features2: 217
+  cuda: true
+  random_seed: 1
+  log_save_interval: 10
+  early_stopping_patience: 10 # If set to 0 or <0, early stopping is turned off.
+  data1: "RNA"
+  data2: "ADT"
+  data_path1: /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/RNA.npy
+  data_path2: /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/ADT.npy
+  data_features1: /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/featureNamesRNA.npy
+  data_features2: /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/featureNamesADT.npy
+  labels: /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/celltype_l3.npy
+  labelnames: /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/celltypes_l3.npy
+  sample_names: /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/sampleNames.npy
+  train_ind: /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/trainInd.npy
+  val_ind: /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/validInd.npy
+  test_ind:  /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/testInd.npy
+UNIPORT:
+  epochs: 500
+  batch_size: 64
+  latent_dim: '256-128-32'
+  lr: 0.0001
+  likelihood1: 'nb'
+  likelihood2: 'nbm'
+  use_batch_norm: False
+  dropout_probability: 0.0
+  optimizer: 'Adam'
+  enc_distribution: 'normal'

@@ -1,0 +1,491 @@
+0.05
+
+        #########################################################
+        ###           __  __  ____  ______                    ### 
+        ###          |  \/  |/ __ \|  ____/\    _             ### 
+        ###          | \  / | |  | | |__ /  \ _| |_           ### 
+        ###          | |\/| | |  | |  __/ /\ \_   _|          ###
+        ###          | |  | | |__| | | / ____ \|_|            ###
+        ###          |_|  |_|\____/|_|/_/    \_\              ###
+        ###                                                   ### 
+        ######################################################### 
+       
+ 
+        
+use_float32 set to True: replacing float64 arrays by float32 arrays to speed up computations...
+
+View names not provided, using default naming convention:
+- view1, view2, ..., viewM
+
+Features names not provided, using default naming convention:
+- feature1_view1, featureD_viewM
+
+Groups names not provided, using default naming convention:
+- group1, group2, ..., groupG
+
+Samples names not provided, using default naming convention:
+- sample1_group1, sample2_group1, sample1_group2, ..., sampleN_groupG
+
+Successfully loaded view='view0' group='group0' with N=5886 samples and D=5000 features...
+Successfully loaded view='view1' group='group0' with N=5886 samples and D=217 features...
+
+
+Warning: 377 features(s) in view 0 have zero variance, consider removing them before training the model...
+
+Model options:
+- Automatic Relevance Determination prior on the factors: False
+- Automatic Relevance Determination prior on the weights: True
+- Spike-and-slab prior on the factors: False
+- Spike-and-slab prior on the weights: False
+Likelihoods:
+- View 0 (view0): gaussian
+- View 1 (view1): gaussian
+
+
+
+GPU mode is activated
+
+
+
+######################################
+## Training the model with seed 42 ##
+######################################
+
+
+ELBO before training: -307976581.29 
+
+Iteration 1: time=7.12, ELBO=18130561.18, deltaELBO=326107142.465 (105.88699345%), Factors=15
+Iteration 2: time=2.49, ELBO=34969696.81, deltaELBO=16839135.634 (5.46766756%), Factors=15
+Iteration 3: time=2.53, ELBO=39568902.67, deltaELBO=4599205.855 (1.49336220%), Factors=15
+Iteration 4: time=2.52, ELBO=39787424.77, deltaELBO=218522.101 (0.07095413%), Factors=15
+Iteration 5: time=2.51, ELBO=39834119.81, deltaELBO=46695.046 (0.01516188%), Factors=15
+Iteration 6: time=2.53, ELBO=39854211.82, deltaELBO=20092.004 (0.00652387%), Factors=15
+Iteration 7: time=2.54, ELBO=39863327.09, deltaELBO=9115.276 (0.00295973%), Factors=15
+Iteration 8: time=2.50, ELBO=39869297.46, deltaELBO=5970.363 (0.00193858%), Factors=15
+Iteration 9: time=2.51, ELBO=39874534.47, deltaELBO=5237.010 (0.00170046%), Factors=15
+Iteration 10: time=2.49, ELBO=39879622.81, deltaELBO=5088.340 (0.00165218%), Factors=15
+Attempting to save the model at the current iteration...
+Saving model in /tmp/mofa_20230816-083303_interrupted.hdf5...
+Traceback (most recent call last):
+  File "/home/nfs/stavrosmakrodi/mambaforge/envs/mofa_env_gpu/lib/python3.11/site-packages/mofapy2/run/entry_point.py", line 49, in saver
+    func(self, *args, **kwargs)
+  File "/home/nfs/stavrosmakrodi/mambaforge/envs/mofa_env_gpu/lib/python3.11/site-packages/mofapy2/run/entry_point.py", line 1020, in run
+    train_model(self.model)
+  File "/home/nfs/stavrosmakrodi/mambaforge/envs/mofa_env_gpu/lib/python3.11/site-packages/mofapy2/build_model/train_model.py", line 28, in train_model
+    model.iterate()
+  File "/home/nfs/stavrosmakrodi/mambaforge/envs/mofa_env_gpu/lib/python3.11/site-packages/mofapy2/core/BayesNet.py", line 299, in iterate
+    self.train_stats = { 'time':iter_time, 'number_factors':number_factors, 'elbo':elbo["total"].values, 'elbo_terms':elbo.drop("total",1) }
+                                                                                                                      ^^^^^^^^^^^^^^^^^^^^
+TypeError: DataFrame.drop() takes from 1 to 2 positional arguments but 3 were given
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/src/MOFA2/timeMOFA.py", line 52, in <module>
+    ent.run()
+  File "/home/nfs/stavrosmakrodi/mambaforge/envs/mofa_env_gpu/lib/python3.11/site-packages/mofapy2/run/entry_point.py", line 59, in saver
+    self.save(outfile=tmp_file)
+  File "/home/nfs/stavrosmakrodi/mambaforge/envs/mofa_env_gpu/lib/python3.11/site-packages/mofapy2/run/entry_point.py", line 1266, in save
+    tmp.saveTrainOptions()
+  File "/home/nfs/stavrosmakrodi/mambaforge/envs/mofa_env_gpu/lib/python3.11/site-packages/mofapy2/build_model/save_model.py", line 483, in saveTrainOptions
+    self.hdf5.create_dataset("training_opts", data=np.array(list(opts.values()), dtype=np.float))
+                                                                                       ^^^^^^^^
+  File "/home/nfs/stavrosmakrodi/mambaforge/envs/mofa_env_gpu/lib/python3.11/site-packages/numpy/__init__.py", line 319, in __getattr__
+    raise AttributeError(__former_attrs__[attr])
+AttributeError: module 'numpy' has no attribute 'float'.
+`np.float` was a deprecated alias for the builtin `float`. To avoid this error in existing code, use `float` by itself. Doing this will not modify any behavior and is safe. If you specifically wanted the numpy scalar type, use `np.float64` here.
+The aliases was originally deprecated in NumPy 1.20; for more details and guidance see the original release note at:
+    https://numpy.org/devdocs/release/1.20.0-notes.html#deprecations. Did you mean: 'cfloat'?
+##################################################################################
+0.1
+
+        #########################################################
+        ###           __  __  ____  ______                    ### 
+        ###          |  \/  |/ __ \|  ____/\    _             ### 
+        ###          | \  / | |  | | |__ /  \ _| |_           ### 
+        ###          | |\/| | |  | |  __/ /\ \_   _|          ###
+        ###          | |  | | |__| | | / ____ \|_|            ###
+        ###          |_|  |_|\____/|_|/_/    \_\              ###
+        ###                                                   ### 
+        ######################################################### 
+       
+ 
+        
+use_float32 set to True: replacing float64 arrays by float32 arrays to speed up computations...
+
+View names not provided, using default naming convention:
+- view1, view2, ..., viewM
+
+Features names not provided, using default naming convention:
+- feature1_view1, featureD_viewM
+
+Groups names not provided, using default naming convention:
+- group1, group2, ..., groupG
+
+Samples names not provided, using default naming convention:
+- sample1_group1, sample2_group1, sample1_group2, ..., sampleN_groupG
+
+Successfully loaded view='view0' group='group0' with N=11773 samples and D=5000 features...
+Successfully loaded view='view1' group='group0' with N=11773 samples and D=217 features...
+
+
+Warning: 161 features(s) in view 0 have zero variance, consider removing them before training the model...
+
+Model options:
+- Automatic Relevance Determination prior on the factors: False
+- Automatic Relevance Determination prior on the weights: True
+- Spike-and-slab prior on the factors: False
+- Spike-and-slab prior on the weights: False
+Likelihoods:
+- View 0 (view0): gaussian
+- View 1 (view1): gaussian
+
+
+
+GPU mode is activated
+
+
+
+######################################
+## Training the model with seed 42 ##
+######################################
+
+
+ELBO before training: -623847599.74 
+
+Iteration 1: time=5.65, ELBO=40087124.20, deltaELBO=663934723.939 (106.42578800%), Factors=15
+Iteration 2: time=4.80, ELBO=67318162.71, deltaELBO=27231038.504 (4.36501455%), Factors=15
+Iteration 3: time=4.79, ELBO=71529215.38, deltaELBO=4211052.674 (0.67501304%), Factors=15
+Iteration 4: time=4.80, ELBO=71721642.35, deltaELBO=192426.970 (0.03084519%), Factors=15
+Iteration 5: time=4.79, ELBO=71818992.55, deltaELBO=97350.196 (0.01560480%), Factors=15
+Iteration 6: time=4.79, ELBO=71864063.42, deltaELBO=45070.871 (0.00722466%), Factors=15
+Iteration 7: time=4.79, ELBO=71883771.15, deltaELBO=19707.731 (0.00315906%), Factors=15
+Iteration 8: time=4.79, ELBO=71894999.15, deltaELBO=11228.004 (0.00179980%), Factors=15
+Iteration 9: time=4.79, ELBO=71902596.48, deltaELBO=7597.329 (0.00121782%), Factors=15
+Iteration 10: time=4.83, ELBO=71908450.75, deltaELBO=5854.263 (0.00093841%), Factors=15
+Attempting to save the model at the current iteration...
+Saving model in /tmp/mofa_20230816-083407_interrupted.hdf5...
+Traceback (most recent call last):
+  File "/home/nfs/stavrosmakrodi/mambaforge/envs/mofa_env_gpu/lib/python3.11/site-packages/mofapy2/run/entry_point.py", line 49, in saver
+    func(self, *args, **kwargs)
+  File "/home/nfs/stavrosmakrodi/mambaforge/envs/mofa_env_gpu/lib/python3.11/site-packages/mofapy2/run/entry_point.py", line 1020, in run
+    train_model(self.model)
+  File "/home/nfs/stavrosmakrodi/mambaforge/envs/mofa_env_gpu/lib/python3.11/site-packages/mofapy2/build_model/train_model.py", line 28, in train_model
+    model.iterate()
+  File "/home/nfs/stavrosmakrodi/mambaforge/envs/mofa_env_gpu/lib/python3.11/site-packages/mofapy2/core/BayesNet.py", line 299, in iterate
+    self.train_stats = { 'time':iter_time, 'number_factors':number_factors, 'elbo':elbo["total"].values, 'elbo_terms':elbo.drop("total",1) }
+                                                                                                                      ^^^^^^^^^^^^^^^^^^^^
+TypeError: DataFrame.drop() takes from 1 to 2 positional arguments but 3 were given
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/src/MOFA2/timeMOFA.py", line 52, in <module>
+    ent.run()
+  File "/home/nfs/stavrosmakrodi/mambaforge/envs/mofa_env_gpu/lib/python3.11/site-packages/mofapy2/run/entry_point.py", line 59, in saver
+    self.save(outfile=tmp_file)
+  File "/home/nfs/stavrosmakrodi/mambaforge/envs/mofa_env_gpu/lib/python3.11/site-packages/mofapy2/run/entry_point.py", line 1266, in save
+    tmp.saveTrainOptions()
+  File "/home/nfs/stavrosmakrodi/mambaforge/envs/mofa_env_gpu/lib/python3.11/site-packages/mofapy2/build_model/save_model.py", line 483, in saveTrainOptions
+    self.hdf5.create_dataset("training_opts", data=np.array(list(opts.values()), dtype=np.float))
+                                                                                       ^^^^^^^^
+  File "/home/nfs/stavrosmakrodi/mambaforge/envs/mofa_env_gpu/lib/python3.11/site-packages/numpy/__init__.py", line 319, in __getattr__
+    raise AttributeError(__former_attrs__[attr])
+AttributeError: module 'numpy' has no attribute 'float'.
+`np.float` was a deprecated alias for the builtin `float`. To avoid this error in existing code, use `float` by itself. Doing this will not modify any behavior and is safe. If you specifically wanted the numpy scalar type, use `np.float64` here.
+The aliases was originally deprecated in NumPy 1.20; for more details and guidance see the original release note at:
+    https://numpy.org/devdocs/release/1.20.0-notes.html#deprecations. Did you mean: 'cfloat'?
+##################################################################################
+0.2
+
+        #########################################################
+        ###           __  __  ____  ______                    ### 
+        ###          |  \/  |/ __ \|  ____/\    _             ### 
+        ###          | \  / | |  | | |__ /  \ _| |_           ### 
+        ###          | |\/| | |  | |  __/ /\ \_   _|          ###
+        ###          | |  | | |__| | | / ____ \|_|            ###
+        ###          |_|  |_|\____/|_|/_/    \_\              ###
+        ###                                                   ### 
+        ######################################################### 
+       
+ 
+        
+use_float32 set to True: replacing float64 arrays by float32 arrays to speed up computations...
+
+View names not provided, using default naming convention:
+- view1, view2, ..., viewM
+
+Features names not provided, using default naming convention:
+- feature1_view1, featureD_viewM
+
+Groups names not provided, using default naming convention:
+- group1, group2, ..., groupG
+
+Samples names not provided, using default naming convention:
+- sample1_group1, sample2_group1, sample1_group2, ..., sampleN_groupG
+
+Successfully loaded view='view0' group='group0' with N=23546 samples and D=5000 features...
+Successfully loaded view='view1' group='group0' with N=23546 samples and D=217 features...
+
+
+Warning: 78 features(s) in view 0 have zero variance, consider removing them before training the model...
+
+Model options:
+- Automatic Relevance Determination prior on the factors: False
+- Automatic Relevance Determination prior on the weights: True
+- Spike-and-slab prior on the factors: False
+- Spike-and-slab prior on the weights: False
+Likelihoods:
+- View 0 (view0): gaussian
+- View 1 (view1): gaussian
+
+
+
+GPU mode is activated
+
+
+
+######################################
+## Training the model with seed 42 ##
+######################################
+
+
+ELBO before training: -1234112033.47 
+
+Iteration 1: time=9.94, ELBO=90191174.75, deltaELBO=1324303208.223 (107.30818372%), Factors=15
+Iteration 2: time=8.78, ELBO=133685913.74, deltaELBO=43494738.987 (3.52437524%), Factors=15
+Iteration 3: time=8.77, ELBO=137705916.48, deltaELBO=4020002.741 (0.32574050%), Factors=15
+Iteration 4: time=8.77, ELBO=138064335.69, deltaELBO=358419.204 (0.02904268%), Factors=15
+Iteration 5: time=8.78, ELBO=138252530.33, deltaELBO=188194.644 (0.01524940%), Factors=15
+Iteration 6: time=8.78, ELBO=138364985.65, deltaELBO=112455.321 (0.00911225%), Factors=15
+Iteration 7: time=8.77, ELBO=138427983.24, deltaELBO=62997.584 (0.00510469%), Factors=15
+Iteration 8: time=8.80, ELBO=138458024.84, deltaELBO=30041.605 (0.00243427%), Factors=15
+Iteration 9: time=8.76, ELBO=138475108.51, deltaELBO=17083.670 (0.00138429%), Factors=15
+Iteration 10: time=8.79, ELBO=138486966.34, deltaELBO=11857.825 (0.00096084%), Factors=15
+Attempting to save the model at the current iteration...
+Saving model in /tmp/mofa_20230816-083559_interrupted.hdf5...
+Traceback (most recent call last):
+  File "/home/nfs/stavrosmakrodi/mambaforge/envs/mofa_env_gpu/lib/python3.11/site-packages/mofapy2/run/entry_point.py", line 49, in saver
+    func(self, *args, **kwargs)
+  File "/home/nfs/stavrosmakrodi/mambaforge/envs/mofa_env_gpu/lib/python3.11/site-packages/mofapy2/run/entry_point.py", line 1020, in run
+    train_model(self.model)
+  File "/home/nfs/stavrosmakrodi/mambaforge/envs/mofa_env_gpu/lib/python3.11/site-packages/mofapy2/build_model/train_model.py", line 28, in train_model
+    model.iterate()
+  File "/home/nfs/stavrosmakrodi/mambaforge/envs/mofa_env_gpu/lib/python3.11/site-packages/mofapy2/core/BayesNet.py", line 299, in iterate
+    self.train_stats = { 'time':iter_time, 'number_factors':number_factors, 'elbo':elbo["total"].values, 'elbo_terms':elbo.drop("total",1) }
+                                                                                                                      ^^^^^^^^^^^^^^^^^^^^
+TypeError: DataFrame.drop() takes from 1 to 2 positional arguments but 3 were given
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/src/MOFA2/timeMOFA.py", line 52, in <module>
+    ent.run()
+  File "/home/nfs/stavrosmakrodi/mambaforge/envs/mofa_env_gpu/lib/python3.11/site-packages/mofapy2/run/entry_point.py", line 59, in saver
+    self.save(outfile=tmp_file)
+  File "/home/nfs/stavrosmakrodi/mambaforge/envs/mofa_env_gpu/lib/python3.11/site-packages/mofapy2/run/entry_point.py", line 1266, in save
+    tmp.saveTrainOptions()
+  File "/home/nfs/stavrosmakrodi/mambaforge/envs/mofa_env_gpu/lib/python3.11/site-packages/mofapy2/build_model/save_model.py", line 483, in saveTrainOptions
+    self.hdf5.create_dataset("training_opts", data=np.array(list(opts.values()), dtype=np.float))
+                                                                                       ^^^^^^^^
+  File "/home/nfs/stavrosmakrodi/mambaforge/envs/mofa_env_gpu/lib/python3.11/site-packages/numpy/__init__.py", line 319, in __getattr__
+    raise AttributeError(__former_attrs__[attr])
+AttributeError: module 'numpy' has no attribute 'float'.
+`np.float` was a deprecated alias for the builtin `float`. To avoid this error in existing code, use `float` by itself. Doing this will not modify any behavior and is safe. If you specifically wanted the numpy scalar type, use `np.float64` here.
+The aliases was originally deprecated in NumPy 1.20; for more details and guidance see the original release note at:
+    https://numpy.org/devdocs/release/1.20.0-notes.html#deprecations. Did you mean: 'cfloat'?
+##################################################################################
+0.5
+
+        #########################################################
+        ###           __  __  ____  ______                    ### 
+        ###          |  \/  |/ __ \|  ____/\    _             ### 
+        ###          | \  / | |  | | |__ /  \ _| |_           ### 
+        ###          | |\/| | |  | |  __/ /\ \_   _|          ###
+        ###          | |  | | |__| | | / ____ \|_|            ###
+        ###          |_|  |_|\____/|_|/_/    \_\              ###
+        ###                                                   ### 
+        ######################################################### 
+       
+ 
+        
+use_float32 set to True: replacing float64 arrays by float32 arrays to speed up computations...
+
+View names not provided, using default naming convention:
+- view1, view2, ..., viewM
+
+Features names not provided, using default naming convention:
+- feature1_view1, featureD_viewM
+
+Groups names not provided, using default naming convention:
+- group1, group2, ..., groupG
+
+Samples names not provided, using default naming convention:
+- sample1_group1, sample2_group1, sample1_group2, ..., sampleN_groupG
+
+Successfully loaded view='view0' group='group0' with N=58865 samples and D=5000 features...
+Successfully loaded view='view1' group='group0' with N=58865 samples and D=217 features...
+
+
+Model options:
+- Automatic Relevance Determination prior on the factors: False
+- Automatic Relevance Determination prior on the weights: True
+- Spike-and-slab prior on the factors: False
+- Spike-and-slab prior on the weights: False
+Likelihoods:
+- View 0 (view0): gaussian
+- View 1 (view1): gaussian
+
+
+
+GPU mode is activated
+
+
+
+######################################
+## Training the model with seed 42 ##
+######################################
+
+
+ELBO before training: -3054538786.72 
+
+Iteration 1: time=23.80, ELBO=214141190.22, deltaELBO=3268679976.936 (107.01058998%), Factors=15
+Iteration 2: time=21.30, ELBO=278998535.07, deltaELBO=64857344.852 (2.12331057%), Factors=15
+Iteration 3: time=21.37, ELBO=281686410.44, deltaELBO=2687875.372 (0.08799611%), Factors=15
+Iteration 4: time=21.31, ELBO=282389531.29, deltaELBO=703120.851 (0.02301889%), Factors=15
+Iteration 5: time=21.34, ELBO=282607554.95, deltaELBO=218023.657 (0.00713769%), Factors=15
+Iteration 6: time=21.28, ELBO=282727808.19, deltaELBO=120253.239 (0.00393687%), Factors=15
+Iteration 7: time=21.34, ELBO=282817918.27, deltaELBO=90110.084 (0.00295004%), Factors=15
+Iteration 8: time=21.31, ELBO=282892624.97, deltaELBO=74706.700 (0.00244576%), Factors=15
+Iteration 9: time=21.37, ELBO=282957673.25, deltaELBO=65048.280 (0.00212956%), Factors=15
+Iteration 10: time=21.38, ELBO=283014910.23, deltaELBO=57236.973 (0.00187383%), Factors=15
+Attempting to save the model at the current iteration...
+Saving model in /tmp/mofa_20230816-084021_interrupted.hdf5...
+Traceback (most recent call last):
+  File "/home/nfs/stavrosmakrodi/mambaforge/envs/mofa_env_gpu/lib/python3.11/site-packages/mofapy2/run/entry_point.py", line 49, in saver
+    func(self, *args, **kwargs)
+  File "/home/nfs/stavrosmakrodi/mambaforge/envs/mofa_env_gpu/lib/python3.11/site-packages/mofapy2/run/entry_point.py", line 1020, in run
+    train_model(self.model)
+  File "/home/nfs/stavrosmakrodi/mambaforge/envs/mofa_env_gpu/lib/python3.11/site-packages/mofapy2/build_model/train_model.py", line 28, in train_model
+    model.iterate()
+  File "/home/nfs/stavrosmakrodi/mambaforge/envs/mofa_env_gpu/lib/python3.11/site-packages/mofapy2/core/BayesNet.py", line 299, in iterate
+    self.train_stats = { 'time':iter_time, 'number_factors':number_factors, 'elbo':elbo["total"].values, 'elbo_terms':elbo.drop("total",1) }
+                                                                                                                      ^^^^^^^^^^^^^^^^^^^^
+TypeError: DataFrame.drop() takes from 1 to 2 positional arguments but 3 were given
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/src/MOFA2/timeMOFA.py", line 52, in <module>
+    ent.run()
+  File "/home/nfs/stavrosmakrodi/mambaforge/envs/mofa_env_gpu/lib/python3.11/site-packages/mofapy2/run/entry_point.py", line 59, in saver
+    self.save(outfile=tmp_file)
+  File "/home/nfs/stavrosmakrodi/mambaforge/envs/mofa_env_gpu/lib/python3.11/site-packages/mofapy2/run/entry_point.py", line 1266, in save
+    tmp.saveTrainOptions()
+  File "/home/nfs/stavrosmakrodi/mambaforge/envs/mofa_env_gpu/lib/python3.11/site-packages/mofapy2/build_model/save_model.py", line 483, in saveTrainOptions
+    self.hdf5.create_dataset("training_opts", data=np.array(list(opts.values()), dtype=np.float))
+                                                                                       ^^^^^^^^
+  File "/home/nfs/stavrosmakrodi/mambaforge/envs/mofa_env_gpu/lib/python3.11/site-packages/numpy/__init__.py", line 319, in __getattr__
+    raise AttributeError(__former_attrs__[attr])
+AttributeError: module 'numpy' has no attribute 'float'.
+`np.float` was a deprecated alias for the builtin `float`. To avoid this error in existing code, use `float` by itself. Doing this will not modify any behavior and is safe. If you specifically wanted the numpy scalar type, use `np.float64` here.
+The aliases was originally deprecated in NumPy 1.20; for more details and guidance see the original release note at:
+    https://numpy.org/devdocs/release/1.20.0-notes.html#deprecations. Did you mean: 'cfloat'?
+##################################################################################
+1.0
+
+        #########################################################
+        ###           __  __  ____  ______                    ### 
+        ###          |  \/  |/ __ \|  ____/\    _             ### 
+        ###          | \  / | |  | | |__ /  \ _| |_           ### 
+        ###          | |\/| | |  | |  __/ /\ \_   _|          ###
+        ###          | |  | | |__| | | / ____ \|_|            ###
+        ###          |_|  |_|\____/|_|/_/    \_\              ###
+        ###                                                   ### 
+        ######################################################### 
+       
+ 
+        
+use_float32 set to True: replacing float64 arrays by float32 arrays to speed up computations...
+
+View names not provided, using default naming convention:
+- view1, view2, ..., viewM
+
+Features names not provided, using default naming convention:
+- feature1_view1, featureD_viewM
+
+Groups names not provided, using default naming convention:
+- group1, group2, ..., groupG
+
+Samples names not provided, using default naming convention:
+- sample1_group1, sample2_group1, sample1_group2, ..., sampleN_groupG
+
+Successfully loaded view='view0' group='group0' with N=117730 samples and D=5000 features...
+Successfully loaded view='view1' group='group0' with N=117730 samples and D=217 features...
+
+
+Model options:
+- Automatic Relevance Determination prior on the factors: False
+- Automatic Relevance Determination prior on the weights: True
+- Spike-and-slab prior on the factors: False
+- Spike-and-slab prior on the weights: False
+Likelihoods:
+- View 0 (view0): gaussian
+- View 1 (view1): gaussian
+
+
+
+GPU mode is activated
+
+
+
+######################################
+## Training the model with seed 42 ##
+######################################
+
+
+ELBO before training: -5901388715.81 
+
+Iteration 1: time=47.84, ELBO=423304925.33, deltaELBO=6324693641.141 (107.17297141%), Factors=15
+Iteration 2: time=42.17, ELBO=513011855.63, deltaELBO=89706930.302 (1.52009865%), Factors=15
+Iteration 3: time=42.12, ELBO=517556318.35, deltaELBO=4544462.718 (0.07700667%), Factors=15
+Iteration 4: time=41.94, ELBO=518549698.55, deltaELBO=993380.202 (0.01683299%), Factors=15
+Iteration 5: time=42.04, ELBO=518968741.95, deltaELBO=419043.398 (0.00710076%), Factors=15
+Iteration 6: time=41.91, ELBO=519214617.33, deltaELBO=245875.382 (0.00416640%), Factors=15
+Iteration 7: time=42.01, ELBO=519381335.76, deltaELBO=166718.425 (0.00282507%), Factors=15
+Iteration 8: time=41.99, ELBO=519502638.56, deltaELBO=121302.800 (0.00205550%), Factors=15
+Iteration 9: time=41.83, ELBO=519595522.11, deltaELBO=92883.548 (0.00157393%), Factors=15
+Iteration 10: time=42.02, ELBO=519670967.23, deltaELBO=75445.121 (0.00127843%), Factors=15
+Attempting to save the model at the current iteration...
+Saving model in /tmp/mofa_20230816-084900_interrupted.hdf5...
+Traceback (most recent call last):
+  File "/home/nfs/stavrosmakrodi/mambaforge/envs/mofa_env_gpu/lib/python3.11/site-packages/mofapy2/run/entry_point.py", line 49, in saver
+    func(self, *args, **kwargs)
+  File "/home/nfs/stavrosmakrodi/mambaforge/envs/mofa_env_gpu/lib/python3.11/site-packages/mofapy2/run/entry_point.py", line 1020, in run
+    train_model(self.model)
+  File "/home/nfs/stavrosmakrodi/mambaforge/envs/mofa_env_gpu/lib/python3.11/site-packages/mofapy2/build_model/train_model.py", line 28, in train_model
+    model.iterate()
+  File "/home/nfs/stavrosmakrodi/mambaforge/envs/mofa_env_gpu/lib/python3.11/site-packages/mofapy2/core/BayesNet.py", line 299, in iterate
+    self.train_stats = { 'time':iter_time, 'number_factors':number_factors, 'elbo':elbo["total"].values, 'elbo_terms':elbo.drop("total",1) }
+                                                                                                                      ^^^^^^^^^^^^^^^^^^^^
+TypeError: DataFrame.drop() takes from 1 to 2 positional arguments but 3 were given
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/src/MOFA2/timeMOFA.py", line 52, in <module>
+    ent.run()
+  File "/home/nfs/stavrosmakrodi/mambaforge/envs/mofa_env_gpu/lib/python3.11/site-packages/mofapy2/run/entry_point.py", line 59, in saver
+    self.save(outfile=tmp_file)
+  File "/home/nfs/stavrosmakrodi/mambaforge/envs/mofa_env_gpu/lib/python3.11/site-packages/mofapy2/run/entry_point.py", line 1266, in save
+    tmp.saveTrainOptions()
+  File "/home/nfs/stavrosmakrodi/mambaforge/envs/mofa_env_gpu/lib/python3.11/site-packages/mofapy2/build_model/save_model.py", line 483, in saveTrainOptions
+    self.hdf5.create_dataset("training_opts", data=np.array(list(opts.values()), dtype=np.float))
+                                                                                       ^^^^^^^^
+  File "/home/nfs/stavrosmakrodi/mambaforge/envs/mofa_env_gpu/lib/python3.11/site-packages/numpy/__init__.py", line 319, in __getattr__
+    raise AttributeError(__former_attrs__[attr])
+AttributeError: module 'numpy' has no attribute 'float'.
+`np.float` was a deprecated alias for the builtin `float`. To avoid this error in existing code, use `float` by itself. Doing this will not modify any behavior and is safe. If you specifically wanted the numpy scalar type, use `np.float64` here.
+The aliases was originally deprecated in NumPy 1.20; for more details and guidance see the original release note at:
+    https://numpy.org/devdocs/release/1.20.0-notes.html#deprecations. Did you mean: 'cfloat'?
+##################################################################################

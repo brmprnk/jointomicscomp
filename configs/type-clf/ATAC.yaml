@@ -1,0 +1,14 @@
+batch_size: 64
+lr: 0.0001
+epochs: 150
+data_path: /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scatac/atac.npy
+early_stopping_patience: 10
+labels: /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scatac/celltype.npy
+log_save_interval: 10
+num_features1: 5303
+random_seed: 1
+test_ind: /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scatac/testInd.npy
+val_ind: /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scatac/validInd.npy
+train_ind: /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scatac/trainInd.npy
+checkpoint: './type-classifier/ATAC/checkpoint'
+log: './type-classifier/ATAC/log'

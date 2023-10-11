@@ -25,18 +25,19 @@ torch.manual_seed(1)
 n_modalities = 2
 
 # Load in data
-omics = [np.load('/tudelft.net/staff-bulk/ewi/insy/DBL/smakrod/lb/tcga-download/data/datasets/ge-me-cn-2022-04-16/RNA.npy'), np.load('/tudelft.net/staff-bulk/ewi/insy/DBL/smakrod/lb/tcga-download/data/datasets/ge-me-cn-2022-04-16/ADT.npy')]
+omics = [np.load('/tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/RNA.npy'), np.load('/tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/ADT.npy')]
 modalities = ['RNA', 'ADT']
 
-labels = np.load('/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/pbmc_multimodal_ADT_5000MAD_cellType_l3.npy')
-labeltypes = np.load('/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/pbmc_multimodal_ADT_5000MAD_cellTypes_l3.npy', allow_pickle=True)
-
+labels = np.load('/tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/celltype_l3.npy')
+labeltypes = np.load('/tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/celltypes_l3.npy', allow_pickle=True)
 
 
 # Use predefined split
-train_ind = np.load('/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/task1/trainInd.npy')
-val_ind = np.load('/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/task1/validInd.npy')
-test_ind = np.load('/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/task1/testInd.npy')
+train_ind = np.load('/tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/trainInd.npy')
+val_ind = np.load('/tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/validInd.npy')
+test_ind = np.load('/tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/testInd.npy')
+
+omics = [np.log(1 + omic) for omic in omics]
 
 omics_train = [omic[train_ind] for omic in omics]
 omics_val = [omic[val_ind] for omic in omics]
@@ -47,9 +48,9 @@ yvalid = labels[val_ind]
 ytest = labels[test_ind]
 
 # Number of features
-input_dims = [5000, 224]
+input_dims = [5000, 217]
 
-likelihoods = ['nb', 'normal']
+likelihoods = ['nb', 'nbm']
 
 # use real training data to do PCA for each modality
 pca1 = PCA(n_components=32, whiten=False, svd_solver='full')
@@ -76,13 +77,17 @@ pcas = [pca1, pca2]
 
 args = dict()
 args['cuda'] = True
-args['latent_dim'] = '64'
+args['latent_dim'] = '256-64'
 args['num_features1'] = 5000
-args['num_features2'] = 224
-args['dropout_probability'] = 0.1
+args['num_features2'] = 217
+args['dropout_probability'] = 0.0
 args['use_batch_norm'] = False
 args['likelihood1'] = 'nb'
-args['likelihood2'] = 'normal'
+args['likelihood2'] = 'nbm'
+
+args['data1'] = 'RNA'
+args['data2'] = 'ADT'
+args['log_inputs'] = 'True'
 
 model = PoE(args)
 
@@ -91,24 +96,24 @@ model.double()
 if device == torch.device('cuda'):
     model.cuda()
 
-checkpoint = torch.load('/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/results/likelihood-cite-poe-31_RNA_ADT/PoE/checkpoint/model_best.pth.tar')
+checkpoint = torch.load('results/tmpnbcite/results/likelihood-cite-poe-15_RNA_ADT/PoE/checkpoint/model_best.pth.tar')
 
 model.load_state_dict(checkpoint['state_dict'])
 logger.success("Loaded trained ProductOfExperts model.")
 
 ######### !!!!!!! here #######
 
-args['data_path1'] = '/tudelft.net/staff-bulk/ewi/insy/DBL/smakrod/lb/tcga-download/data/datasets/ge-me-cn-2022-04-16/RNA.npy'
-args['data_path2'] = '/tudelft.net/staff-bulk/ewi/insy/DBL/smakrod/lb/tcga-download/data/datasets/ge-me-cn-2022-04-16/ADT.npy'
-args['labels'] = '/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/pbmc_multimodal_ADT_5000MAD_cellType_l3.npy'
-args['labelnames'] = '/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/pbmc_multimodal_ADT_5000MAD_cellTypes_l3.npy'
+args['data_path1'] = '/tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/RNA.npy'
+args['data_path2'] = '/tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/ADT.npy'
+args['labels'] = '/tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/celltype_l3.npy'
+args['labelnames'] = '/tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/celltypes_l3.npy'
 
-args['train_ind'] = '/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/task1/trainInd.npy'
-args['val_ind'] = '/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/task1/validInd.npy'
-args['test_ind'] = '/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/task1/testInd.npy'
+args['train_ind'] = '/tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/trainInd.npy'
+args['val_ind'] = '/tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/validInd.npy'
+args['test_ind'] = '/tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/testInd.npy'
 args['batch_size'] = 64
 
-save_dir = '/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/results/likelihood-cite-poe-31_RNA_ADT/PoE/'
+save_dir = 'results/tmpnbcite/results/likelihood-cite-poe-15_RNA_ADT/PoE/'
 
 # embed test data
 tcga_data = datasets.TCGAData(args, save_dir=save_dir)
@@ -139,7 +144,9 @@ with torch.no_grad():
 
         ind += args['batch_size']
 
-sys.exit(0)
+imputedRNA = np.log(1 + imputedRNA)
+imputedADT = np.log(1 + imputedADT)
+
 imputed1test = pca1.transform(imputedRNA)
 imputed2test = pca2.transform(imputedADT)
 imputedTest = [imputed1test, imputed2test]
@@ -155,7 +162,7 @@ for i, modality in enumerate(modalities):
 
     clfSingle = clfSingle.to(device)
 
-    checkpoint = torch.load('type-classifier/eval/l3/baseline_%s/checkpoint/model_best.pth.tar' % modality)
+    checkpoint = torch.load('type-classifier/eval/l2/baseline_%s/checkpoint/model_best.pth.tar' % modality)
     clfSingle.load_state_dict(checkpoint['state_dict'])
     clfSingle.eval()
 
@@ -215,7 +222,7 @@ for i, modality in enumerate(modalities):
 
     clfDouble = clfDouble.to(device)
 
-    checkpoint = torch.load('type-classifier/eval/l3/baseline_RNA_ADT/checkpoint/model_best.pth.tar')
+    checkpoint = torch.load('type-classifier/eval/l2/baseline_RNA_ADT/checkpoint/model_best.pth.tar')
     clfDouble.load_state_dict(checkpoint['state_dict'])
     clfDouble.eval()
 

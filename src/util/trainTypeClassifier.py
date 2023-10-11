@@ -39,6 +39,9 @@ if __name__ == "__main__":
     logger.output_file = config['log']
     X = np.load(config['data_path'])
 
+    if 'log_transform' in config and config['log_transform']:
+        X = np.log10(X+1)
+
     trnInd = np.load(config['train_ind'])
     valInd = np.load(config['val_ind'])
     tstInd = np.load(config['test_ind'])

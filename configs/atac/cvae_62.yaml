@@ -1,0 +1,36 @@
+CVAE:
+  batch_size: 64
+  beta_start_value: 1
+  dropout_probability: 0.1
+  enc_distribution: normal
+  epochs: 500
+  latent_dim: 128-32
+  likelihood1: nb
+  likelihood2: bernoulli
+  lr: 0.0001
+  optimizer: Adam
+  train_loader_eval_batch_size: 64
+  use_batch_norm: true
+GLOBAL_PARAMS:
+  cuda: true
+  data1: RNA
+  data2: ATAC
+  data_features1: /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scatac/featureNamesRNA.npy
+  data_features2: /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scatac/featureNamesATAC.npy
+  data_path1: /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scatac/rna.npy
+  data_path2: /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scatac/atac.npy
+  early_stopping_patience: 10
+  labelnames: /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scatac/celltypes_l2.npy
+  labels: /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scatac/celltype_l2.npy
+  log_inputs: true
+  log_save_interval: 10
+  name: likelihood-atac-cvae-62
+  nomics: 2
+  num_features1: 3000
+  num_features2: 5000
+  random_seed: 1
+  sample_names: /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scatac/sampleNames.npy
+  task: 0
+  test_ind: /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scatac/testInd.npy
+  train_ind: /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scatac/trainInd.npy
+  val_ind: /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scatac/validInd.npy

@@ -2,39 +2,48 @@ GLOBAL_PARAMS:
   name: "likelihood-cite-cgae"
   task: 0
   num_features1: 5000
-  num_features2: 224
+  num_features2: 217
   cuda: true
   random_seed: 1
   log_save_interval: 10
   early_stopping_patience: 10 # If set to 0 or <0, early stopping is turned off.
   data1: "RNA"
   data2: "ADT"
-  data_path1: /tudelft.net/staff-bulk/ewi/insy/DBL/smakrod/lb/tcga-download/data/datasets/ge-me-cn-2022-04-16/RNA.npy
-  data_path2: /tudelft.net/staff-bulk/ewi/insy/DBL/smakrod/lb/tcga-download/data/datasets/ge-me-cn-2022-04-16/ADT.npy
-  data_features1: "/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/pbmc_multimodal_RNA_5000MAD_featureNames.npy"
-  data_features2: "/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/pbmc_multimodal_ADT_5000MAD_featureNames.npy"
-  sample_names: "/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/pbmc_multimodal_RNA_5000MAD_sampleNames.npy"
-  labels: "/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/pbmc_multimodal_RNA_5000MAD_cellType.npy"
-  labelnames: "/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/pbmc_multimodal_RNA_5000MAD_cellType.npy"
-  train_ind: "/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/task1/trainInd.npy"
-  val_ind: "/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/task1/validInd.npy"
-  test_ind: "/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/task1/testInd.npy"
+  data_path1: /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/RNA.npy
+  data_path2: /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/ADT.npy
+  data_features1: /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/featureNamesRNA.npy
+  data_features2: /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/featureNamesADT.npy
+  labels: /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/celltype_l3.npy
+  labelnames: /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/celltypes_l3.npy
+  sample_names: /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/sampleNames.npy
+  train_ind: /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/trainInd.npy
+  val_ind: /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/validInd.npy
+  test_ind:  /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/testInd.npy
+  # data_path1: /tudelft.net/staff-bulk/ewi/insy/DBL/smakrod/lb/tcga-download/data/datasets/ge-me-cn-2022-04-16/RNA.npy
+  # data_path2: /tudelft.net/staff-bulk/ewi/insy/DBL/smakrod/lb/tcga-download/data/datasets/ge-me-cn-2022-04-16/ADT.npy
+  # data_features1: "/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/pbmc_multimodal_RNA_5000MAD_featureNames.npy"
+  # data_features2: "/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/pbmc_multimodal_ADT_5000MAD_featureNames.npy"
+  # sample_names: "/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/pbmc_multimodal_RNA_5000MAD_sampleNames.npy"
+  # labels: "/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/pbmc_multimodal_RNA_5000MAD_cellType.npy"
+  # labelnames: "/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/pbmc_multimodal_RNA_5000MAD_cellType.npy"
+  # train_ind: "/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/task1/trainInd.npy"
+  # val_ind: "/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/task1/validInd.npy"
+  # test_ind: "/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/task1/testInd.npy"
   nomics: 2
 
 CGAE:
   epochs: 500
   batch_size: 64
-  latent_dim: '64'
-  clf_criterion: 'acc'
+  latent_dim: '128-64'
   lr: 0.0001
-  loss_function: 'mse'
   use_batch_norm: False
   dropout_probability: 0.0
   optimizer: 'Adam'
   beta_start_value: 1
   zconstraintCoef: 1
   crossPenaltyCoef: 1
-  enc_distribution: 'normal'
+  enc_distribution: normal
   train_loader_eval_batch_size: 64
   likelihood1: nb
-  likelihood2: normal
+  likelihood2: nbm
+  log_inputs: true

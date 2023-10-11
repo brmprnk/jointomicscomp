@@ -10,7 +10,7 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 from torch.distributions import Normal, Independent, Beta
 
-from src.nets import CrossGeneratingVariationalAutoencoder, ProbabilisticFullyConnectedModule, identity
+from src.nets import CrossGeneratingVariationalAutoencoder, ProbabilisticFullyConnectedModule, identity, SCVIdecoder
 
 
 class PoE(nn.Module):
@@ -19,24 +19,42 @@ class PoE(nn.Module):
 
         device = torch.device('cuda') if torch.cuda.is_available() and args['cuda'] else torch.device('cpu')
         self.to(device)
+        
+        if 'log_inputs' not in args:
+            args['log_inputs'] = False
+
 
 
         latent_dim = [int(k) for k in args['latent_dim'].split('-')]
 
         # define q(z|x_i) for i = 1...2
-        self.omic1_encoder = Encoder(latent_dim[-1], args['num_features1'], latent_dim[:-1], device, args['dropout_probability'], args['use_batch_norm'])
-        self.omic2_encoder = Encoder(latent_dim[-1], args['num_features2'], latent_dim[:-1], device, args['dropout_probability'], args['use_batch_norm'])
+        self.omic1_encoder = Encoder(latent_dim[-1], args['num_features1'], latent_dim[:-1], device, args['dropout_probability'], args['use_batch_norm'], args['log_inputs'])
+        if args['data2'] == 'ATAC':
+            self.omic2_encoder = Encoder(latent_dim[-1], args['num_features2'], latent_dim[:-1], device, args['dropout_probability'], args['use_batch_norm'], False)
+        else:
+            self.omic2_encoder = Encoder(latent_dim[-1], args['num_features2'], latent_dim[:-1], device, args['dropout_probability'], args['use_batch_norm'], args['log_inputs'])
 
         # define p(x_i|z) for i = 1...2
-        if 'n_categories1' in args:
-            self.omic1_decoder = Decoder(latent_dim[-1], args['num_features1'], latent_dim[:-1][::-1], device, args['likelihood1'], args['dropout_probability'], args['use_batch_norm'], args['n_categories1'])
+        if args['likelihood1'] not in {'nb', 'zinb', 'nbm'}:
+            if 'n_categories1' in args:
+                self.omic1_decoder = Decoder(latent_dim[-1], args['num_features1'], latent_dim[:-1][::-1], device, args['likelihood1'], args['dropout_probability'], args['use_batch_norm'], args['n_categories1'])
+            else:
+                self.omic1_decoder = Decoder(latent_dim[-1], args['num_features1'], latent_dim[:-1][::-1], device, args['likelihood1'], args['dropout_probability'], args['use_batch_norm'])
         else:
-            self.omic1_decoder = Decoder(latent_dim[-1], args['num_features1'], latent_dim[:-1][::-1], device, args['likelihood1'], args['dropout_probability'], args['use_batch_norm'])
+            #input_dim, hidden_dim=[100], distribution='nb', use_batch_norm=False, dropoutP=0.0):
+            self.omic1_decoder = SCVIdecoder(latent_dim[-1], latent_dim[::-1][1:] + [args['num_features1']], args['likelihood1'], args['use_batch_norm'], args['dropout_probability'])
 
-        if 'n_categories2' in args:
-            self.omic2_decoder = Decoder(latent_dim[-1], args['num_features2'], latent_dim[:-1][::-1], device, args['likelihood2'], args['dropout_probability'], args['use_batch_norm'], args['n_categories2'])
+        if args['likelihood2'] not in {'nb', 'zinb', 'nbm'}:
+
+            if 'n_categories2' in args:
+                self.omic2_decoder = Decoder(latent_dim[-1], args['num_features2'], latent_dim[:-1][::-1], device, args['likelihood2'], args['dropout_probability'], args['use_batch_norm'], args['n_categories2'])
+            else:
+                self.omic2_decoder = Decoder(latent_dim[-1], args['num_features2'], latent_dim[:-1][::-1], device, args['likelihood2'], args['dropout_probability'], args['use_batch_norm'])
         else:
-            self.omic2_decoder = Decoder(latent_dim[-1], args['num_features2'], latent_dim[:-1][::-1], device, args['likelihood2'], args['dropout_probability'], args['use_batch_norm'])
+            #input_dim, hidden_dim=[100], distribution='nb', use_batch_norm=False, dropoutP=0.0):
+            self.omic2_decoder = SCVIdecoder(latent_dim[-1], latent_dim[::-1][1:] + [args['num_features2']], args['likelihood2'], args['use_batch_norm'], args['dropout_probability'])
+
+
 
         # define q(z|x) = q(z|x_1)...q(z|x_6)
         self.experts = ProductOfExperts()
@@ -133,11 +151,11 @@ class Encoder(nn.Module):
                       number of latent dimensions
     """
 
-    def __init__(self, latent_dim, num_features, hidden_dims, device, dropoutP=0., use_batch_norm=True):
+    def __init__(self, latent_dim, num_features, hidden_dims, device, dropoutP=0., use_batch_norm=True, log_input=False):
         super(Encoder, self).__init__()
 
         self.to(device)
-
+        self.log_input = log_input
         input_size = num_features
 
 
@@ -178,6 +196,9 @@ class Encoder(nn.Module):
         self.latent_dim = latent_dim
 
     def forward(self, x):
+        if self.log_input:
+            x = torch.log(x+1)
+
         result = self.encoder(x)
         result = torch.flatten(result, start_dim=1)
 
@@ -240,7 +261,10 @@ class Decoder(nn.Module):
         self.decoder = nn.Sequential(*modules)
 
         if self.distribution != 'categorical':
-            self.final_layer = nn.Sequential(nn.Linear(hidden_dims[-1], 2 * num_features))
+            if self.distribution != 'bernoulli':
+                self.final_layer = nn.Sequential(nn.Linear(hidden_dims[-1], 2 * num_features))
+            else:
+                self.final_layer = nn.Sequential(nn.Linear(hidden_dims[-1], num_features))
         else:
             self.final_layer = nn.Sequential(nn.Linear(hidden_dims[-1], n_categories * num_features))
 
@@ -258,6 +282,9 @@ class Decoder(nn.Module):
             self.p1Transform = torch.exp
             self.p2Transform = torch.nn.Sigmoid()
             self.D = torch.distributions.NegativeBinomial
+        elif self.distribution == 'bernoulli':
+            self.p1Transform = identity
+            self.D = torch.distributions.Bernoulli
 
         else:
         	raise NotImplementedError('%s not supported. Use: \'normal\' or \'beta\'' % self.distribution)
@@ -268,10 +295,14 @@ class Decoder(nn.Module):
         result = self.final_layer(result)
 
         if self.distribution != 'categorical':
-        	p1 = self.p1Transform(result[:, :self.num_features])
-        	p2 = self.p2Transform(result[:, self.num_features:])
+            if self.distribution != 'bernoulli': 
+                p1 = self.p1Transform(result[:, :self.num_features])
+                p2 = self.p2Transform(result[:, self.num_features:])
 
-        	result = Independent(self.D(p1, p2), 0)
+                result = Independent(self.D(p1, p2), 0)
+            else:
+                p1 = self.p1Transform(result)
+                result = self.D(logits=p1)
         else:
 
             result = torch.reshape(result, (-1, self.num_features, self.n_categories))

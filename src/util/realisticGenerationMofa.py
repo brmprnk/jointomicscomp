@@ -24,18 +24,20 @@ torch.manual_seed(1)
 n_modalities = 2
 
 # Load in data
-omics = [np.load('/tudelft.net/staff-bulk/ewi/insy/DBL/smakrod/lb/tcga-download/data/datasets/ge-me-cn-2022-04-16/RNA.npy'), np.load('/tudelft.net/staff-bulk/ewi/insy/DBL/smakrod/lb/tcga-download/data/datasets/ge-me-cn-2022-04-16/ADT.npy')]
+omics = [np.load('/tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/RNA.npy'), np.load('/tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/ADT.npy')]
 modalities = ['RNA', 'ADT']
 
-labels = np.load('/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/pbmc_multimodal_ADT_5000MAD_cellType_l3.npy')
-labeltypes = np.load('/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/pbmc_multimodal_ADT_5000MAD_cellTypes_l3.npy', allow_pickle=True)
-
+labels = np.load('/tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/celltype_l3.npy')
+labeltypes = np.load('/tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/celltypes_l3.npy', allow_pickle=True)
 
 
 # Use predefined split
-train_ind = np.load('/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/task1/trainInd.npy')
-val_ind = np.load('/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/task1/validInd.npy')
-test_ind = np.load('/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/task1/testInd.npy')
+train_ind = np.load('/tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/trainInd.npy')
+val_ind = np.load('/tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/validInd.npy')
+test_ind = np.load('/tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/testInd.npy')
+
+omics = [np.log(1 + omic) for omic in omics]
+
 
 omics_train = [omic[train_ind] for omic in omics]
 omics_val = [omic[val_ind] for omic in omics]
@@ -69,10 +71,9 @@ pcas = [pca1, pca2]
 
 
 # load pre-trained MoFA model and learn projection
-trainFactorsFile = 'src/MOFA2/mofa_cite_factors_training.tsv'
+trainFactorsFile = 'src/MOFA2/mofa_cite_factors.training.npy'
 
-ztrainDF = pd.read_csv(trainFactorsFile, index_col=0, sep='\t')
-ztrain = np.array(ztrainDF)
+ztrain = np.load(trainFactorsFile)
 
 mapper1 = LinearRegression()
 mapper1.fit(omics_train[0], ztrain)
@@ -84,11 +85,11 @@ mapper2.fit(omics_train[1], ztrain)
 print('Projection from modality 2 to z\nMean R^2 on training data: %.4f' % mapper2.score(omics_train[1], ztrain))
 
 
-weightsFile1 = 'src/MOFA2/mofa_cite_weights_rna.tsv'
-weightsFile2 = 'src/MOFA2/mofa_cite_weights_adt.tsv'
+weightsFile1 = 'src/MOFA2/mofa_cite_weights_rna.npy'
+weightsFile2 = 'src/MOFA2/mofa_cite_weights_adt.npy'
 
-weights1 = pd.read_csv(weightsFile1, index_col=0, sep='\t')
-weights2 = pd.read_csv(weightsFile2, index_col=0, sep='\t')
+weights1 = np.load(weightsFile1)
+weights2 = np.load(weightsFile2)
 
 
 
@@ -113,7 +114,7 @@ for i, modality in enumerate(modalities):
 
     clfSingle = clfSingle.to(device)
 
-    checkpoint = torch.load('type-classifier/eval/l3/baseline_%s/checkpoint/model_best.pth.tar' % modality)
+    checkpoint = torch.load('type-classifier/eval/l2/baseline_%s/checkpoint/model_best.pth.tar' % modality)
     clfSingle.load_state_dict(checkpoint['state_dict'])
     clfSingle.eval()
 
@@ -173,7 +174,7 @@ for i, modality in enumerate(modalities):
 
     clfDouble = clfDouble.to(device)
 
-    checkpoint = torch.load('type-classifier/eval/l3/baseline_RNA_ADT/checkpoint/model_best.pth.tar')
+    checkpoint = torch.load('type-classifier/eval/l2/baseline_RNA_ADT/checkpoint/model_best.pth.tar')
     clfDouble.load_state_dict(checkpoint['state_dict'])
     clfDouble.eval()
 

@@ -1,7 +1,6 @@
 import yaml
 
-models = ['cgae', 'mvib', 'poe', 'moe']
-#models = ['cgae', 'cvae', 'moe']
+models = ['cgae', 'cvae', 'poe', 'moe']
 
 lrs = [1e-4, 1e-3]
 enc_archs = ['32', '64', '128-32', '128-64', '256-32', '256-64', '256-256-32', '256-256-64', '256-128-32', '256-128-64']
@@ -9,6 +8,10 @@ mi_archs = ['100-1', '500-1', '500-100-1']
 dropouts = [0.0, 0.1]
 batchnorm = [False, True]
 Ks = [10, 20]
+
+n_layers_scvi = [1, 2]
+n_latents_scvi = [16, 32]
+n_neurons_scvi = [128, 256]
 
 for model in models:
     with open(model + '_default.yaml') as file:
@@ -18,37 +21,7 @@ for model in models:
 
     baseName = config['GLOBAL_PARAMS']['name']
 
-    if model == 'mvib':
-
-        for bn in batchnorm:
-            config['MVIB']['use_batch_norm'] = bn
-
-            for dropoutP in dropouts:
-                config['MVIB']['dropout_probability'] = dropoutP
-
-
-
-                for mi_arch in mi_archs:
-                    config['MVIB']['mi_net_arch'] = mi_arch
-
-                    for learning_rate in lrs:
-                        config['MVIB']['enc1_lr'] = learning_rate * 0.1
-                        config['MVIB']['enc2_lr'] = learning_rate * 0.1
-                        config['MVIB']['dec1_lr'] = learning_rate * 0.1
-                        config['MVIB']['dec2_lr'] = learning_rate * 0.1
-                        config['MVIB']['mi_net_lr'] = learning_rate * 0.1
-
-                        for arch in enc_archs:
-                            config['MVIB']['latent_dim'] = arch
-
-                            counter += 1
-
-                            config['GLOBAL_PARAMS']['name'] = baseName + '-' + str(counter)
-
-                            with open(model + '_' + str(counter) + '.yaml', 'w') as writeFile:
-                                yaml.safe_dump(config, writeFile)
-
-    elif model == 'cgae':
+    if model == 'cgae':
 
         for bn in batchnorm:
             config['CGAE']['use_batch_norm'] = bn
@@ -140,3 +113,63 @@ for model in models:
 
                             with open(model + '_' + str(counter) + '.yaml', 'w') as writeFile:
                                 yaml.safe_dump(config, writeFile)
+
+
+
+model = 'totalVI'
+modelName = 'totalVI'
+with open(modelName + '_default.yaml') as file:
+    config = yaml.safe_load(file)
+
+counter = -1
+
+baseName = config['GLOBAL_PARAMS']['name']
+
+for bn in batchnorm:
+    config[modelName]['use_batch_norm'] = bn
+
+    for dropoutP in dropouts:
+        config[modelName]['dropout_probability'] = dropoutP
+
+        for learning_rate in lrs:
+            config[modelName]['lr'] = learning_rate
+
+            for nlayer in n_layers_scvi:
+                config[modelName]['n_layers'] = nlayer
+
+                for nneuron in n_neurons_scvi:
+                    config[modelName]['n_neurons_per_layer'] = nneuron
+
+                    for zz in n_latents_scvi:
+                        config[modelName]['zdim'] = zz
+                        counter += 1
+
+                        config['GLOBAL_PARAMS']['name'] = baseName + '-' + str(counter)
+
+                        with open(model + '_' + str(counter) + '.yaml', 'w') as writeFile:
+                            yaml.safe_dump(config, writeFile)
+
+
+# uniport
+model = 'uniport'
+
+with open(model + '_default.yaml') as file:
+    config = yaml.safe_load(file)
+
+counter = -1
+
+baseName = config['GLOBAL_PARAMS']['name']
+enc_archs = ['128-32', '128-64', '256-32', '256-64', '256-256-32', '256-256-64', '256-128-32', '256-128-64']
+
+
+for learning_rate in lrs:
+    config['UNIPORT']['lr'] = learning_rate
+
+    for arch in enc_archs:
+        config['UNIPORT']['latent_dim'] = arch
+        counter += 1
+
+        config['GLOBAL_PARAMS']['name'] = baseName + '-' + str(counter)
+
+        with open(model + '_' + str(counter) + '.yaml', 'w') as writeFile:
+            yaml.safe_dump(config, writeFile)

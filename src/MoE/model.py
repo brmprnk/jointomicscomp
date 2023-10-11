@@ -25,9 +25,9 @@ class MixtureOfExperts(CrossGeneratingVariationalAutoencoder):
 
     def __init__(self, input_dims, enc_hidden_dim=[100], dec_hidden_dim=[], likelihoods='normal',
                  use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder_lr=1e-4, decoder_lr=1e-4,
-                 enc_distribution='laplace', beta=1.0, K=20, llik_scaling=None, n_categories=None):
-        print(n_categories)
-        super(MixtureOfExperts, self).__init__(input_dims, enc_hidden_dim, dec_hidden_dim, likelihoods, use_batch_norm, dropoutP, optimizer_name, encoder_lr, decoder_lr, enc_distribution, beta, n_categories=n_categories)
+                 enc_distribution='laplace', beta=1.0, K=20, llik_scaling=None, n_categories=None, log_input=False):
+        # print(n_categories)
+        super(MixtureOfExperts, self).__init__(input_dims, enc_hidden_dim, dec_hidden_dim, likelihoods, use_batch_norm, dropoutP, optimizer_name, encoder_lr, decoder_lr, enc_distribution, beta, n_categories=n_categories, log_input=log_input)
 
         if llik_scaling is None:
             self.llik_scaling = torch.ones(self.n_modalities).double().to(self.device)
@@ -51,6 +51,7 @@ class MixtureOfExperts(CrossGeneratingVariationalAutoencoder):
 
         for m, (enc, dec) in enumerate(zip(self.encoders, self.decoders)):
             qz_x = enc(x[m])
+
             zs = qz_x.rsample(torch.Size([self.K]))
             px_z = [dec(zi) for zi in zs]
 
@@ -188,10 +189,10 @@ class MixtureOfExperts(CrossGeneratingVariationalAutoencoder):
                 klkey = 'KL/%d' % (i+1)
                 for j in range(self.n_modalities):
                     llkey = 'LL%d/%d' % (j+1, i+1)
-                    msekey = 'MSE%d/%d' % (j+1, i+1)
+                    #msekey = 'MSE%d/%d' % (j+1, i+1)
 
                     metrics[llkey] = torch.mean(torch.sum(x_hat[i][j].log_prob(x[j]), 1)).item()
-                    metrics[msekey] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(getPointEstimate(x_hat[i][j]), x[j]), 1)).item()
+                    #metrics[msekey] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(getPointEstimate(x_hat[i][j]), x[j]), 1)).item()
 
 
                 # lpz = [self.pz.log_prob(zi) for zi in zmean]

@@ -19,7 +19,7 @@ from src.baseline.baseline import classification, classificationMLP
 
 import numpy as np
 from sklearn.metrics import mean_squared_error
-
+import time
 
 def compute_loss(recon_omic1, omic1, recon_omic2, omic2):
     metrics = dict()
@@ -143,6 +143,79 @@ def train(args, model, train_loader, optimizer, epoch, tf_logger):
         print('====> Epoch: {}\tLoss: {:.4f}'.format(epoch, train_loss_per_batch.mean()))
         print('====> Epoch: {}\tReconstruction Loss: {:.4f}'.format(epoch, train_recon_loss_per_batch.mean()))
         print('====> Epoch: {}\tKLD Loss: {:.4f}'.format(epoch, train_kl_loss_per_batch.mean()))
+
+
+
+
+def timeTrainingPoE(model, num_epochs, train_loader, optimizer):
+    model.training = True
+    model = model.double()
+    model.train()
+
+    #progress_bar = tqdm(total=len(train_loader))
+    train_loss_per_batch = np.zeros(len(train_loader))
+    train_recon_loss_per_batch = np.zeros(len(train_loader))
+    train_kl_loss_per_batch = np.zeros(len(train_loader))
+
+    times = np.zeros(num_epochs)
+
+    for epoch in range(num_epochs):
+        # Incorporate MMVAE training function
+
+        print('[*] Epoch %d' % epoch, flush=True)
+        torch.cuda.synchronize()
+        epoch_start = time.perf_counter()
+
+        for batch_idx, (omic1, omic2) in enumerate(train_loader):
+
+            omic1 = omic1.cuda()
+            omic2 = omic2.cuda()
+
+            # refresh the optimizer
+            optimizer.zero_grad()
+
+            kld_weight = len(omic1) / len(train_loader.dataset)  # Account for the minibatch samples from the dataset
+
+            # compute reconstructions using all the modalities
+            (joint_recon_omic1, joint_recon_omic2, joint_mu, joint_logvar) = model.forward(omic1, omic2)
+
+            # compute reconstructions using each of the individual modalities
+            (omic1_recon_ge, omic1_recon_me, omic1_mu, omic1_logvar) = model.forward(omic1=omic1)
+
+            (omic2_recon_ge, omic2_recon_me, omic2_mu, omic2_logvar) = model.forward(omic2=omic2)
+
+            # Compute joint train loss
+            joint_train_loss = loss_function(joint_recon_omic1, omic1,
+                                             joint_recon_omic2, omic2,
+                                             joint_mu, joint_logvar, kld_weight)
+
+            # compute loss with single modal inputs
+            omic1_train_loss = loss_function(omic1_recon_ge, omic1,
+                                          omic1_recon_me, omic2,
+                                          omic1_mu, omic1_logvar, kld_weight)
+
+            omic2_train_loss = loss_function(omic2_recon_ge, omic1,
+                                          omic2_recon_me, omic2,
+                                          omic2_mu, omic2_logvar, kld_weight)
+
+            train_loss = joint_train_loss['loss'] + omic1_train_loss['loss'] + omic2_train_loss['loss']
+            train_loss_per_batch[batch_idx] = train_loss
+            train_recon_loss = joint_train_loss['Reconstruction_Loss'] + omic1_train_loss['Reconstruction_Loss'] + \
+                               omic2_train_loss['Reconstruction_Loss']
+            train_recon_loss_per_batch[batch_idx] = train_recon_loss
+            train_kld_loss = joint_train_loss['KLD'] + omic1_train_loss['KLD'] + omic2_train_loss['KLD']
+            train_kl_loss_per_batch[batch_idx] = train_kld_loss
+
+            # compute and take gradient step
+            train_loss.backward()
+            optimizer.step()
+
+        torch.cuda.synchronize()
+        epoch_end = time.perf_counter()
+        times[epoch] = epoch_end - epoch_start
+        print(times[epoch])
+    return times
+
 
 
 def test(args, model, val_loader, optimizer, epoch, tf_logger):
@@ -315,6 +388,8 @@ def run(args) -> None:
         for epoch in range(1, args['epochs'] + 1):
             train(args, model, train_loader, optimizer, epoch, tf_logger)
             validation_loss = test(args, model, val_loader, optimizer, epoch, tf_logger)
+            logger.info('%d: %f' % (epoch, validation_loss.cpu().detach().numpy()))
+            logger.info('%d' % torch.isfinite(validation_loss))
 
             # Save the last model
             if epoch == args['epochs'] or epoch % args['log_save_interval'] == 0:
@@ -331,6 +406,7 @@ def run(args) -> None:
 
             if validation_loss < best_loss:
                 best_loss = validation_loss
+                bestEpoch = epoch
                 state = {'state_dict': model.state_dict(),
                     'best_loss': validation_loss,
                     'latent_dim': args['latent_dim'],
@@ -339,7 +415,6 @@ def run(args) -> None:
                     'batch_size': args['batch_size'],
                     'optimizer': optimizer.state_dict(),
                 }
-
                 torch.save(state, os.path.join(ckpt_dir, 'model_best.pth.tar'))
 
             early_stopping(validation_loss)
