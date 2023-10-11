@@ -4,8 +4,9 @@
 [![Conda Install](https://anaconda.org/conda-forge/terraform-provider-github/badges/installer/conda.svg)](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html)
 [![MIT License](https://img.shields.io/apm/l/atomic-design-ui.svg?)](https://github.com/tterb/atomic-design-ui/blob/master/LICENSEs)
 
-Wrapper and implementation for comparing five models for multiomics data integration; MOFA+, Mixture-of-Experts, Product-of-Experts, Multi-view Info Bottleneck, and CGAE models.
-MOST RECENT UPDATES ARE FOUND IN THE ```dev``` BRANCH!
+Wrapper and implementation for comparing models for multiomics data integration; Check out our paper "An in-depth comparison of linear and non-linear joint embedding methods for bulk and single-cell multi-omics" here: https://doi.org/10.1101/2023.04.10.535672
+MOST RECENT UPDATES ARE FOUND IN THE ```generic-impl``` BRANCH!
+
 
 ## Installation
 <!---
@@ -35,9 +36,6 @@ python run.py -h
 - All metrics are written to a TensorBoard file, also found in the results folder
 - All informational print statements are saved to a log.txt file, using a logger found in the util folder.
 
-
-## To-do's
-To see some open issues, have a look at this [Drive doc](https://docs.google.com/document/d/1R6pXmTQIgCXdm_zTyRQ4GYI5oybIU4Vas66auJLRIJk/edit?usp=sharing)
 
 ## General Status
 - For every model, the Z is saved to the results folder, together with a UMAP representation.
