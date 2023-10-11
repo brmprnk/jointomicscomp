@@ -5,6 +5,7 @@
 [![MIT License](https://img.shields.io/apm/l/atomic-design-ui.svg?)](https://github.com/tterb/atomic-design-ui/blob/master/LICENSEs)
 
 Wrapper and implementation for comparing models for multiomics data integration; Check out our paper "An in-depth comparison of linear and non-linear joint embedding methods for bulk and single-cell multi-omics" here: https://doi.org/10.1101/2023.04.10.535672
+
 MOST RECENT UPDATES ARE FOUND IN THE ```generic-impl``` BRANCH!
 
 
