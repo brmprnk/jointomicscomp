@@ -1,0 +1,1731 @@
+2022-09-22 17:11:24: Selected device: cuda
+2022-09-22 17:11:24: Likelihood for omic1: nb
+2022-09-22 17:11:24: Likelihood for omic2: normal
+2022-09-22 17:12:00: EarlyStopping counter: 1 out of 10
+2022-09-22 17:16:05: EarlyStopping counter: 1 out of 10
+2022-09-22 17:16:15: EarlyStopping counter: 2 out of 10
+2022-09-22 17:16:26: EarlyStopping counter: 3 out of 10
+2022-09-22 17:16:36: EarlyStopping counter: 4 out of 10
+2022-09-22 17:16:47: EarlyStopping counter: 5 out of 10
+2022-09-22 17:16:58: EarlyStopping counter: 6 out of 10
+2022-09-22 17:17:08: EarlyStopping counter: 7 out of 10
+2022-09-22 17:17:19: EarlyStopping counter: 8 out of 10
+2022-09-22 17:17:30: EarlyStopping counter: 9 out of 10
+2022-09-22 17:17:40: EarlyStopping counter: 10 out of 10
+2022-09-22 17:17:40: Early stopping training since loss did not improve for 10 epochs.
+2022-09-22 17:17:40: Using model from epoch 24
+2022-09-22 17:17:41: Validation performance, imputation error modality 2 from 1
+2022-09-22 17:17:41: loss	253.7431
+2022-09-22 17:17:41: MSE	135.9757
+2022-09-22 17:17:41: Test performance, imputation error modality 2 from 1
+2022-09-22 17:17:41: loss	267.4056
+2022-09-22 17:17:41: MSE	129.6881
+2022-09-22 17:18:04: EarlyStopping counter: 1 out of 10
+2022-09-22 17:22:22: EarlyStopping counter: 1 out of 10
+2022-09-22 17:22:51: EarlyStopping counter: 1 out of 10
+2022-09-22 17:23:20: EarlyStopping counter: 1 out of 10
+2022-09-22 17:23:34: EarlyStopping counter: 2 out of 10
+2022-09-22 17:24:03: EarlyStopping counter: 1 out of 10
+2022-09-22 17:24:18: EarlyStopping counter: 2 out of 10
+2022-09-22 17:24:32: EarlyStopping counter: 3 out of 10
+2022-09-22 17:25:01: EarlyStopping counter: 1 out of 10
+2022-09-22 17:25:16: EarlyStopping counter: 2 out of 10
+2022-09-22 17:25:30: EarlyStopping counter: 3 out of 10
+2022-09-22 17:25:45: EarlyStopping counter: 4 out of 10
+2022-09-22 17:25:59: EarlyStopping counter: 5 out of 10
+2022-09-22 17:26:29: EarlyStopping counter: 1 out of 10
+2022-09-22 17:26:43: EarlyStopping counter: 2 out of 10
+2022-09-22 17:26:58: EarlyStopping counter: 3 out of 10
+2022-09-22 17:27:12: EarlyStopping counter: 4 out of 10
+2022-09-22 17:27:27: EarlyStopping counter: 5 out of 10
+2022-09-22 17:27:41: EarlyStopping counter: 6 out of 10
+2022-09-22 17:27:56: EarlyStopping counter: 7 out of 10
+2022-09-22 17:28:25: EarlyStopping counter: 1 out of 10
+2022-09-22 17:28:40: EarlyStopping counter: 2 out of 10
+2022-09-22 17:28:54: EarlyStopping counter: 3 out of 10
+2022-09-22 17:29:09: EarlyStopping counter: 4 out of 10
+2022-09-22 17:29:23: EarlyStopping counter: 5 out of 10
+2022-09-22 17:29:38: EarlyStopping counter: 6 out of 10
+2022-09-22 17:29:52: EarlyStopping counter: 7 out of 10
+2022-09-22 17:30:07: EarlyStopping counter: 8 out of 10
+2022-09-22 17:30:22: EarlyStopping counter: 9 out of 10
+2022-09-22 17:30:36: EarlyStopping counter: 10 out of 10
+2022-09-22 17:30:36: Early stopping training since loss did not improve for 10 epochs.
+2022-09-22 17:30:36: Using model from epoch 53
+2022-09-22 17:30:38: Validation performance, imputation error modality 2 from 1
+2022-09-22 17:30:38: loss	903.0158
+2022-09-22 17:30:38: MSE	54729.9992
+2022-09-22 17:30:38: Test performance, imputation error modality 2 from 1
+2022-09-22 17:30:38: loss	961.2853
+2022-09-22 17:30:38: MSE	10229.4417
+2022-09-22 17:30:38: 
+
+
+2022-09-22 17:30:39: Coherence: 0.6815
+2022-09-22 17:30:39: 
+
+
+2022-09-22 17:30:39: Test performance, classification task, linear classifier, modality 1
+2022-09-22 17:33:25: ACC: 0.7873	PR: 0.6760	RC: 0.4495	F1: 0.4789	MCC: 0.7634
+2022-09-22 17:33:25: Test performance, classification task, linear classifier, modality 2
+2022-09-22 21:40:56: Selected device: cuda
+2022-09-22 21:40:56: Likelihood for omic1: nb
+2022-09-22 21:40:56: Likelihood for omic2: normal
+2022-09-22 21:41:30: EarlyStopping counter: 1 out of 10
+2022-09-22 21:44:25: EarlyStopping counter: 1 out of 10
+2022-09-22 21:44:32: EarlyStopping counter: 2 out of 10
+2022-09-22 21:44:40: EarlyStopping counter: 3 out of 10
+2022-09-22 21:44:48: EarlyStopping counter: 4 out of 10
+2022-09-22 21:44:55: EarlyStopping counter: 5 out of 10
+2022-09-22 21:45:03: EarlyStopping counter: 6 out of 10
+2022-09-22 21:45:11: EarlyStopping counter: 7 out of 10
+2022-09-22 21:45:20: EarlyStopping counter: 8 out of 10
+2022-09-22 21:45:28: EarlyStopping counter: 9 out of 10
+2022-09-22 21:45:37: EarlyStopping counter: 10 out of 10
+2022-09-22 21:45:37: Early stopping training since loss did not improve for 10 epochs.
+2022-09-22 21:45:37: Using model from epoch 24
+2022-09-22 21:45:38: Validation performance, imputation error modality 2 from 1
+2022-09-22 21:45:38: loss	253.7431
+2022-09-22 21:45:38: MSE	135.9758
+2022-09-22 21:45:38: Test performance, imputation error modality 2 from 1
+2022-09-22 21:45:38: loss	267.4019
+2022-09-22 21:45:38: MSE	129.6881
+2022-09-22 21:45:57: EarlyStopping counter: 1 out of 10
+2022-09-22 21:49:32: EarlyStopping counter: 1 out of 10
+2022-09-22 21:49:56: EarlyStopping counter: 1 out of 10
+2022-09-22 21:50:20: EarlyStopping counter: 1 out of 10
+2022-09-22 21:50:32: EarlyStopping counter: 2 out of 10
+2022-09-22 21:50:56: EarlyStopping counter: 1 out of 10
+2022-09-22 21:51:08: EarlyStopping counter: 2 out of 10
+2022-09-22 21:51:20: EarlyStopping counter: 3 out of 10
+2022-09-22 21:51:44: EarlyStopping counter: 1 out of 10
+2022-09-22 21:51:57: EarlyStopping counter: 2 out of 10
+2022-09-22 21:52:09: EarlyStopping counter: 3 out of 10
+2022-09-22 21:52:21: EarlyStopping counter: 4 out of 10
+2022-09-22 21:52:33: EarlyStopping counter: 5 out of 10
+2022-09-22 21:52:57: EarlyStopping counter: 1 out of 10
+2022-09-22 21:53:09: EarlyStopping counter: 2 out of 10
+2022-09-22 21:53:21: EarlyStopping counter: 3 out of 10
+2022-09-22 21:53:33: EarlyStopping counter: 4 out of 10
+2022-09-22 21:53:45: EarlyStopping counter: 5 out of 10
+2022-09-22 21:53:57: EarlyStopping counter: 6 out of 10
+2022-09-22 21:54:10: EarlyStopping counter: 7 out of 10
+2022-09-22 21:54:34: EarlyStopping counter: 1 out of 10
+2022-09-22 21:54:46: EarlyStopping counter: 2 out of 10
+2022-09-22 21:54:58: EarlyStopping counter: 3 out of 10
+2022-09-22 21:55:10: EarlyStopping counter: 4 out of 10
+2022-09-22 21:55:22: EarlyStopping counter: 5 out of 10
+2022-09-22 21:55:34: EarlyStopping counter: 6 out of 10
+2022-09-22 21:55:46: EarlyStopping counter: 7 out of 10
+2022-09-22 21:55:59: EarlyStopping counter: 8 out of 10
+2022-09-22 21:56:11: EarlyStopping counter: 9 out of 10
+2022-09-22 21:56:23: EarlyStopping counter: 10 out of 10
+2022-09-22 21:56:23: Early stopping training since loss did not improve for 10 epochs.
+2022-09-22 21:56:23: Using model from epoch 53
+2022-09-22 21:56:24: Validation performance, imputation error modality 2 from 1
+2022-09-22 21:56:24: loss	903.0158
+2022-09-22 21:56:24: MSE	54730.9743
+2022-09-22 21:56:24: Test performance, imputation error modality 2 from 1
+2022-09-22 21:56:24: loss	961.2853
+2022-09-22 21:56:24: MSE	10229.6322
+2022-09-22 21:56:24: 
+
+
+2022-09-22 21:56:25: Coherence: 0.6945
+2022-09-22 21:56:25: 
+
+
+2022-09-22 21:56:25: Test performance, classification task, linear classifier, modality 1
+2022-09-22 21:59:44: ACC: 0.7876	PR: 0.6757	RC: 0.4494	F1: 0.4787	MCC: 0.7638
+2022-09-22 21:59:44: Test performance, classification task, linear classifier, modality 2
+2022-09-22 22:02:41: ACC: 0.7761	PR: 0.6199	RC: 0.4433	F1: 0.4760	MCC: 0.7506
+2022-09-22 22:02:41: Test performance, classification task, linear classifier, both modalities
+2022-09-22 22:06:00: ACC: 0.8167	PR: 0.7390	RC: 0.5112	F1: 0.5469	MCC: 0.7968
+2022-09-22 22:06:00: Test performance, classification task, non-linear classifier, modality 1
+2022-09-22 22:06:07: EarlyStopping counter: 1 out of 10
+2022-09-22 22:07:22: EarlyStopping counter: 1 out of 10
+2022-09-22 22:07:35: EarlyStopping counter: 1 out of 10
+2022-09-22 22:07:49: EarlyStopping counter: 1 out of 10
+2022-09-22 22:07:56: EarlyStopping counter: 2 out of 10
+2022-09-22 22:08:02: EarlyStopping counter: 3 out of 10
+2022-09-22 22:08:16: EarlyStopping counter: 1 out of 10
+2022-09-22 22:08:29: EarlyStopping counter: 1 out of 10
+2022-09-22 22:08:43: EarlyStopping counter: 1 out of 10
+2022-09-22 22:08:50: EarlyStopping counter: 2 out of 10
+2022-09-22 22:08:56: EarlyStopping counter: 3 out of 10
+2022-09-22 22:09:03: EarlyStopping counter: 4 out of 10
+2022-09-22 22:09:10: EarlyStopping counter: 5 out of 10
+2022-09-22 22:09:17: EarlyStopping counter: 6 out of 10
+2022-09-22 22:09:24: EarlyStopping counter: 7 out of 10
+2022-09-22 22:09:30: EarlyStopping counter: 8 out of 10
+2022-09-22 22:09:37: EarlyStopping counter: 9 out of 10
+2022-09-22 22:09:44: EarlyStopping counter: 10 out of 10
+2022-09-22 22:09:44: ACC: 0.8841	PR: 0.7924	RC: 0.7485	F1: 0.7475	MCC: 0.8717
+2022-09-22 22:09:44: Test performance, classification task, non-linear classifier, modality 2
+2022-09-22 22:09:51: EarlyStopping counter: 1 out of 10
+2022-09-22 22:10:52: EarlyStopping counter: 1 out of 10
+2022-09-22 22:11:05: EarlyStopping counter: 1 out of 10
+2022-09-22 22:11:12: EarlyStopping counter: 2 out of 10
+2022-09-22 22:11:33: EarlyStopping counter: 1 out of 10
+2022-09-22 22:11:39: EarlyStopping counter: 2 out of 10
+2022-09-22 22:11:46: EarlyStopping counter: 3 out of 10
+2022-09-22 22:12:00: EarlyStopping counter: 1 out of 10
+2022-09-22 22:12:06: EarlyStopping counter: 2 out of 10
+2022-09-22 22:12:13: EarlyStopping counter: 3 out of 10
+2022-09-22 22:12:20: EarlyStopping counter: 4 out of 10
+2022-09-22 22:12:27: EarlyStopping counter: 5 out of 10
+2022-09-22 22:12:34: EarlyStopping counter: 6 out of 10
+2022-09-22 22:12:40: EarlyStopping counter: 7 out of 10
+2022-09-22 22:12:47: EarlyStopping counter: 8 out of 10
+2022-09-22 22:13:01: EarlyStopping counter: 1 out of 10
+2022-09-22 22:13:07: EarlyStopping counter: 2 out of 10
+2022-09-22 22:13:14: EarlyStopping counter: 3 out of 10
+2022-09-22 22:13:21: EarlyStopping counter: 4 out of 10
+2022-09-22 22:13:28: EarlyStopping counter: 5 out of 10
+2022-09-22 22:13:34: EarlyStopping counter: 6 out of 10
+2022-09-22 22:13:41: EarlyStopping counter: 7 out of 10
+2022-09-22 22:13:48: EarlyStopping counter: 8 out of 10
+2022-09-22 22:13:55: EarlyStopping counter: 9 out of 10
+2022-09-22 22:14:01: EarlyStopping counter: 10 out of 10
+2022-09-22 22:14:02: ACC: 0.8487	PR: 0.6722	RC: 0.6637	F1: 0.6546	MCC: 0.8329
+2022-09-22 22:14:02: Test performance, classification task, non-linear classifier, both modalities
+2022-09-22 22:14:09: EarlyStopping counter: 1 out of 10
+2022-09-22 22:15:30: EarlyStopping counter: 1 out of 10
+2022-09-22 22:15:44: EarlyStopping counter: 1 out of 10
+2022-09-22 22:15:50: EarlyStopping counter: 2 out of 10
+2022-09-22 22:16:04: EarlyStopping counter: 1 out of 10
+2022-09-22 22:16:11: EarlyStopping counter: 2 out of 10
+2022-09-22 22:16:17: EarlyStopping counter: 3 out of 10
+2022-09-22 22:16:24: EarlyStopping counter: 4 out of 10
+2022-09-22 22:16:31: EarlyStopping counter: 5 out of 10
+2022-09-22 22:16:44: EarlyStopping counter: 1 out of 10
+2022-09-22 22:16:58: EarlyStopping counter: 1 out of 10
+2022-09-22 22:17:05: EarlyStopping counter: 2 out of 10
+2022-09-22 22:17:11: EarlyStopping counter: 3 out of 10
+2022-09-22 22:17:18: EarlyStopping counter: 4 out of 10
+2022-09-22 22:17:25: EarlyStopping counter: 5 out of 10
+2022-09-22 22:17:32: EarlyStopping counter: 6 out of 10
+2022-09-22 22:17:39: EarlyStopping counter: 7 out of 10
+2022-09-22 22:17:52: EarlyStopping counter: 1 out of 10
+2022-09-22 22:17:59: EarlyStopping counter: 2 out of 10
+2022-09-22 22:18:06: EarlyStopping counter: 3 out of 10
+2022-09-22 22:18:12: EarlyStopping counter: 4 out of 10
+2022-09-22 22:18:26: EarlyStopping counter: 1 out of 10
+2022-09-22 22:18:33: EarlyStopping counter: 2 out of 10
+2022-09-22 22:18:40: EarlyStopping counter: 3 out of 10
+2022-09-22 22:18:46: EarlyStopping counter: 4 out of 10
+2022-09-22 22:18:53: EarlyStopping counter: 5 out of 10
+2022-09-22 22:19:00: EarlyStopping counter: 6 out of 10
+2022-09-22 22:19:07: EarlyStopping counter: 7 out of 10
+2022-09-22 22:19:13: EarlyStopping counter: 8 out of 10
+2022-09-22 22:19:20: EarlyStopping counter: 9 out of 10
+2022-09-22 22:19:27: EarlyStopping counter: 10 out of 10
+2022-09-22 22:19:27: ACC: 0.8992	PR: 0.8040	RC: 0.7856	F1: 0.7853	MCC: 0.8886
+2022-09-22 22:19:27: Saving results
+2022-10-11 09:58:36: Selected device: cuda
+2022-10-11 09:58:36: Likelihood for omic1: normal
+2022-10-11 09:58:36: Likelihood for omic2: beta
+2022-10-11 09:58:45: EarlyStopping counter: 1 out of 10
+2022-10-11 10:28:04: Selected device: cuda
+2022-10-11 10:28:04: Likelihood for omic1: normal
+2022-10-11 10:28:05: Likelihood for omic2: beta
+2022-10-11 10:28:31: EarlyStopping counter: 1 out of 10
+2022-10-11 10:29:56: EarlyStopping counter: 1 out of 10
+2022-10-11 10:29:58: EarlyStopping counter: 1 out of 10
+2022-10-11 10:29:59: EarlyStopping counter: 1 out of 10
+2022-10-11 10:30:00: EarlyStopping counter: 1 out of 10
+2022-10-11 10:30:02: EarlyStopping counter: 1 out of 10
+2022-10-11 10:30:03: EarlyStopping counter: 1 out of 10
+2022-10-11 10:30:05: EarlyStopping counter: 1 out of 10
+2022-10-11 10:30:06: EarlyStopping counter: 1 out of 10
+2022-10-11 10:30:08: EarlyStopping counter: 1 out of 10
+2022-10-11 10:30:09: EarlyStopping counter: 1 out of 10
+2022-10-11 10:30:11: EarlyStopping counter: 1 out of 10
+2022-10-11 10:30:12: EarlyStopping counter: 1 out of 10
+2022-10-11 10:30:14: EarlyStopping counter: 1 out of 10
+2022-10-11 10:30:15: EarlyStopping counter: 1 out of 10
+2022-10-11 10:30:16: EarlyStopping counter: 1 out of 10
+2022-10-11 10:30:18: EarlyStopping counter: 1 out of 10
+2022-10-11 10:30:19: EarlyStopping counter: 1 out of 10
+2022-10-11 10:30:21: EarlyStopping counter: 1 out of 10
+2022-10-11 10:30:22: EarlyStopping counter: 1 out of 10
+2022-10-11 10:30:24: EarlyStopping counter: 1 out of 10
+2022-10-11 10:30:25: EarlyStopping counter: 1 out of 10
+2022-10-11 10:30:27: EarlyStopping counter: 1 out of 10
+2022-10-11 10:30:28: EarlyStopping counter: 1 out of 10
+2022-10-11 10:30:29: EarlyStopping counter: 1 out of 10
+2022-10-11 10:30:31: EarlyStopping counter: 1 out of 10
+2022-10-11 10:30:32: EarlyStopping counter: 1 out of 10
+2022-10-11 10:30:34: EarlyStopping counter: 1 out of 10
+2022-10-11 10:30:35: EarlyStopping counter: 1 out of 10
+2022-10-11 10:30:36: EarlyStopping counter: 2 out of 10
+2022-10-11 10:30:37: EarlyStopping counter: 1 out of 10
+2022-10-11 10:30:38: EarlyStopping counter: 2 out of 10
+2022-10-11 10:30:39: EarlyStopping counter: 1 out of 10
+2022-10-11 10:30:40: EarlyStopping counter: 2 out of 10
+2022-10-11 10:30:42: EarlyStopping counter: 1 out of 10
+2022-10-11 10:30:42: EarlyStopping counter: 2 out of 10
+2022-10-11 10:30:44: EarlyStopping counter: 1 out of 10
+2022-10-11 10:30:44: EarlyStopping counter: 2 out of 10
+2022-10-11 10:30:46: EarlyStopping counter: 1 out of 10
+2022-10-11 10:30:47: EarlyStopping counter: 2 out of 10
+2022-10-11 10:30:48: EarlyStopping counter: 1 out of 10
+2022-10-11 10:30:49: EarlyStopping counter: 2 out of 10
+2022-10-11 10:30:50: EarlyStopping counter: 1 out of 10
+2022-10-11 10:30:51: EarlyStopping counter: 2 out of 10
+2022-10-11 10:30:52: EarlyStopping counter: 3 out of 10
+2022-10-11 10:30:53: EarlyStopping counter: 1 out of 10
+2022-10-11 10:30:54: EarlyStopping counter: 2 out of 10
+2022-10-11 10:30:55: EarlyStopping counter: 3 out of 10
+2022-10-11 10:30:56: EarlyStopping counter: 1 out of 10
+2022-10-11 10:30:57: EarlyStopping counter: 2 out of 10
+2022-10-11 10:30:57: EarlyStopping counter: 3 out of 10
+2022-10-11 10:30:59: EarlyStopping counter: 1 out of 10
+2022-10-11 10:31:00: EarlyStopping counter: 2 out of 10
+2022-10-11 10:31:00: EarlyStopping counter: 3 out of 10
+2022-10-11 10:31:01: EarlyStopping counter: 4 out of 10
+2022-10-11 10:31:02: EarlyStopping counter: 1 out of 10
+2022-10-11 10:31:03: EarlyStopping counter: 2 out of 10
+2022-10-11 10:31:04: EarlyStopping counter: 3 out of 10
+2022-10-11 10:31:05: EarlyStopping counter: 4 out of 10
+2022-10-11 10:31:06: EarlyStopping counter: 1 out of 10
+2022-10-11 10:31:07: EarlyStopping counter: 2 out of 10
+2022-10-11 10:31:07: EarlyStopping counter: 3 out of 10
+2022-10-11 10:31:08: EarlyStopping counter: 4 out of 10
+2022-10-11 10:31:09: EarlyStopping counter: 5 out of 10
+2022-10-11 10:31:10: EarlyStopping counter: 1 out of 10
+2022-10-11 10:31:11: EarlyStopping counter: 2 out of 10
+2022-10-11 10:31:12: EarlyStopping counter: 3 out of 10
+2022-10-11 10:31:12: EarlyStopping counter: 4 out of 10
+2022-10-11 10:31:13: EarlyStopping counter: 5 out of 10
+2022-10-11 10:31:14: EarlyStopping counter: 6 out of 10
+2022-10-11 10:31:15: EarlyStopping counter: 7 out of 10
+2022-10-11 10:31:16: EarlyStopping counter: 1 out of 10
+2022-10-11 10:31:17: EarlyStopping counter: 2 out of 10
+2022-10-11 10:31:17: EarlyStopping counter: 3 out of 10
+2022-10-11 10:31:18: EarlyStopping counter: 4 out of 10
+2022-10-11 10:31:19: EarlyStopping counter: 5 out of 10
+2022-10-11 10:31:20: EarlyStopping counter: 6 out of 10
+2022-10-11 10:31:20: EarlyStopping counter: 7 out of 10
+2022-10-11 10:31:21: EarlyStopping counter: 8 out of 10
+2022-10-11 10:31:22: EarlyStopping counter: 9 out of 10
+2022-10-11 10:31:22: EarlyStopping counter: 10 out of 10
+2022-10-11 10:31:22: Early stopping training since loss did not improve for 10 epochs.
+2022-10-11 10:31:22: Using model from epoch 241
+2022-10-11 10:44:58: Selected device: cuda
+2022-10-11 10:44:58: Likelihood for omic1: normal
+2022-10-11 10:44:58: Likelihood for omic2: beta
+2022-10-11 10:45:01: EarlyStopping counter: 1 out of 10
+2022-10-11 10:46:26: EarlyStopping counter: 1 out of 10
+2022-10-11 10:46:27: EarlyStopping counter: 1 out of 10
+2022-10-11 10:46:29: EarlyStopping counter: 1 out of 10
+2022-10-11 10:46:30: EarlyStopping counter: 1 out of 10
+2022-10-11 10:46:32: EarlyStopping counter: 1 out of 10
+2022-10-11 10:46:33: EarlyStopping counter: 1 out of 10
+2022-10-11 10:46:35: EarlyStopping counter: 1 out of 10
+2022-10-11 10:46:36: EarlyStopping counter: 1 out of 10
+2022-10-11 10:46:38: EarlyStopping counter: 1 out of 10
+2022-10-11 10:46:39: EarlyStopping counter: 1 out of 10
+2022-10-11 10:46:40: EarlyStopping counter: 1 out of 10
+2022-10-11 10:46:42: EarlyStopping counter: 1 out of 10
+2022-10-11 10:46:43: EarlyStopping counter: 1 out of 10
+2022-10-11 10:46:45: EarlyStopping counter: 1 out of 10
+2022-10-11 10:46:46: EarlyStopping counter: 1 out of 10
+2022-10-11 10:46:48: EarlyStopping counter: 1 out of 10
+2022-10-11 10:46:49: EarlyStopping counter: 1 out of 10
+2022-10-11 10:46:51: EarlyStopping counter: 1 out of 10
+2022-10-11 10:46:52: EarlyStopping counter: 1 out of 10
+2022-10-11 10:46:53: EarlyStopping counter: 1 out of 10
+2022-10-11 10:46:55: EarlyStopping counter: 1 out of 10
+2022-10-11 10:46:56: EarlyStopping counter: 1 out of 10
+2022-10-11 10:46:58: EarlyStopping counter: 1 out of 10
+2022-10-11 10:46:59: EarlyStopping counter: 1 out of 10
+2022-10-11 10:47:01: EarlyStopping counter: 1 out of 10
+2022-10-11 10:47:02: EarlyStopping counter: 1 out of 10
+2022-10-11 10:47:04: EarlyStopping counter: 1 out of 10
+2022-10-11 10:47:05: EarlyStopping counter: 1 out of 10
+2022-10-11 10:47:06: EarlyStopping counter: 2 out of 10
+2022-10-11 10:47:07: EarlyStopping counter: 1 out of 10
+2022-10-11 10:47:08: EarlyStopping counter: 2 out of 10
+2022-10-11 10:47:09: EarlyStopping counter: 1 out of 10
+2022-10-11 10:47:10: EarlyStopping counter: 2 out of 10
+2022-10-11 10:47:11: EarlyStopping counter: 1 out of 10
+2022-10-11 10:47:12: EarlyStopping counter: 2 out of 10
+2022-10-11 10:47:14: EarlyStopping counter: 1 out of 10
+2022-10-11 10:47:14: EarlyStopping counter: 2 out of 10
+2022-10-11 10:47:16: EarlyStopping counter: 1 out of 10
+2022-10-11 10:47:16: EarlyStopping counter: 2 out of 10
+2022-10-11 10:47:18: EarlyStopping counter: 1 out of 10
+2022-10-11 10:47:19: EarlyStopping counter: 2 out of 10
+2022-10-11 10:47:20: EarlyStopping counter: 1 out of 10
+2022-10-11 10:47:21: EarlyStopping counter: 2 out of 10
+2022-10-11 10:47:22: EarlyStopping counter: 3 out of 10
+2022-10-11 10:47:23: EarlyStopping counter: 1 out of 10
+2022-10-11 10:47:24: EarlyStopping counter: 2 out of 10
+2022-10-11 10:47:24: EarlyStopping counter: 3 out of 10
+2022-10-11 10:47:26: EarlyStopping counter: 1 out of 10
+2022-10-11 10:47:27: EarlyStopping counter: 2 out of 10
+2022-10-11 10:47:27: EarlyStopping counter: 3 out of 10
+2022-10-11 10:47:29: EarlyStopping counter: 1 out of 10
+2022-10-11 10:47:29: EarlyStopping counter: 2 out of 10
+2022-10-11 10:47:30: EarlyStopping counter: 3 out of 10
+2022-10-11 10:47:31: EarlyStopping counter: 4 out of 10
+2022-10-11 10:47:32: EarlyStopping counter: 1 out of 10
+2022-10-11 10:47:33: EarlyStopping counter: 2 out of 10
+2022-10-11 10:47:34: EarlyStopping counter: 3 out of 10
+2022-10-11 10:47:34: EarlyStopping counter: 4 out of 10
+2022-10-11 10:47:36: EarlyStopping counter: 1 out of 10
+2022-10-11 10:47:37: EarlyStopping counter: 2 out of 10
+2022-10-11 10:47:37: EarlyStopping counter: 3 out of 10
+2022-10-11 10:47:38: EarlyStopping counter: 4 out of 10
+2022-10-11 10:47:39: EarlyStopping counter: 5 out of 10
+2022-10-11 10:47:40: EarlyStopping counter: 1 out of 10
+2022-10-11 10:47:41: EarlyStopping counter: 2 out of 10
+2022-10-11 10:47:42: EarlyStopping counter: 3 out of 10
+2022-10-11 10:47:42: EarlyStopping counter: 4 out of 10
+2022-10-11 10:47:43: EarlyStopping counter: 5 out of 10
+2022-10-11 10:47:44: EarlyStopping counter: 6 out of 10
+2022-10-11 10:47:44: EarlyStopping counter: 7 out of 10
+2022-10-11 10:47:46: EarlyStopping counter: 1 out of 10
+2022-10-11 10:47:47: EarlyStopping counter: 2 out of 10
+2022-10-11 10:47:47: EarlyStopping counter: 3 out of 10
+2022-10-11 10:47:48: EarlyStopping counter: 4 out of 10
+2022-10-11 10:47:49: EarlyStopping counter: 5 out of 10
+2022-10-11 10:47:49: EarlyStopping counter: 6 out of 10
+2022-10-11 10:47:50: EarlyStopping counter: 7 out of 10
+2022-10-11 10:47:51: EarlyStopping counter: 8 out of 10
+2022-10-11 10:47:52: EarlyStopping counter: 9 out of 10
+2022-10-11 10:47:52: EarlyStopping counter: 10 out of 10
+2022-10-11 10:47:52: Early stopping training since loss did not improve for 10 epochs.
+2022-10-11 10:47:52: Using model from epoch 241
+2022-10-11 10:47:53: Validation performance, imputation error modality 2 from 1
+2022-10-11 10:47:53: loss	-4340.3542
+2022-10-11 10:47:53: MSE	78.6887
+2022-10-11 10:47:53: Test performance, imputation error modality 2 from 1
+2022-10-11 10:47:53: loss	-4306.5696
+2022-10-11 10:47:53: MSE	79.5397
+2022-10-11 10:47:54: EarlyStopping counter: 1 out of 10
+2022-10-11 10:48:22: EarlyStopping counter: 1 out of 10
+2022-10-11 10:48:24: EarlyStopping counter: 1 out of 10
+2022-10-11 10:48:25: EarlyStopping counter: 1 out of 10
+2022-10-11 10:48:26: EarlyStopping counter: 1 out of 10
+2022-10-11 10:48:27: EarlyStopping counter: 1 out of 10
+2022-10-11 10:48:29: EarlyStopping counter: 1 out of 10
+2022-10-11 10:48:29: EarlyStopping counter: 2 out of 10
+2022-10-11 10:48:30: EarlyStopping counter: 1 out of 10
+2022-10-11 10:48:31: EarlyStopping counter: 2 out of 10
+2022-10-11 10:48:32: EarlyStopping counter: 3 out of 10
+2022-10-11 10:48:32: EarlyStopping counter: 4 out of 10
+2022-10-11 10:48:33: EarlyStopping counter: 5 out of 10
+2022-10-11 10:48:34: EarlyStopping counter: 6 out of 10
+2022-10-11 10:48:34: EarlyStopping counter: 7 out of 10
+2022-10-11 10:48:35: EarlyStopping counter: 8 out of 10
+2022-10-11 10:48:35: EarlyStopping counter: 9 out of 10
+2022-10-11 10:48:36: EarlyStopping counter: 10 out of 10
+2022-10-11 10:48:36: Early stopping training since loss did not improve for 10 epochs.
+2022-10-11 10:48:36: Using model from epoch 63
+2022-10-11 10:48:36: Validation performance, imputation error modality 2 from 1
+2022-10-11 10:48:36: loss	5376.4121
+2022-10-11 10:48:36: MSE	2636.7810
+2022-10-11 10:48:36: Test performance, imputation error modality 2 from 1
+2022-10-11 10:48:36: loss	5368.5441
+2022-10-11 10:48:36: MSE	2639.7108
+2022-10-11 10:48:37: 
+
+
+2022-10-11 11:10:18: Selected device: cuda
+2022-10-11 11:10:18: Likelihood for omic1: normal
+2022-10-11 11:10:18: Likelihood for omic2: beta
+2022-10-11 11:10:46: EarlyStopping counter: 1 out of 10
+2022-10-11 11:12:12: EarlyStopping counter: 1 out of 10
+2022-10-11 11:12:13: EarlyStopping counter: 1 out of 10
+2022-10-11 11:12:14: EarlyStopping counter: 1 out of 10
+2022-10-11 11:12:16: EarlyStopping counter: 1 out of 10
+2022-10-11 11:12:17: EarlyStopping counter: 1 out of 10
+2022-10-11 11:12:19: EarlyStopping counter: 1 out of 10
+2022-10-11 11:12:20: EarlyStopping counter: 1 out of 10
+2022-10-11 11:12:22: EarlyStopping counter: 1 out of 10
+2022-10-11 11:12:23: EarlyStopping counter: 1 out of 10
+2022-10-11 11:12:24: EarlyStopping counter: 1 out of 10
+2022-10-11 11:12:26: EarlyStopping counter: 1 out of 10
+2022-10-11 11:12:27: EarlyStopping counter: 1 out of 10
+2022-10-11 11:12:29: EarlyStopping counter: 1 out of 10
+2022-10-11 11:12:30: EarlyStopping counter: 1 out of 10
+2022-10-11 11:12:32: EarlyStopping counter: 1 out of 10
+2022-10-11 11:12:33: EarlyStopping counter: 1 out of 10
+2022-10-11 11:12:35: EarlyStopping counter: 1 out of 10
+2022-10-11 11:12:36: EarlyStopping counter: 1 out of 10
+2022-10-11 11:12:37: EarlyStopping counter: 1 out of 10
+2022-10-11 11:12:39: EarlyStopping counter: 1 out of 10
+2022-10-11 11:12:40: EarlyStopping counter: 1 out of 10
+2022-10-11 11:12:42: EarlyStopping counter: 1 out of 10
+2022-10-11 11:12:43: EarlyStopping counter: 1 out of 10
+2022-10-11 11:12:45: EarlyStopping counter: 1 out of 10
+2022-10-11 11:12:46: EarlyStopping counter: 1 out of 10
+2022-10-11 11:12:47: EarlyStopping counter: 1 out of 10
+2022-10-11 11:12:49: EarlyStopping counter: 1 out of 10
+2022-10-11 11:12:50: EarlyStopping counter: 1 out of 10
+2022-10-11 11:12:51: EarlyStopping counter: 2 out of 10
+2022-10-11 11:12:52: EarlyStopping counter: 1 out of 10
+2022-10-11 11:12:53: EarlyStopping counter: 2 out of 10
+2022-10-11 11:12:55: EarlyStopping counter: 1 out of 10
+2022-10-11 11:12:55: EarlyStopping counter: 2 out of 10
+2022-10-11 11:12:57: EarlyStopping counter: 1 out of 10
+2022-10-11 11:12:57: EarlyStopping counter: 2 out of 10
+2022-10-11 11:12:59: EarlyStopping counter: 1 out of 10
+2022-10-11 11:13:00: EarlyStopping counter: 2 out of 10
+2022-10-11 11:13:01: EarlyStopping counter: 1 out of 10
+2022-10-11 11:13:02: EarlyStopping counter: 2 out of 10
+2022-10-11 11:13:03: EarlyStopping counter: 1 out of 10
+2022-10-11 11:13:04: EarlyStopping counter: 2 out of 10
+2022-10-11 11:13:05: EarlyStopping counter: 1 out of 10
+2022-10-11 11:13:06: EarlyStopping counter: 2 out of 10
+2022-10-11 11:13:07: EarlyStopping counter: 3 out of 10
+2022-10-11 11:13:08: EarlyStopping counter: 1 out of 10
+2022-10-11 11:13:09: EarlyStopping counter: 2 out of 10
+2022-10-11 11:13:10: EarlyStopping counter: 3 out of 10
+2022-10-11 11:13:11: EarlyStopping counter: 1 out of 10
+2022-10-11 11:13:12: EarlyStopping counter: 2 out of 10
+2022-10-11 11:13:12: EarlyStopping counter: 3 out of 10
+2022-10-11 11:13:14: EarlyStopping counter: 1 out of 10
+2022-10-11 11:13:15: EarlyStopping counter: 2 out of 10
+2022-10-11 11:13:15: EarlyStopping counter: 3 out of 10
+2022-10-11 11:13:16: EarlyStopping counter: 4 out of 10
+2022-10-11 11:13:17: EarlyStopping counter: 1 out of 10
+2022-10-11 11:13:18: EarlyStopping counter: 2 out of 10
+2022-10-11 11:13:19: EarlyStopping counter: 3 out of 10
+2022-10-11 11:13:20: EarlyStopping counter: 4 out of 10
+2022-10-11 11:13:21: EarlyStopping counter: 1 out of 10
+2022-10-11 11:13:22: EarlyStopping counter: 2 out of 10
+2022-10-11 11:13:22: EarlyStopping counter: 3 out of 10
+2022-10-11 11:13:23: EarlyStopping counter: 4 out of 10
+2022-10-11 11:13:24: EarlyStopping counter: 5 out of 10
+2022-10-11 11:13:25: EarlyStopping counter: 1 out of 10
+2022-10-11 11:13:26: EarlyStopping counter: 2 out of 10
+2022-10-11 11:13:27: EarlyStopping counter: 3 out of 10
+2022-10-11 11:13:27: EarlyStopping counter: 4 out of 10
+2022-10-11 11:13:28: EarlyStopping counter: 5 out of 10
+2022-10-11 11:13:29: EarlyStopping counter: 6 out of 10
+2022-10-11 11:13:30: EarlyStopping counter: 7 out of 10
+2022-10-11 11:13:31: EarlyStopping counter: 1 out of 10
+2022-10-11 11:13:32: EarlyStopping counter: 2 out of 10
+2022-10-11 11:13:32: EarlyStopping counter: 3 out of 10
+2022-10-11 11:13:33: EarlyStopping counter: 4 out of 10
+2022-10-11 11:13:34: EarlyStopping counter: 5 out of 10
+2022-10-11 11:13:35: EarlyStopping counter: 6 out of 10
+2022-10-11 11:13:35: EarlyStopping counter: 7 out of 10
+2022-10-11 11:13:36: EarlyStopping counter: 8 out of 10
+2022-10-11 11:13:37: EarlyStopping counter: 9 out of 10
+2022-10-11 11:13:37: EarlyStopping counter: 10 out of 10
+2022-10-11 11:13:37: Early stopping training since loss did not improve for 10 epochs.
+2022-10-11 11:13:37: Using model from epoch 241
+2022-10-11 11:13:38: Validation performance, imputation error modality 2 from 1
+2022-10-11 11:13:38: loss	-4340.3542
+2022-10-11 11:13:38: MSE	78.6887
+2022-10-11 11:13:38: Test performance, imputation error modality 2 from 1
+2022-10-11 11:13:38: loss	-4306.5696
+2022-10-11 11:13:38: MSE	79.5397
+2022-10-11 11:13:39: EarlyStopping counter: 1 out of 10
+2022-10-11 11:14:07: EarlyStopping counter: 1 out of 10
+2022-10-11 11:14:08: EarlyStopping counter: 1 out of 10
+2022-10-11 11:14:10: EarlyStopping counter: 1 out of 10
+2022-10-11 11:14:11: EarlyStopping counter: 1 out of 10
+2022-10-11 11:14:12: EarlyStopping counter: 1 out of 10
+2022-10-11 11:14:13: EarlyStopping counter: 1 out of 10
+2022-10-11 11:14:14: EarlyStopping counter: 2 out of 10
+2022-10-11 11:14:15: EarlyStopping counter: 1 out of 10
+2022-10-11 11:14:16: EarlyStopping counter: 2 out of 10
+2022-10-11 11:14:16: EarlyStopping counter: 3 out of 10
+2022-10-11 11:14:17: EarlyStopping counter: 4 out of 10
+2022-10-11 11:14:18: EarlyStopping counter: 5 out of 10
+2022-10-11 11:14:18: EarlyStopping counter: 6 out of 10
+2022-10-11 11:14:19: EarlyStopping counter: 7 out of 10
+2022-10-11 11:14:19: EarlyStopping counter: 8 out of 10
+2022-10-11 11:14:20: EarlyStopping counter: 9 out of 10
+2022-10-11 11:14:21: EarlyStopping counter: 10 out of 10
+2022-10-11 11:14:21: Early stopping training since loss did not improve for 10 epochs.
+2022-10-11 11:14:21: Using model from epoch 63
+2022-10-11 11:14:21: Validation performance, imputation error modality 1 from 2
+2022-10-11 11:14:21: loss	5376.4121
+2022-10-11 11:14:21: MSE	2636.7810
+2022-10-11 11:14:21: Test performance, imputation error modality 1 from 2
+2022-10-11 11:14:21: loss	5368.5441
+2022-10-11 11:14:21: MSE	2639.7108
+2022-10-11 11:14:21: 
+
+
+2022-10-11 11:14:23: Coherence: 0.5350
+2022-10-11 11:14:23: 
+
+
+2022-10-12 12:51:57: Selected device: cuda
+2022-10-12 12:51:57: Likelihood for omic1: normal
+2022-10-12 12:51:57: Likelihood for omic2: categorical
+2022-10-12 12:52:20: EarlyStopping counter: 1 out of 10
+2022-10-12 12:52:40: EarlyStopping counter: 1 out of 10
+2022-10-12 12:52:42: EarlyStopping counter: 1 out of 10
+2022-10-12 12:52:43: EarlyStopping counter: 2 out of 10
+2022-10-12 12:52:44: EarlyStopping counter: 3 out of 10
+2022-10-12 12:52:46: EarlyStopping counter: 1 out of 10
+2022-10-12 12:52:47: EarlyStopping counter: 2 out of 10
+2022-10-12 12:52:48: EarlyStopping counter: 3 out of 10
+2022-10-12 12:52:49: EarlyStopping counter: 4 out of 10
+2022-10-12 12:52:50: EarlyStopping counter: 5 out of 10
+2022-10-12 12:52:51: EarlyStopping counter: 6 out of 10
+2022-10-12 12:52:52: EarlyStopping counter: 7 out of 10
+2022-10-12 12:52:52: EarlyStopping counter: 8 out of 10
+2022-10-12 12:52:53: EarlyStopping counter: 9 out of 10
+2022-10-12 12:52:54: EarlyStopping counter: 10 out of 10
+2022-10-12 12:52:54: Early stopping training since loss did not improve for 10 epochs.
+2022-10-12 12:52:54: Using model from epoch 28
+2022-10-12 12:52:55: Validation performance, imputation error modality 2 from 1
+2022-10-12 12:52:55: loss	6436.8312
+2022-10-12 12:52:55: MSE	3201.2654
+2022-10-12 12:52:55: Test performance, imputation error modality 2 from 1
+2022-10-12 12:52:55: loss	6641.5356
+2022-10-12 12:52:55: MSE	3184.6339
+2022-10-12 12:58:18: Using model from epoch 0
+2022-10-12 15:46:43: Selected device: cuda
+2022-10-12 15:46:43: Likelihood for omic1: normal
+2022-10-12 15:46:43: Likelihood for omic2: categorical
+2022-10-12 16:06:09: Validation performance, imputation error modality 1 from 2
+2022-10-12 16:06:09: loss	nan
+2022-10-12 16:06:09: MSE	1427258357345815887872.0000
+2022-10-12 16:06:09: Test performance, imputation error modality 1 from 2
+2022-10-12 16:06:09: loss	nan
+2022-10-12 16:06:09: MSE	3344154269188287889408.0000
+2022-10-12 16:07:19: 
+
+
+2022-10-12 16:07:20: Coherence: 0.1755
+2022-10-12 16:07:20: 
+
+
+2022-10-12 16:17:51: Selected device: cuda
+2022-10-12 16:17:51: Likelihood for omic1: normal
+2022-10-12 16:17:51: Likelihood for omic2: categorical
+2022-10-12 16:18:13: EarlyStopping counter: 1 out of 10
+2022-10-12 16:18:34: EarlyStopping counter: 1 out of 10
+2022-10-12 16:18:36: EarlyStopping counter: 1 out of 10
+2022-10-12 16:18:37: EarlyStopping counter: 2 out of 10
+2022-10-12 16:18:38: EarlyStopping counter: 3 out of 10
+2022-10-12 16:18:39: EarlyStopping counter: 1 out of 10
+2022-10-12 16:18:40: EarlyStopping counter: 2 out of 10
+2022-10-12 16:18:41: EarlyStopping counter: 3 out of 10
+2022-10-12 16:18:42: EarlyStopping counter: 4 out of 10
+2022-10-12 16:18:43: EarlyStopping counter: 5 out of 10
+2022-10-12 16:18:44: EarlyStopping counter: 6 out of 10
+2022-10-12 16:18:45: EarlyStopping counter: 7 out of 10
+2022-10-12 16:18:46: EarlyStopping counter: 8 out of 10
+2022-10-12 16:18:46: EarlyStopping counter: 9 out of 10
+2022-10-12 16:18:47: EarlyStopping counter: 10 out of 10
+2022-10-12 16:18:47: Early stopping training since loss did not improve for 10 epochs.
+2022-10-12 16:18:47: Using model from epoch 28
+2022-10-12 16:18:48: Validation performance, imputation error modality 2 from 1
+2022-10-12 16:18:48: loss	6436.8312
+2022-10-12 16:18:48: MSE	3201.2654
+2022-10-12 16:18:48: Test performance, imputation error modality 2 from 1
+2022-10-12 16:18:48: loss	6641.5356
+2022-10-12 16:18:48: MSE	3184.6339
+2022-10-13 15:02:41: Selected device: cuda
+2022-10-13 15:02:41: Likelihood for omic1: nb
+2022-10-13 15:02:41: Likelihood for omic2: normal
+2022-10-13 15:02:59: EarlyStopping counter: 1 out of 10
+2022-10-13 15:07:06: EarlyStopping counter: 1 out of 10
+2022-10-13 15:07:16: EarlyStopping counter: 2 out of 10
+2022-10-13 15:07:27: EarlyStopping counter: 3 out of 10
+2022-10-13 15:07:38: EarlyStopping counter: 4 out of 10
+2022-10-13 15:07:49: EarlyStopping counter: 5 out of 10
+2022-10-13 15:07:59: EarlyStopping counter: 6 out of 10
+2022-10-13 15:08:10: EarlyStopping counter: 7 out of 10
+2022-10-13 15:08:21: EarlyStopping counter: 8 out of 10
+2022-10-13 15:08:32: EarlyStopping counter: 9 out of 10
+2022-10-13 15:08:42: EarlyStopping counter: 10 out of 10
+2022-10-13 15:08:42: Early stopping training since loss did not improve for 10 epochs.
+2022-10-13 15:08:42: Using model from epoch 24
+2022-10-13 15:08:59: Validation performance, imputation error modality 2 from 1
+2022-10-13 15:08:59: loss	253.7431
+2022-10-13 15:08:59: MSE	135.9757
+2022-10-13 15:08:59: Test performance, imputation error modality 2 from 1
+2022-10-13 15:08:59: loss	267.4056
+2022-10-13 15:08:59: MSE	129.6881
+2022-10-13 15:39:13: Selected device: cuda
+2022-10-13 15:39:13: Likelihood for omic1: nb
+2022-10-13 15:39:13: Likelihood for omic2: normal
+2022-10-13 15:39:53: EarlyStopping counter: 1 out of 10
+2022-10-13 15:43:48: EarlyStopping counter: 1 out of 10
+2022-10-13 15:43:58: EarlyStopping counter: 2 out of 10
+2022-10-13 15:44:08: EarlyStopping counter: 3 out of 10
+2022-10-13 15:44:18: EarlyStopping counter: 4 out of 10
+2022-10-13 15:44:27: EarlyStopping counter: 5 out of 10
+2022-10-13 15:44:37: EarlyStopping counter: 6 out of 10
+2022-10-13 15:44:47: EarlyStopping counter: 7 out of 10
+2022-10-13 15:44:57: EarlyStopping counter: 8 out of 10
+2022-10-13 15:45:07: EarlyStopping counter: 9 out of 10
+2022-10-13 15:45:17: EarlyStopping counter: 10 out of 10
+2022-10-13 15:45:17: Early stopping training since loss did not improve for 10 epochs.
+2022-10-13 15:45:17: Using model from epoch 24
+2022-10-13 15:45:32: Validation performance, imputation error modality 2 from 1
+2022-10-13 15:45:32: loss	253.7431
+2022-10-13 15:45:32: MSE	135.9758
+2022-10-13 15:45:32: Test performance, imputation error modality 2 from 1
+2022-10-13 15:45:32: loss	267.4018
+2022-10-13 15:45:32: MSE	129.6880
+2022-10-13 15:58:06: Selected device: cuda
+2022-10-13 15:58:06: Likelihood for omic1: nb
+2022-10-13 15:58:06: Likelihood for omic2: normal
+2022-10-13 15:58:26: EarlyStopping counter: 1 out of 10
+2022-10-13 16:02:42: EarlyStopping counter: 1 out of 10
+2022-10-13 16:02:53: EarlyStopping counter: 2 out of 10
+2022-10-13 16:03:05: EarlyStopping counter: 3 out of 10
+2022-10-13 16:03:16: EarlyStopping counter: 4 out of 10
+2022-10-13 16:03:27: EarlyStopping counter: 5 out of 10
+2022-10-13 16:03:38: EarlyStopping counter: 6 out of 10
+2022-10-13 16:03:49: EarlyStopping counter: 7 out of 10
+2022-10-13 16:04:00: EarlyStopping counter: 8 out of 10
+2022-10-13 16:04:11: EarlyStopping counter: 9 out of 10
+2022-10-13 16:04:22: EarlyStopping counter: 10 out of 10
+2022-10-13 16:04:22: Early stopping training since loss did not improve for 10 epochs.
+2022-10-13 16:04:22: Using model from epoch 24
+2022-10-13 16:04:40: Validation performance, imputation error modality 2 from 1
+2022-10-13 16:04:40: loss	253.7431
+2022-10-13 16:04:40: MSE	135.9757
+2022-10-13 16:04:40: Test performance, imputation error modality 2 from 1
+2022-10-13 16:04:40: loss	267.4056
+2022-10-13 16:04:40: MSE	129.6881
+2022-10-13 16:05:02: EarlyStopping counter: 1 out of 10
+2022-10-13 16:09:23: EarlyStopping counter: 1 out of 10
+2022-10-13 16:09:53: EarlyStopping counter: 1 out of 10
+2022-10-13 16:10:22: EarlyStopping counter: 1 out of 10
+2022-10-13 16:10:37: EarlyStopping counter: 2 out of 10
+2022-10-13 16:11:06: EarlyStopping counter: 1 out of 10
+2022-10-13 16:11:21: EarlyStopping counter: 2 out of 10
+2022-10-13 16:11:35: EarlyStopping counter: 3 out of 10
+2022-10-13 16:12:05: EarlyStopping counter: 1 out of 10
+2022-10-13 16:12:19: EarlyStopping counter: 2 out of 10
+2022-10-13 16:12:34: EarlyStopping counter: 3 out of 10
+2022-10-13 16:12:49: EarlyStopping counter: 4 out of 10
+2022-10-13 16:13:03: EarlyStopping counter: 5 out of 10
+2022-10-13 16:13:33: EarlyStopping counter: 1 out of 10
+2022-10-13 16:13:48: EarlyStopping counter: 2 out of 10
+2022-10-13 16:14:02: EarlyStopping counter: 3 out of 10
+2022-10-13 16:14:17: EarlyStopping counter: 4 out of 10
+2022-10-13 16:14:32: EarlyStopping counter: 5 out of 10
+2022-10-13 16:14:46: EarlyStopping counter: 6 out of 10
+2022-10-13 16:15:01: EarlyStopping counter: 7 out of 10
+2022-10-13 16:15:31: EarlyStopping counter: 1 out of 10
+2022-10-13 16:15:46: EarlyStopping counter: 2 out of 10
+2022-10-13 16:16:00: EarlyStopping counter: 3 out of 10
+2022-10-13 16:16:15: EarlyStopping counter: 4 out of 10
+2022-10-13 16:16:30: EarlyStopping counter: 5 out of 10
+2022-10-13 16:16:45: EarlyStopping counter: 6 out of 10
+2022-10-13 16:16:59: EarlyStopping counter: 7 out of 10
+2022-10-13 16:17:14: EarlyStopping counter: 8 out of 10
+2022-10-13 16:17:29: EarlyStopping counter: 9 out of 10
+2022-10-13 16:17:44: EarlyStopping counter: 10 out of 10
+2022-10-13 16:17:44: Early stopping training since loss did not improve for 10 epochs.
+2022-10-13 16:17:44: Using model from epoch 53
+2022-10-13 16:17:45: Validation performance, imputation error modality 1 from 2
+2022-10-13 16:17:45: loss	903.0307
+2022-10-13 16:17:45: MSE	78377.1659
+2022-10-13 16:17:45: Test performance, imputation error modality 1 from 2
+2022-10-13 16:17:45: loss	961.3478
+2022-10-13 16:17:45: MSE	14782.5964
+2022-10-13 16:18:06: 
+
+
+2022-10-13 16:18:07: Coherence: 0.6945
+2022-10-13 16:18:07: 
+
+
+2022-10-13 16:18:07: Test performance, classification task, linear classifier, modality 1
+2022-10-13 16:21:51: ACC: 0.7873	PR: 0.6760	RC: 0.4495	F1: 0.4789	MCC: 0.7634
+2022-10-13 16:21:51: Test performance, classification task, linear classifier, modality 2
+2022-10-13 16:25:24: ACC: 0.7760	PR: 0.6205	RC: 0.4423	F1: 0.4749	MCC: 0.7505
+2022-10-13 16:25:24: Test performance, classification task, linear classifier, both modalities
+2022-10-13 16:29:08: ACC: 0.8167	PR: 0.7390	RC: 0.5112	F1: 0.5469	MCC: 0.7968
+2022-10-13 16:29:08: Test performance, classification task, non-linear classifier, modality 1
+2022-10-13 16:29:17: EarlyStopping counter: 1 out of 10
+2022-10-13 16:30:56: EarlyStopping counter: 1 out of 10
+2022-10-13 16:31:13: EarlyStopping counter: 1 out of 10
+2022-10-13 16:31:22: EarlyStopping counter: 2 out of 10
+2022-10-13 16:31:40: EarlyStopping counter: 1 out of 10
+2022-10-13 16:31:58: EarlyStopping counter: 1 out of 10
+2022-10-13 16:32:07: EarlyStopping counter: 2 out of 10
+2022-10-13 16:32:16: EarlyStopping counter: 3 out of 10
+2022-10-13 16:32:25: EarlyStopping counter: 4 out of 10
+2022-10-13 16:32:43: EarlyStopping counter: 1 out of 10
+2022-10-13 16:32:52: EarlyStopping counter: 2 out of 10
+2022-10-13 16:33:00: EarlyStopping counter: 3 out of 10
+2022-10-13 16:33:09: EarlyStopping counter: 4 out of 10
+2022-10-13 16:33:18: EarlyStopping counter: 5 out of 10
+2022-10-13 16:33:27: EarlyStopping counter: 6 out of 10
+2022-10-13 16:33:36: EarlyStopping counter: 7 out of 10
+2022-10-13 16:33:54: EarlyStopping counter: 1 out of 10
+2022-10-13 16:34:03: EarlyStopping counter: 2 out of 10
+2022-10-13 16:34:12: EarlyStopping counter: 3 out of 10
+2022-10-13 16:34:21: EarlyStopping counter: 4 out of 10
+2022-10-13 16:34:30: EarlyStopping counter: 5 out of 10
+2022-10-13 16:34:39: EarlyStopping counter: 6 out of 10
+2022-10-13 16:34:48: EarlyStopping counter: 7 out of 10
+2022-10-13 16:35:06: EarlyStopping counter: 1 out of 10
+2022-10-13 16:35:15: EarlyStopping counter: 2 out of 10
+2022-10-13 16:35:24: EarlyStopping counter: 3 out of 10
+2022-10-13 16:35:33: EarlyStopping counter: 4 out of 10
+2022-10-13 16:35:42: EarlyStopping counter: 5 out of 10
+2022-10-13 16:35:51: EarlyStopping counter: 6 out of 10
+2022-10-13 16:36:00: EarlyStopping counter: 7 out of 10
+2022-10-13 16:36:08: EarlyStopping counter: 8 out of 10
+2022-10-13 16:36:17: EarlyStopping counter: 9 out of 10
+2022-10-13 16:36:26: EarlyStopping counter: 10 out of 10
+2022-10-13 16:36:32: ACC: 0.8803	PR: 0.7822	RC: 0.7408	F1: 0.7444	MCC: 0.8675
+2022-10-13 16:36:32: Test performance, classification task, non-linear classifier, modality 2
+2022-10-13 16:36:41: EarlyStopping counter: 1 out of 10
+2022-10-13 16:38:21: EarlyStopping counter: 1 out of 10
+2022-10-13 16:38:48: EarlyStopping counter: 1 out of 10
+2022-10-13 16:39:07: EarlyStopping counter: 1 out of 10
+2022-10-13 16:39:16: EarlyStopping counter: 2 out of 10
+2022-10-13 16:39:34: EarlyStopping counter: 1 out of 10
+2022-10-13 16:39:43: EarlyStopping counter: 2 out of 10
+2022-10-13 16:39:52: EarlyStopping counter: 3 out of 10
+2022-10-13 16:40:01: EarlyStopping counter: 4 out of 10
+2022-10-13 16:40:10: EarlyStopping counter: 5 out of 10
+2022-10-13 16:40:20: EarlyStopping counter: 6 out of 10
+2022-10-13 16:40:38: EarlyStopping counter: 1 out of 10
+2022-10-13 16:40:47: EarlyStopping counter: 2 out of 10
+2022-10-13 16:40:56: EarlyStopping counter: 3 out of 10
+2022-10-13 16:41:05: EarlyStopping counter: 4 out of 10
+2022-10-13 16:41:14: EarlyStopping counter: 5 out of 10
+2022-10-13 16:41:23: EarlyStopping counter: 6 out of 10
+2022-10-13 16:41:32: EarlyStopping counter: 7 out of 10
+2022-10-13 16:41:42: EarlyStopping counter: 8 out of 10
+2022-10-13 16:42:00: EarlyStopping counter: 1 out of 10
+2022-10-13 16:42:09: EarlyStopping counter: 2 out of 10
+2022-10-13 16:42:18: EarlyStopping counter: 3 out of 10
+2022-10-13 16:42:27: EarlyStopping counter: 4 out of 10
+2022-10-13 16:42:36: EarlyStopping counter: 5 out of 10
+2022-10-13 16:42:45: EarlyStopping counter: 6 out of 10
+2022-10-13 16:42:54: EarlyStopping counter: 7 out of 10
+2022-10-13 16:43:03: EarlyStopping counter: 8 out of 10
+2022-10-13 16:43:12: EarlyStopping counter: 9 out of 10
+2022-10-13 16:43:21: EarlyStopping counter: 10 out of 10
+2022-10-13 16:43:27: ACC: 0.8512	PR: 0.7041	RC: 0.6887	F1: 0.6838	MCC: 0.8356
+2022-10-13 16:43:27: Test performance, classification task, non-linear classifier, both modalities
+2022-10-13 16:43:36: EarlyStopping counter: 1 out of 10
+2022-10-13 16:45:07: EarlyStopping counter: 1 out of 10
+2022-10-13 16:45:26: EarlyStopping counter: 1 out of 10
+2022-10-13 16:45:35: EarlyStopping counter: 2 out of 10
+2022-10-13 16:46:11: EarlyStopping counter: 1 out of 10
+2022-10-13 16:46:20: EarlyStopping counter: 2 out of 10
+2022-10-13 16:46:38: EarlyStopping counter: 1 out of 10
+2022-10-13 16:46:56: EarlyStopping counter: 1 out of 10
+2022-10-13 16:47:05: EarlyStopping counter: 2 out of 10
+2022-10-13 16:47:14: EarlyStopping counter: 3 out of 10
+2022-10-13 16:47:23: EarlyStopping counter: 4 out of 10
+2022-10-13 16:47:50: EarlyStopping counter: 1 out of 10
+2022-10-13 16:47:59: EarlyStopping counter: 2 out of 10
+2022-10-13 16:48:09: EarlyStopping counter: 3 out of 10
+2022-10-13 16:48:18: EarlyStopping counter: 4 out of 10
+2022-10-13 16:48:27: EarlyStopping counter: 5 out of 10
+2022-10-13 16:48:36: EarlyStopping counter: 6 out of 10
+2022-10-13 16:48:45: EarlyStopping counter: 7 out of 10
+2022-10-13 16:48:54: EarlyStopping counter: 8 out of 10
+2022-10-13 16:49:03: EarlyStopping counter: 9 out of 10
+2022-10-13 16:49:12: EarlyStopping counter: 10 out of 10
+2022-10-13 16:49:18: ACC: 0.8972	PR: 0.7913	RC: 0.7597	F1: 0.7618	MCC: 0.8863
+2022-10-13 16:49:18: Saving results
+2022-10-14 15:41:48: Selected device: cuda
+2022-10-14 15:41:48: Likelihood for omic1: normal
+2022-10-14 15:41:48: Likelihood for omic2: categorical
+2022-10-14 15:41:51: EarlyStopping counter: 1 out of 10
+2022-10-14 15:42:12: EarlyStopping counter: 1 out of 10
+2022-10-14 15:42:13: EarlyStopping counter: 1 out of 10
+2022-10-14 15:42:14: EarlyStopping counter: 2 out of 10
+2022-10-14 15:42:15: EarlyStopping counter: 3 out of 10
+2022-10-14 15:42:17: EarlyStopping counter: 1 out of 10
+2022-10-14 15:42:18: EarlyStopping counter: 2 out of 10
+2022-10-14 15:42:19: EarlyStopping counter: 3 out of 10
+2022-10-14 15:42:20: EarlyStopping counter: 4 out of 10
+2022-10-14 15:42:20: EarlyStopping counter: 5 out of 10
+2022-10-14 15:42:21: EarlyStopping counter: 6 out of 10
+2022-10-14 15:42:22: EarlyStopping counter: 7 out of 10
+2022-10-14 15:42:23: EarlyStopping counter: 8 out of 10
+2022-10-14 15:42:24: EarlyStopping counter: 9 out of 10
+2022-10-14 15:42:25: EarlyStopping counter: 10 out of 10
+2022-10-14 15:42:25: Early stopping training since loss did not improve for 10 epochs.
+2022-10-14 15:42:25: Using model from epoch 28
+2022-10-14 15:42:26: Validation performance, imputation error modality 2 from 1
+2022-10-14 15:42:26: loss	6436.8312
+2022-10-14 15:42:26: MSE	3201.2654
+2022-10-14 15:42:26: Test performance, imputation error modality 2 from 1
+2022-10-14 15:42:26: loss	6641.5356
+2022-10-14 15:42:26: MSE	3184.6339
+2022-10-14 15:47:17: Using model from epoch 0
+2022-10-14 15:47:17: Training did not complete properly, using last epoch
+2022-10-14 15:47:17: Validation performance, imputation error modality 1 from 2
+2022-10-14 15:47:17: loss	nan
+2022-10-14 15:47:17: MSE	3316850437362729091072.0000
+2022-10-14 15:47:17: Test performance, imputation error modality 1 from 2
+2022-10-14 15:47:17: loss	nan
+2022-10-14 15:47:17: MSE	45642101541342908776448.0000
+2022-10-14 15:47:17: 
+
+
+2022-10-14 15:47:20: Coherence: 0.1755
+2022-10-14 15:47:20: 
+
+
+2023-07-18 09:54:03: Selected device: cuda
+2023-07-18 09:54:03: Likelihood for omic1: normal
+2023-07-18 09:54:03: Likelihood for omic2: normal
+2023-07-18 09:54:25: EarlyStopping counter: 1 out of 10
+2023-07-18 09:54:49: EarlyStopping counter: 1 out of 10
+2023-07-18 09:54:51: EarlyStopping counter: 1 out of 10
+2023-07-18 09:54:53: EarlyStopping counter: 1 out of 10
+2023-07-18 09:54:53: EarlyStopping counter: 2 out of 10
+2023-07-18 09:54:54: EarlyStopping counter: 1 out of 10
+2023-07-18 09:54:55: EarlyStopping counter: 1 out of 10
+2023-07-18 09:54:57: EarlyStopping counter: 1 out of 10
+2023-07-18 09:54:58: EarlyStopping counter: 1 out of 10
+2023-07-18 09:54:59: EarlyStopping counter: 1 out of 10
+2023-07-18 09:55:00: EarlyStopping counter: 1 out of 10
+2023-07-18 09:55:01: EarlyStopping counter: 2 out of 10
+2023-07-18 09:55:02: EarlyStopping counter: 1 out of 10
+2023-07-18 09:55:02: EarlyStopping counter: 2 out of 10
+2023-07-18 09:55:03: EarlyStopping counter: 3 out of 10
+2023-07-18 09:55:04: EarlyStopping counter: 1 out of 10
+2023-07-18 09:55:05: EarlyStopping counter: 2 out of 10
+2023-07-18 09:55:06: EarlyStopping counter: 1 out of 10
+2023-07-18 09:55:06: EarlyStopping counter: 2 out of 10
+2023-07-18 09:55:07: EarlyStopping counter: 3 out of 10
+2023-07-18 09:55:08: EarlyStopping counter: 4 out of 10
+2023-07-18 09:55:08: EarlyStopping counter: 5 out of 10
+2023-07-18 09:55:09: EarlyStopping counter: 1 out of 10
+2023-07-18 09:55:10: EarlyStopping counter: 2 out of 10
+2023-07-18 09:55:11: EarlyStopping counter: 1 out of 10
+2023-07-18 09:55:12: EarlyStopping counter: 2 out of 10
+2023-07-18 09:55:12: EarlyStopping counter: 3 out of 10
+2023-07-18 09:55:13: EarlyStopping counter: 4 out of 10
+2023-07-18 09:55:13: EarlyStopping counter: 5 out of 10
+2023-07-18 09:55:14: EarlyStopping counter: 6 out of 10
+2023-07-18 09:55:15: EarlyStopping counter: 7 out of 10
+2023-07-18 09:55:15: EarlyStopping counter: 8 out of 10
+2023-07-18 09:55:16: EarlyStopping counter: 9 out of 10
+2023-07-18 09:55:16: EarlyStopping counter: 10 out of 10
+2023-07-18 09:55:16: Early stopping training since loss did not improve for 10 epochs.
+2023-07-18 09:55:16: Using model from epoch 79
+2023-07-18 09:55:17: Validation performance, imputation error modality 2 from 1
+2023-07-18 09:55:17: loss	350767.9248
+2023-07-18 09:55:17: MSE	6177.0717
+2023-07-18 09:55:17: Test performance, imputation error modality 2 from 1
+2023-07-18 09:55:17: loss	117314.2117
+2023-07-18 09:55:17: MSE	6204.3172
+2023-07-18 09:55:18: EarlyStopping counter: 1 out of 10
+2023-07-18 09:55:29: EarlyStopping counter: 1 out of 10
+2023-07-18 09:55:31: EarlyStopping counter: 1 out of 10
+2023-07-18 09:55:32: EarlyStopping counter: 1 out of 10
+2023-07-18 09:55:33: EarlyStopping counter: 1 out of 10
+2023-07-18 09:55:34: EarlyStopping counter: 1 out of 10
+2023-07-18 09:55:35: EarlyStopping counter: 1 out of 10
+2023-07-18 09:55:36: EarlyStopping counter: 1 out of 10
+2023-07-18 09:55:38: EarlyStopping counter: 1 out of 10
+2023-07-18 09:55:39: EarlyStopping counter: 1 out of 10
+2023-07-18 09:55:40: EarlyStopping counter: 1 out of 10
+2023-07-18 09:55:41: EarlyStopping counter: 1 out of 10
+2023-07-18 09:55:42: EarlyStopping counter: 1 out of 10
+2023-07-18 09:55:43: EarlyStopping counter: 1 out of 10
+2023-07-18 09:55:44: EarlyStopping counter: 2 out of 10
+2023-07-18 09:55:45: EarlyStopping counter: 1 out of 10
+2023-07-18 09:55:46: EarlyStopping counter: 2 out of 10
+2023-07-18 09:55:47: EarlyStopping counter: 1 out of 10
+2023-07-18 09:55:47: EarlyStopping counter: 2 out of 10
+2023-07-18 09:55:49: EarlyStopping counter: 1 out of 10
+2023-07-18 09:55:49: EarlyStopping counter: 2 out of 10
+2023-07-18 09:55:50: EarlyStopping counter: 1 out of 10
+2023-07-18 09:55:51: EarlyStopping counter: 2 out of 10
+2023-07-18 09:55:52: EarlyStopping counter: 1 out of 10
+2023-07-18 09:55:53: EarlyStopping counter: 2 out of 10
+2023-07-18 09:55:54: EarlyStopping counter: 1 out of 10
+2023-07-18 09:55:54: EarlyStopping counter: 2 out of 10
+2023-07-18 09:55:55: EarlyStopping counter: 3 out of 10
+2023-07-18 09:55:56: EarlyStopping counter: 1 out of 10
+2023-07-18 09:55:57: EarlyStopping counter: 2 out of 10
+2023-07-18 09:55:57: EarlyStopping counter: 3 out of 10
+2023-07-18 09:55:58: EarlyStopping counter: 1 out of 10
+2023-07-18 09:55:59: EarlyStopping counter: 2 out of 10
+2023-07-18 09:56:00: EarlyStopping counter: 3 out of 10
+2023-07-18 09:56:00: EarlyStopping counter: 4 out of 10
+2023-07-18 09:56:01: EarlyStopping counter: 1 out of 10
+2023-07-18 09:56:02: EarlyStopping counter: 2 out of 10
+2023-07-18 09:56:03: EarlyStopping counter: 3 out of 10
+2023-07-18 09:56:03: EarlyStopping counter: 4 out of 10
+2023-07-18 09:56:04: EarlyStopping counter: 5 out of 10
+2023-07-18 09:56:05: EarlyStopping counter: 1 out of 10
+2023-07-18 09:56:05: EarlyStopping counter: 2 out of 10
+2023-07-18 09:56:06: EarlyStopping counter: 3 out of 10
+2023-07-18 09:56:07: EarlyStopping counter: 4 out of 10
+2023-07-18 09:56:07: EarlyStopping counter: 5 out of 10
+2023-07-18 09:56:08: EarlyStopping counter: 6 out of 10
+2023-07-18 09:56:08: EarlyStopping counter: 7 out of 10
+2023-07-18 09:56:09: EarlyStopping counter: 8 out of 10
+2023-07-18 09:56:09: EarlyStopping counter: 9 out of 10
+2023-07-18 09:56:11: EarlyStopping counter: 1 out of 10
+2023-07-18 09:56:11: EarlyStopping counter: 2 out of 10
+2023-07-18 09:56:12: EarlyStopping counter: 3 out of 10
+2023-07-18 09:56:12: EarlyStopping counter: 4 out of 10
+2023-07-18 09:56:13: EarlyStopping counter: 5 out of 10
+2023-07-18 09:56:13: EarlyStopping counter: 6 out of 10
+2023-07-18 09:56:14: EarlyStopping counter: 7 out of 10
+2023-07-18 09:56:15: EarlyStopping counter: 8 out of 10
+2023-07-18 09:56:15: EarlyStopping counter: 9 out of 10
+2023-07-18 09:56:16: EarlyStopping counter: 10 out of 10
+2023-07-18 09:56:16: Early stopping training since loss did not improve for 10 epochs.
+2023-07-18 09:56:16: Using model from epoch 95
+2023-07-18 09:56:16: Validation performance, imputation error modality 1 from 2
+2023-07-18 09:56:16: loss	6535.4465
+2023-07-18 09:56:16: MSE	3590.6401
+2023-07-18 09:56:16: Test performance, imputation error modality 1 from 2
+2023-07-18 09:56:16: loss	6428.4836
+2023-07-18 09:56:16: MSE	3690.8988
+2023-07-18 09:56:16: 
+
+
+2023-07-18 09:56:18: Coherence: 0.9115
+2023-07-18 09:56:18: 
+
+
+2023-07-18 09:56:18: Test performance, classification task, linear classifier, modality 1
+2023-07-18 09:56:24: ACC: 0.8484	PR: 0.7832	RC: 0.7438	F1: 0.7570	MCC: 0.8264
+2023-07-18 09:56:24: Test performance, classification task, linear classifier, modality 2
+2023-07-18 09:56:30: ACC: 0.7169	PR: 0.6047	RC: 0.4858	F1: 0.5177	MCC: 0.6737
+2023-07-18 09:56:30: Test performance, classification task, linear classifier, both modalities
+2023-07-18 09:56:36: ACC: 0.8752	PR: 0.8220	RC: 0.7769	F1: 0.7863	MCC: 0.8576
+2023-07-18 09:56:36: Test performance, classification task, non-linear classifier, modality 1
+2023-07-18 09:56:36: defining model with 20 classes
+2023-07-18 09:56:37: EarlyStopping counter: 1 out of 10
+2023-07-18 09:56:53: EarlyStopping counter: 1 out of 10
+2023-07-18 09:56:54: EarlyStopping counter: 1 out of 10
+2023-07-18 09:56:54: EarlyStopping counter: 1 out of 10
+2023-07-18 09:56:55: EarlyStopping counter: 1 out of 10
+2023-07-18 09:56:56: EarlyStopping counter: 1 out of 10
+2023-07-18 09:56:57: EarlyStopping counter: 1 out of 10
+2023-07-18 09:56:57: EarlyStopping counter: 1 out of 10
+2023-07-18 09:56:58: EarlyStopping counter: 1 out of 10
+2023-07-18 09:56:59: EarlyStopping counter: 1 out of 10
+2023-07-18 09:57:00: EarlyStopping counter: 1 out of 10
+2023-07-18 09:57:00: EarlyStopping counter: 2 out of 10
+2023-07-18 09:57:01: EarlyStopping counter: 1 out of 10
+2023-07-18 09:57:01: EarlyStopping counter: 2 out of 10
+2023-07-18 09:57:02: EarlyStopping counter: 1 out of 10
+2023-07-18 09:57:02: EarlyStopping counter: 2 out of 10
+2023-07-18 09:57:03: EarlyStopping counter: 1 out of 10
+2023-07-18 09:57:03: EarlyStopping counter: 2 out of 10
+2023-07-18 09:57:04: EarlyStopping counter: 3 out of 10
+2023-07-18 09:57:05: EarlyStopping counter: 1 out of 10
+2023-07-18 09:57:05: EarlyStopping counter: 2 out of 10
+2023-07-18 09:57:06: EarlyStopping counter: 1 out of 10
+2023-07-18 09:57:06: EarlyStopping counter: 2 out of 10
+2023-07-18 09:57:07: EarlyStopping counter: 1 out of 10
+2023-07-18 09:57:07: EarlyStopping counter: 2 out of 10
+2023-07-18 09:57:08: EarlyStopping counter: 3 out of 10
+2023-07-18 09:57:08: EarlyStopping counter: 4 out of 10
+2023-07-18 09:57:08: EarlyStopping counter: 5 out of 10
+2023-07-18 09:57:09: EarlyStopping counter: 1 out of 10
+2023-07-18 09:57:09: EarlyStopping counter: 2 out of 10
+2023-07-18 09:57:10: EarlyStopping counter: 3 out of 10
+2023-07-18 09:57:10: EarlyStopping counter: 4 out of 10
+2023-07-18 09:57:11: EarlyStopping counter: 1 out of 10
+2023-07-18 09:57:11: EarlyStopping counter: 2 out of 10
+2023-07-18 09:57:12: EarlyStopping counter: 3 out of 10
+2023-07-18 09:57:12: EarlyStopping counter: 4 out of 10
+2023-07-18 09:57:13: EarlyStopping counter: 1 out of 10
+2023-07-18 09:57:13: EarlyStopping counter: 2 out of 10
+2023-07-18 09:57:14: EarlyStopping counter: 3 out of 10
+2023-07-18 09:57:14: EarlyStopping counter: 4 out of 10
+2023-07-18 09:57:14: EarlyStopping counter: 5 out of 10
+2023-07-18 09:57:15: EarlyStopping counter: 6 out of 10
+2023-07-18 09:57:16: EarlyStopping counter: 1 out of 10
+2023-07-18 09:57:16: EarlyStopping counter: 2 out of 10
+2023-07-18 09:57:16: EarlyStopping counter: 3 out of 10
+2023-07-18 09:57:17: EarlyStopping counter: 4 out of 10
+2023-07-18 09:57:17: EarlyStopping counter: 5 out of 10
+2023-07-18 09:57:18: EarlyStopping counter: 1 out of 10
+2023-07-18 09:57:18: EarlyStopping counter: 2 out of 10
+2023-07-18 09:57:19: EarlyStopping counter: 3 out of 10
+2023-07-18 09:57:19: EarlyStopping counter: 4 out of 10
+2023-07-18 09:57:19: EarlyStopping counter: 5 out of 10
+2023-07-18 09:57:20: EarlyStopping counter: 6 out of 10
+2023-07-18 09:57:20: EarlyStopping counter: 7 out of 10
+2023-07-18 09:57:20: EarlyStopping counter: 8 out of 10
+2023-07-18 09:57:21: EarlyStopping counter: 1 out of 10
+2023-07-18 09:57:22: EarlyStopping counter: 2 out of 10
+2023-07-18 09:57:22: EarlyStopping counter: 3 out of 10
+2023-07-18 09:57:22: EarlyStopping counter: 4 out of 10
+2023-07-18 09:57:23: EarlyStopping counter: 5 out of 10
+2023-07-18 09:57:23: EarlyStopping counter: 6 out of 10
+2023-07-18 09:57:23: EarlyStopping counter: 7 out of 10
+2023-07-18 09:57:24: EarlyStopping counter: 8 out of 10
+2023-07-18 09:57:24: EarlyStopping counter: 9 out of 10
+2023-07-18 09:57:25: EarlyStopping counter: 10 out of 10
+2023-07-18 09:57:25: ACC: 0.8752	PR: 0.8441	RC: 0.7993	F1: 0.8076	MCC: 0.8575
+2023-07-18 09:57:25: Test performance, classification task, non-linear classifier, modality 2
+2023-07-18 09:57:25: defining model with 20 classes
+2023-07-18 09:57:25: EarlyStopping counter: 1 out of 10
+2023-07-18 09:57:37: EarlyStopping counter: 1 out of 10
+2023-07-18 09:57:38: EarlyStopping counter: 1 out of 10
+2023-07-18 09:57:39: EarlyStopping counter: 1 out of 10
+2023-07-18 09:57:39: EarlyStopping counter: 1 out of 10
+2023-07-18 09:57:40: EarlyStopping counter: 2 out of 10
+2023-07-18 09:57:41: EarlyStopping counter: 1 out of 10
+2023-07-18 09:57:41: EarlyStopping counter: 2 out of 10
+2023-07-18 09:57:42: EarlyStopping counter: 1 out of 10
+2023-07-18 09:57:42: EarlyStopping counter: 2 out of 10
+2023-07-18 09:57:43: EarlyStopping counter: 3 out of 10
+2023-07-18 09:57:43: EarlyStopping counter: 4 out of 10
+2023-07-18 09:57:43: EarlyStopping counter: 5 out of 10
+2023-07-18 09:57:44: EarlyStopping counter: 6 out of 10
+2023-07-18 09:57:44: EarlyStopping counter: 1 out of 10
+2023-07-18 09:57:45: EarlyStopping counter: 2 out of 10
+2023-07-18 09:57:45: EarlyStopping counter: 3 out of 10
+2023-07-18 09:57:46: EarlyStopping counter: 4 out of 10
+2023-07-18 09:57:46: EarlyStopping counter: 5 out of 10
+2023-07-18 09:57:46: EarlyStopping counter: 6 out of 10
+2023-07-18 09:57:47: EarlyStopping counter: 7 out of 10
+2023-07-18 09:57:47: EarlyStopping counter: 8 out of 10
+2023-07-18 09:57:47: EarlyStopping counter: 9 out of 10
+2023-07-18 09:57:48: EarlyStopping counter: 10 out of 10
+2023-07-18 09:57:48: ACC: 0.7630	PR: 0.5748	RC: 0.5408	F1: 0.5484	MCC: 0.7282
+2023-07-18 09:57:48: Test performance, classification task, non-linear classifier, both modalities
+2023-07-18 09:57:48: defining model with 20 classes
+2023-07-18 09:57:49: EarlyStopping counter: 1 out of 10
+2023-07-18 09:58:06: EarlyStopping counter: 1 out of 10
+2023-07-18 09:58:07: EarlyStopping counter: 1 out of 10
+2023-07-18 09:58:08: EarlyStopping counter: 1 out of 10
+2023-07-18 09:58:09: EarlyStopping counter: 1 out of 10
+2023-07-18 09:58:09: EarlyStopping counter: 1 out of 10
+2023-07-18 09:58:10: EarlyStopping counter: 1 out of 10
+2023-07-18 09:58:11: EarlyStopping counter: 1 out of 10
+2023-07-18 09:58:11: EarlyStopping counter: 2 out of 10
+2023-07-18 09:58:12: EarlyStopping counter: 1 out of 10
+2023-07-18 09:58:13: EarlyStopping counter: 1 out of 10
+2023-07-18 09:58:13: EarlyStopping counter: 2 out of 10
+2023-07-18 09:58:14: EarlyStopping counter: 1 out of 10
+2023-07-18 09:58:14: EarlyStopping counter: 2 out of 10
+2023-07-18 09:58:15: EarlyStopping counter: 1 out of 10
+2023-07-18 09:58:15: EarlyStopping counter: 2 out of 10
+2023-07-18 09:58:16: EarlyStopping counter: 3 out of 10
+2023-07-18 09:58:17: EarlyStopping counter: 1 out of 10
+2023-07-18 09:58:17: EarlyStopping counter: 2 out of 10
+2023-07-18 09:58:18: EarlyStopping counter: 1 out of 10
+2023-07-18 09:58:18: EarlyStopping counter: 2 out of 10
+2023-07-18 09:58:19: EarlyStopping counter: 1 out of 10
+2023-07-18 09:58:19: EarlyStopping counter: 2 out of 10
+2023-07-18 09:58:20: EarlyStopping counter: 3 out of 10
+2023-07-18 09:58:21: EarlyStopping counter: 1 out of 10
+2023-07-18 09:58:21: EarlyStopping counter: 2 out of 10
+2023-07-18 09:58:21: EarlyStopping counter: 3 out of 10
+2023-07-18 09:58:22: EarlyStopping counter: 1 out of 10
+2023-07-18 09:58:22: EarlyStopping counter: 2 out of 10
+2023-07-18 09:58:23: EarlyStopping counter: 3 out of 10
+2023-07-18 09:58:23: EarlyStopping counter: 4 out of 10
+2023-07-18 09:58:24: EarlyStopping counter: 1 out of 10
+2023-07-18 09:58:24: EarlyStopping counter: 2 out of 10
+2023-07-18 09:58:25: EarlyStopping counter: 3 out of 10
+2023-07-18 09:58:26: EarlyStopping counter: 1 out of 10
+2023-07-18 09:58:26: EarlyStopping counter: 2 out of 10
+2023-07-18 09:58:26: EarlyStopping counter: 3 out of 10
+2023-07-18 09:58:27: EarlyStopping counter: 4 out of 10
+2023-07-18 09:58:27: EarlyStopping counter: 5 out of 10
+2023-07-18 09:58:28: EarlyStopping counter: 1 out of 10
+2023-07-18 09:58:28: EarlyStopping counter: 2 out of 10
+2023-07-18 09:58:29: EarlyStopping counter: 3 out of 10
+2023-07-18 09:58:29: EarlyStopping counter: 4 out of 10
+2023-07-18 09:58:29: EarlyStopping counter: 5 out of 10
+2023-07-18 09:58:30: EarlyStopping counter: 1 out of 10
+2023-07-18 09:58:31: EarlyStopping counter: 2 out of 10
+2023-07-18 09:58:31: EarlyStopping counter: 3 out of 10
+2023-07-18 09:58:31: EarlyStopping counter: 4 out of 10
+2023-07-18 09:58:32: EarlyStopping counter: 5 out of 10
+2023-07-18 09:58:32: EarlyStopping counter: 6 out of 10
+2023-07-18 09:58:33: EarlyStopping counter: 7 out of 10
+2023-07-18 09:58:33: EarlyStopping counter: 8 out of 10
+2023-07-18 09:58:34: EarlyStopping counter: 1 out of 10
+2023-07-18 09:58:34: EarlyStopping counter: 2 out of 10
+2023-07-18 09:58:34: EarlyStopping counter: 3 out of 10
+2023-07-18 09:58:35: EarlyStopping counter: 4 out of 10
+2023-07-18 09:58:35: EarlyStopping counter: 5 out of 10
+2023-07-18 09:58:36: EarlyStopping counter: 6 out of 10
+2023-07-18 09:58:36: EarlyStopping counter: 7 out of 10
+2023-07-18 09:58:36: EarlyStopping counter: 8 out of 10
+2023-07-18 09:58:37: EarlyStopping counter: 1 out of 10
+2023-07-18 09:58:38: EarlyStopping counter: 2 out of 10
+2023-07-18 09:58:38: EarlyStopping counter: 3 out of 10
+2023-07-18 09:58:38: EarlyStopping counter: 4 out of 10
+2023-07-18 09:58:39: EarlyStopping counter: 5 out of 10
+2023-07-18 09:58:39: EarlyStopping counter: 6 out of 10
+2023-07-18 09:58:39: EarlyStopping counter: 7 out of 10
+2023-07-18 09:58:40: EarlyStopping counter: 8 out of 10
+2023-07-18 09:58:40: EarlyStopping counter: 9 out of 10
+2023-07-18 09:58:41: EarlyStopping counter: 10 out of 10
+2023-07-18 09:58:41: ACC: 0.9050	PR: 0.8819	RC: 0.8228	F1: 0.8349	MCC: 0.8915
+2023-07-18 09:58:41: Saving results
+2023-08-15 09:57:11: Selected device: cuda
+2023-08-15 09:57:11: Likelihood for omic1: normal
+2023-08-15 09:57:11: Likelihood for omic2: bernoulli
+2023-08-15 09:57:35: EarlyStopping counter: 1 out of 10
+2023-08-15 09:57:38: EarlyStopping counter: 1 out of 10
+2023-08-15 09:57:40: EarlyStopping counter: 1 out of 10
+2023-08-15 09:57:42: EarlyStopping counter: 1 out of 10
+2023-08-15 09:57:45: EarlyStopping counter: 1 out of 10
+2023-08-15 09:57:47: EarlyStopping counter: 1 out of 10
+2023-08-15 09:57:49: EarlyStopping counter: 1 out of 10
+2023-08-15 09:57:50: EarlyStopping counter: 2 out of 10
+2023-08-15 09:57:52: EarlyStopping counter: 1 out of 10
+2023-08-15 09:57:53: EarlyStopping counter: 2 out of 10
+2023-08-15 09:57:55: EarlyStopping counter: 1 out of 10
+2023-08-15 09:57:56: EarlyStopping counter: 2 out of 10
+2023-08-15 09:57:57: EarlyStopping counter: 3 out of 10
+2023-08-15 09:58:00: EarlyStopping counter: 1 out of 10
+2023-08-15 09:58:01: EarlyStopping counter: 2 out of 10
+2023-08-15 09:58:02: EarlyStopping counter: 3 out of 10
+2023-08-15 09:58:03: EarlyStopping counter: 4 out of 10
+2023-08-15 09:58:04: EarlyStopping counter: 5 out of 10
+2023-08-15 09:58:06: EarlyStopping counter: 1 out of 10
+2023-08-15 09:58:07: EarlyStopping counter: 2 out of 10
+2023-08-15 09:58:08: EarlyStopping counter: 3 out of 10
+2023-08-15 09:58:09: EarlyStopping counter: 4 out of 10
+2023-08-15 09:58:10: EarlyStopping counter: 5 out of 10
+2023-08-15 09:58:11: EarlyStopping counter: 6 out of 10
+2023-08-15 09:58:13: EarlyStopping counter: 7 out of 10
+2023-08-15 09:58:14: EarlyStopping counter: 8 out of 10
+2023-08-15 09:58:15: EarlyStopping counter: 9 out of 10
+2023-08-15 09:58:16: EarlyStopping counter: 10 out of 10
+2023-08-15 09:58:16: Early stopping training since loss did not improve for 10 epochs.
+2023-08-15 09:58:16: Using model from epoch 39
+2023-08-15 09:58:16: Validation performance, imputation error modality 2 from 1
+2023-08-15 09:58:16: loss	3327.0820
+2023-08-15 09:58:16: Test performance, imputation error modality 2 from 1
+2023-08-15 09:58:16: loss	3383.7199
+2023-08-15 09:58:18: EarlyStopping counter: 1 out of 10
+2023-08-15 09:58:19: EarlyStopping counter: 2 out of 10
+2023-08-15 09:58:20: EarlyStopping counter: 3 out of 10
+2023-08-15 09:58:21: EarlyStopping counter: 4 out of 10
+2023-08-15 09:58:22: EarlyStopping counter: 5 out of 10
+2023-08-15 09:58:23: EarlyStopping counter: 6 out of 10
+2023-08-15 09:58:24: EarlyStopping counter: 7 out of 10
+2023-08-15 09:58:24: EarlyStopping counter: 8 out of 10
+2023-08-15 09:58:25: EarlyStopping counter: 9 out of 10
+2023-08-15 09:58:26: EarlyStopping counter: 10 out of 10
+2023-08-15 09:58:26: Early stopping training since loss did not improve for 10 epochs.
+2023-08-15 09:58:26: Using model from epoch 1
+2023-08-15 09:58:26: Validation performance, imputation error modality 1 from 2
+2023-08-15 09:58:26: loss	21926.3846
+2023-08-15 09:58:26: Test performance, imputation error modality 1 from 2
+2023-08-15 09:58:26: loss	30898.8960
+2023-08-15 09:58:27: 
+
+
+2023-08-15 09:58:28: Coherence: 0.8420
+2023-08-15 09:58:28: 
+
+
+2023-08-15 09:58:28: Test performance, classification task, linear classifier, modality 1
+2023-08-15 09:58:37: ACC: 0.8628	PR: 0.8210	RC: 0.7738	F1: 0.7901	MCC: 0.8431
+2023-08-15 09:58:37: Test performance, classification task, linear classifier, modality 2
+2023-08-15 09:58:45: ACC: 0.6574	PR: 0.4898	RC: 0.3775	F1: 0.4057	MCC: 0.6007
+2023-08-15 09:58:45: Test performance, classification task, linear classifier, both modalities
+2023-08-15 09:58:54: ACC: 0.7572	PR: 0.7544	RC: 0.5708	F1: 0.6248	MCC: 0.7191
+2023-08-15 09:58:54: Test performance, classification task, non-linear classifier, modality 1
+2023-08-15 09:58:54: defining model with 20 classes
+2023-08-15 09:58:55: EarlyStopping counter: 1 out of 10
+2023-08-15 09:59:19: EarlyStopping counter: 1 out of 10
+2023-08-15 09:59:22: EarlyStopping counter: 1 out of 10
+2023-08-15 09:59:23: EarlyStopping counter: 1 out of 10
+2023-08-15 09:59:24: EarlyStopping counter: 1 out of 10
+2023-08-15 09:59:25: EarlyStopping counter: 1 out of 10
+2023-08-15 09:59:26: EarlyStopping counter: 2 out of 10
+2023-08-15 09:59:27: EarlyStopping counter: 1 out of 10
+2023-08-15 09:59:28: EarlyStopping counter: 1 out of 10
+2023-08-15 09:59:28: EarlyStopping counter: 2 out of 10
+2023-08-15 09:59:29: EarlyStopping counter: 1 out of 10
+2023-08-15 09:59:30: EarlyStopping counter: 2 out of 10
+2023-08-15 09:59:31: EarlyStopping counter: 1 out of 10
+2023-08-15 09:59:32: EarlyStopping counter: 2 out of 10
+2023-08-15 09:59:33: EarlyStopping counter: 1 out of 10
+2023-08-15 09:59:33: EarlyStopping counter: 2 out of 10
+2023-08-15 09:59:34: EarlyStopping counter: 3 out of 10
+2023-08-15 09:59:35: EarlyStopping counter: 1 out of 10
+2023-08-15 09:59:36: EarlyStopping counter: 2 out of 10
+2023-08-15 09:59:36: EarlyStopping counter: 3 out of 10
+2023-08-15 09:59:37: EarlyStopping counter: 1 out of 10
+2023-08-15 09:59:38: EarlyStopping counter: 2 out of 10
+2023-08-15 09:59:38: EarlyStopping counter: 3 out of 10
+2023-08-15 09:59:39: EarlyStopping counter: 4 out of 10
+2023-08-15 09:59:40: EarlyStopping counter: 5 out of 10
+2023-08-15 09:59:41: EarlyStopping counter: 1 out of 10
+2023-08-15 09:59:41: EarlyStopping counter: 2 out of 10
+2023-08-15 09:59:42: EarlyStopping counter: 3 out of 10
+2023-08-15 09:59:42: EarlyStopping counter: 4 out of 10
+2023-08-15 09:59:43: EarlyStopping counter: 5 out of 10
+2023-08-15 09:59:44: EarlyStopping counter: 1 out of 10
+2023-08-15 09:59:44: EarlyStopping counter: 2 out of 10
+2023-08-15 09:59:45: EarlyStopping counter: 3 out of 10
+2023-08-15 09:59:46: EarlyStopping counter: 4 out of 10
+2023-08-15 09:59:46: EarlyStopping counter: 5 out of 10
+2023-08-15 09:59:47: EarlyStopping counter: 1 out of 10
+2023-08-15 09:59:48: EarlyStopping counter: 2 out of 10
+2023-08-15 09:59:48: EarlyStopping counter: 3 out of 10
+2023-08-15 09:59:49: EarlyStopping counter: 4 out of 10
+2023-08-15 09:59:50: EarlyStopping counter: 5 out of 10
+2023-08-15 09:59:50: EarlyStopping counter: 6 out of 10
+2023-08-15 09:59:51: EarlyStopping counter: 7 out of 10
+2023-08-15 09:59:51: EarlyStopping counter: 8 out of 10
+2023-08-15 09:59:52: EarlyStopping counter: 9 out of 10
+2023-08-15 09:59:52: EarlyStopping counter: 10 out of 10
+2023-08-15 09:59:53: ACC: 0.8848	PR: 0.8121	RC: 0.7744	F1: 0.7886	MCC: 0.8684
+2023-08-15 09:59:53: Test performance, classification task, non-linear classifier, modality 2
+2023-08-15 09:59:53: defining model with 20 classes
+2023-08-15 09:59:54: EarlyStopping counter: 1 out of 10
+2023-08-15 10:00:12: EarlyStopping counter: 1 out of 10
+2023-08-15 10:00:13: EarlyStopping counter: 1 out of 10
+2023-08-15 10:00:14: EarlyStopping counter: 1 out of 10
+2023-08-15 10:00:15: EarlyStopping counter: 1 out of 10
+2023-08-15 10:00:15: EarlyStopping counter: 2 out of 10
+2023-08-15 10:00:17: EarlyStopping counter: 1 out of 10
+2023-08-15 10:00:17: EarlyStopping counter: 2 out of 10
+2023-08-15 10:00:18: EarlyStopping counter: 3 out of 10
+2023-08-15 10:00:19: EarlyStopping counter: 1 out of 10
+2023-08-15 10:00:19: EarlyStopping counter: 2 out of 10
+2023-08-15 10:00:20: EarlyStopping counter: 3 out of 10
+2023-08-15 10:00:21: EarlyStopping counter: 4 out of 10
+2023-08-15 10:00:21: EarlyStopping counter: 5 out of 10
+2023-08-15 10:00:22: EarlyStopping counter: 6 out of 10
+2023-08-15 10:00:22: EarlyStopping counter: 7 out of 10
+2023-08-15 10:00:23: EarlyStopping counter: 8 out of 10
+2023-08-15 10:00:23: EarlyStopping counter: 9 out of 10
+2023-08-15 10:00:24: EarlyStopping counter: 10 out of 10
+2023-08-15 10:00:24: ACC: 0.6823	PR: 0.5613	RC: 0.4827	F1: 0.5021	MCC: 0.6350
+2023-08-15 10:00:24: Test performance, classification task, non-linear classifier, both modalities
+2023-08-15 10:00:24: defining model with 20 classes
+2023-08-15 10:00:25: EarlyStopping counter: 1 out of 10
+2023-08-15 10:00:44: EarlyStopping counter: 1 out of 10
+2023-08-15 10:00:45: EarlyStopping counter: 1 out of 10
+2023-08-15 10:00:46: EarlyStopping counter: 1 out of 10
+2023-08-15 10:00:47: EarlyStopping counter: 2 out of 10
+2023-08-15 10:00:48: EarlyStopping counter: 1 out of 10
+2023-08-15 10:00:48: EarlyStopping counter: 2 out of 10
+2023-08-15 10:00:49: EarlyStopping counter: 1 out of 10
+2023-08-15 10:00:50: EarlyStopping counter: 2 out of 10
+2023-08-15 10:00:50: EarlyStopping counter: 3 out of 10
+2023-08-15 10:00:51: EarlyStopping counter: 4 out of 10
+2023-08-15 10:00:52: EarlyStopping counter: 1 out of 10
+2023-08-15 10:00:52: EarlyStopping counter: 2 out of 10
+2023-08-15 10:00:53: EarlyStopping counter: 3 out of 10
+2023-08-15 10:00:54: EarlyStopping counter: 4 out of 10
+2023-08-15 10:00:54: EarlyStopping counter: 5 out of 10
+2023-08-15 10:00:55: EarlyStopping counter: 6 out of 10
+2023-08-15 10:00:55: EarlyStopping counter: 7 out of 10
+2023-08-15 10:00:56: EarlyStopping counter: 8 out of 10
+2023-08-15 10:00:56: EarlyStopping counter: 9 out of 10
+2023-08-15 10:00:57: EarlyStopping counter: 10 out of 10
+2023-08-15 10:00:57: ACC: 0.8148	PR: 0.7836	RC: 0.6889	F1: 0.7194	MCC: 0.7876
+2023-08-15 10:00:57: Saving results
+2023-08-15 23:10:38: Selected device: cuda
+2023-08-15 23:10:38: Likelihood for omic1: nb
+2023-08-15 23:10:38: Likelihood for omic2: bernoulli
+2023-08-15 23:11:00: EarlyStopping counter: 1 out of 10
+2023-08-15 23:11:03: EarlyStopping counter: 1 out of 10
+2023-08-15 23:11:05: EarlyStopping counter: 1 out of 10
+2023-08-15 23:11:07: EarlyStopping counter: 1 out of 10
+2023-08-15 23:11:09: EarlyStopping counter: 1 out of 10
+2023-08-15 23:11:12: EarlyStopping counter: 1 out of 10
+2023-08-15 23:11:14: EarlyStopping counter: 1 out of 10
+2023-08-15 23:11:15: EarlyStopping counter: 2 out of 10
+2023-08-15 23:11:17: EarlyStopping counter: 1 out of 10
+2023-08-15 23:11:18: EarlyStopping counter: 2 out of 10
+2023-08-15 23:11:20: EarlyStopping counter: 1 out of 10
+2023-08-15 23:11:21: EarlyStopping counter: 2 out of 10
+2023-08-15 23:11:22: EarlyStopping counter: 3 out of 10
+2023-08-15 23:11:25: EarlyStopping counter: 1 out of 10
+2023-08-15 23:11:26: EarlyStopping counter: 2 out of 10
+2023-08-15 23:11:27: EarlyStopping counter: 3 out of 10
+2023-08-15 23:11:28: EarlyStopping counter: 4 out of 10
+2023-08-15 23:11:29: EarlyStopping counter: 5 out of 10
+2023-08-15 23:11:31: EarlyStopping counter: 1 out of 10
+2023-08-15 23:11:32: EarlyStopping counter: 2 out of 10
+2023-08-15 23:11:33: EarlyStopping counter: 3 out of 10
+2023-08-15 23:11:34: EarlyStopping counter: 4 out of 10
+2023-08-15 23:11:35: EarlyStopping counter: 5 out of 10
+2023-08-15 23:11:36: EarlyStopping counter: 6 out of 10
+2023-08-15 23:11:37: EarlyStopping counter: 7 out of 10
+2023-08-15 23:11:39: EarlyStopping counter: 8 out of 10
+2023-08-15 23:11:40: EarlyStopping counter: 9 out of 10
+2023-08-15 23:11:41: EarlyStopping counter: 10 out of 10
+2023-08-15 23:11:41: Early stopping training since loss did not improve for 10 epochs.
+2023-08-15 23:11:41: Using model from epoch 39
+2023-08-15 23:11:41: Validation performance, imputation error modality 2 from 1
+2023-08-15 23:11:41: loss	3327.0544
+2023-08-15 23:11:41: Test performance, imputation error modality 2 from 1
+2023-08-15 23:11:41: loss	3383.7216
+2023-08-15 23:11:44: EarlyStopping counter: 1 out of 10
+2023-08-15 23:12:27: EarlyStopping counter: 1 out of 10
+2023-08-15 23:12:30: EarlyStopping counter: 1 out of 10
+2023-08-15 23:12:34: EarlyStopping counter: 1 out of 10
+2023-08-15 23:12:37: EarlyStopping counter: 1 out of 10
+2023-08-15 23:12:41: EarlyStopping counter: 1 out of 10
+2023-08-15 23:12:44: EarlyStopping counter: 1 out of 10
+2023-08-15 23:12:48: EarlyStopping counter: 1 out of 10
+2023-08-15 23:12:51: EarlyStopping counter: 1 out of 10
+2023-08-15 23:12:55: EarlyStopping counter: 1 out of 10
+2023-08-15 23:12:58: EarlyStopping counter: 1 out of 10
+2023-08-15 23:13:02: EarlyStopping counter: 1 out of 10
+2023-08-15 23:13:05: EarlyStopping counter: 1 out of 10
+2023-08-15 23:13:08: EarlyStopping counter: 1 out of 10
+2023-08-15 23:13:12: EarlyStopping counter: 1 out of 10
+2023-08-15 23:13:15: EarlyStopping counter: 1 out of 10
+2023-08-15 23:13:19: EarlyStopping counter: 1 out of 10
+2023-08-15 23:13:22: EarlyStopping counter: 1 out of 10
+2023-08-15 23:13:26: EarlyStopping counter: 1 out of 10
+2023-08-15 23:13:29: EarlyStopping counter: 1 out of 10
+2023-08-15 23:13:33: EarlyStopping counter: 1 out of 10
+2023-08-15 23:13:36: EarlyStopping counter: 1 out of 10
+2023-08-15 23:13:40: EarlyStopping counter: 1 out of 10
+2023-08-15 23:13:43: EarlyStopping counter: 1 out of 10
+2023-08-15 23:13:47: EarlyStopping counter: 1 out of 10
+2023-08-15 23:13:50: EarlyStopping counter: 1 out of 10
+2023-08-15 23:13:54: EarlyStopping counter: 1 out of 10
+2023-08-15 23:13:57: EarlyStopping counter: 1 out of 10
+2023-08-15 23:14:00: EarlyStopping counter: 1 out of 10
+2023-08-15 23:14:04: EarlyStopping counter: 1 out of 10
+2023-08-15 23:14:07: EarlyStopping counter: 1 out of 10
+2023-08-15 23:14:11: EarlyStopping counter: 1 out of 10
+2023-08-15 23:14:14: EarlyStopping counter: 1 out of 10
+2023-08-15 23:14:18: EarlyStopping counter: 1 out of 10
+2023-08-15 23:14:21: EarlyStopping counter: 1 out of 10
+2023-08-15 23:14:25: EarlyStopping counter: 1 out of 10
+2023-08-15 23:14:28: EarlyStopping counter: 1 out of 10
+2023-08-15 23:14:30: EarlyStopping counter: 2 out of 10
+2023-08-15 23:14:33: EarlyStopping counter: 1 out of 10
+2023-08-15 23:14:35: EarlyStopping counter: 2 out of 10
+2023-08-15 23:14:38: EarlyStopping counter: 1 out of 10
+2023-08-15 23:14:40: EarlyStopping counter: 2 out of 10
+2023-08-15 23:14:44: EarlyStopping counter: 1 out of 10
+2023-08-15 23:14:45: EarlyStopping counter: 2 out of 10
+2023-08-15 23:14:49: EarlyStopping counter: 1 out of 10
+2023-08-15 23:14:51: EarlyStopping counter: 2 out of 10
+2023-08-15 23:14:54: EarlyStopping counter: 1 out of 10
+2023-08-15 23:14:56: EarlyStopping counter: 2 out of 10
+2023-08-15 23:14:59: EarlyStopping counter: 1 out of 10
+2023-08-15 23:15:01: EarlyStopping counter: 2 out of 10
+2023-08-15 23:15:05: EarlyStopping counter: 1 out of 10
+2023-08-15 23:15:06: EarlyStopping counter: 2 out of 10
+2023-08-15 23:15:10: EarlyStopping counter: 1 out of 10
+2023-08-15 23:15:12: EarlyStopping counter: 2 out of 10
+2023-08-15 23:15:15: EarlyStopping counter: 1 out of 10
+2023-08-15 23:15:17: EarlyStopping counter: 2 out of 10
+2023-08-15 23:15:20: EarlyStopping counter: 1 out of 10
+2023-08-15 23:15:22: EarlyStopping counter: 2 out of 10
+2023-08-15 23:15:26: EarlyStopping counter: 1 out of 10
+2023-08-15 23:15:28: EarlyStopping counter: 2 out of 10
+2023-08-15 23:15:29: EarlyStopping counter: 3 out of 10
+2023-08-15 23:15:33: EarlyStopping counter: 1 out of 10
+2023-08-15 23:15:35: EarlyStopping counter: 2 out of 10
+2023-08-15 23:15:36: EarlyStopping counter: 3 out of 10
+2023-08-15 23:15:40: EarlyStopping counter: 1 out of 10
+2023-08-15 23:15:42: EarlyStopping counter: 2 out of 10
+2023-08-15 23:15:44: EarlyStopping counter: 3 out of 10
+2023-08-15 23:15:47: EarlyStopping counter: 1 out of 10
+2023-08-15 23:15:49: EarlyStopping counter: 2 out of 10
+2023-08-15 23:15:51: EarlyStopping counter: 3 out of 10
+2023-08-15 23:15:54: EarlyStopping counter: 1 out of 10
+2023-08-15 23:15:56: EarlyStopping counter: 2 out of 10
+2023-08-15 23:15:58: EarlyStopping counter: 3 out of 10
+2023-08-15 23:16:02: EarlyStopping counter: 1 out of 10
+2023-08-15 23:16:03: EarlyStopping counter: 2 out of 10
+2023-08-15 23:16:05: EarlyStopping counter: 3 out of 10
+2023-08-15 23:16:07: EarlyStopping counter: 4 out of 10
+2023-08-15 23:16:11: EarlyStopping counter: 1 out of 10
+2023-08-15 23:16:12: EarlyStopping counter: 2 out of 10
+2023-08-15 23:16:14: EarlyStopping counter: 3 out of 10
+2023-08-15 23:16:16: EarlyStopping counter: 4 out of 10
+2023-08-15 23:16:20: EarlyStopping counter: 1 out of 10
+2023-08-15 23:16:22: EarlyStopping counter: 2 out of 10
+2023-08-15 23:16:23: EarlyStopping counter: 3 out of 10
+2023-08-15 23:16:25: EarlyStopping counter: 4 out of 10
+2023-08-15 23:16:27: EarlyStopping counter: 5 out of 10
+2023-08-15 23:16:31: EarlyStopping counter: 1 out of 10
+2023-08-15 23:16:32: EarlyStopping counter: 2 out of 10
+2023-08-15 23:16:34: EarlyStopping counter: 3 out of 10
+2023-08-15 23:16:36: EarlyStopping counter: 4 out of 10
+2023-08-15 23:16:38: EarlyStopping counter: 5 out of 10
+2023-08-15 23:16:41: EarlyStopping counter: 1 out of 10
+2023-08-15 23:16:43: EarlyStopping counter: 2 out of 10
+2023-08-15 23:16:45: EarlyStopping counter: 3 out of 10
+2023-08-15 23:16:47: EarlyStopping counter: 4 out of 10
+2023-08-15 23:16:49: EarlyStopping counter: 5 out of 10
+2023-08-15 23:16:50: EarlyStopping counter: 6 out of 10
+2023-08-15 23:16:54: EarlyStopping counter: 1 out of 10
+2023-08-15 23:16:56: EarlyStopping counter: 2 out of 10
+2023-08-15 23:16:58: EarlyStopping counter: 3 out of 10
+2023-08-15 23:17:00: EarlyStopping counter: 4 out of 10
+2023-08-15 23:17:01: EarlyStopping counter: 5 out of 10
+2023-08-15 23:17:03: EarlyStopping counter: 6 out of 10
+2023-08-15 23:17:05: EarlyStopping counter: 7 out of 10
+2023-08-15 23:17:09: EarlyStopping counter: 1 out of 10
+2023-08-15 23:17:11: EarlyStopping counter: 2 out of 10
+2023-08-15 23:17:12: EarlyStopping counter: 3 out of 10
+2023-08-15 23:17:14: EarlyStopping counter: 4 out of 10
+2023-08-15 23:17:16: EarlyStopping counter: 5 out of 10
+2023-08-15 23:17:18: EarlyStopping counter: 6 out of 10
+2023-08-15 23:17:20: EarlyStopping counter: 7 out of 10
+2023-08-15 23:17:22: EarlyStopping counter: 8 out of 10
+2023-08-15 23:17:25: EarlyStopping counter: 1 out of 10
+2023-08-15 23:17:27: EarlyStopping counter: 2 out of 10
+2023-08-15 23:17:29: EarlyStopping counter: 3 out of 10
+2023-08-15 23:17:31: EarlyStopping counter: 4 out of 10
+2023-08-15 23:17:33: EarlyStopping counter: 5 out of 10
+2023-08-15 23:17:35: EarlyStopping counter: 6 out of 10
+2023-08-15 23:17:36: EarlyStopping counter: 7 out of 10
+2023-08-15 23:17:38: EarlyStopping counter: 8 out of 10
+2023-08-15 23:17:40: EarlyStopping counter: 9 out of 10
+2023-08-15 23:17:42: EarlyStopping counter: 10 out of 10
+2023-08-15 23:17:42: Early stopping training since loss did not improve for 10 epochs.
+2023-08-15 23:17:42: Using model from epoch 204
+2023-08-15 23:17:42: Validation performance, imputation error modality 1 from 2
+2023-08-15 23:17:42: loss	966.8220
+2023-08-15 23:17:42: Test performance, imputation error modality 1 from 2
+2023-08-15 23:17:42: loss	968.0070
+2023-08-15 23:17:43: 
+
+
+2023-08-15 23:17:44: Coherence: 0.8420
+2023-08-15 23:17:44: 
+
+
+2023-08-15 23:17:44: Test performance, classification task, linear classifier, modality 1
+2023-08-15 23:17:52: ACC: 0.8628	PR: 0.8210	RC: 0.7738	F1: 0.7901	MCC: 0.8431
+2023-08-15 23:17:52: Test performance, classification task, linear classifier, modality 2
+2023-08-15 23:18:00: ACC: 0.6574	PR: 0.4898	RC: 0.3775	F1: 0.4057	MCC: 0.6007
+2023-08-15 23:18:00: Test performance, classification task, linear classifier, both modalities
+2023-08-15 23:18:08: ACC: 0.7572	PR: 0.7544	RC: 0.5708	F1: 0.6248	MCC: 0.7191
+2023-08-15 23:18:08: Test performance, classification task, non-linear classifier, modality 1
+2023-08-15 23:18:08: defining model with 20 classes
+2023-08-15 23:18:08: EarlyStopping counter: 1 out of 10
+2023-08-15 23:18:36: EarlyStopping counter: 1 out of 10
+2023-08-15 23:18:38: EarlyStopping counter: 1 out of 10
+2023-08-15 23:18:39: EarlyStopping counter: 1 out of 10
+2023-08-15 23:18:40: EarlyStopping counter: 1 out of 10
+2023-08-15 23:18:41: EarlyStopping counter: 1 out of 10
+2023-08-15 23:18:43: EarlyStopping counter: 1 out of 10
+2023-08-15 23:18:44: EarlyStopping counter: 1 out of 10
+2023-08-15 23:18:45: EarlyStopping counter: 1 out of 10
+2023-08-15 23:18:46: EarlyStopping counter: 1 out of 10
+2023-08-15 23:18:47: EarlyStopping counter: 2 out of 10
+2023-08-15 23:18:48: EarlyStopping counter: 1 out of 10
+2023-08-15 23:18:48: EarlyStopping counter: 2 out of 10
+2023-08-15 23:18:49: EarlyStopping counter: 3 out of 10
+2023-08-15 23:18:49: EarlyStopping counter: 4 out of 10
+2023-08-15 23:18:50: EarlyStopping counter: 1 out of 10
+2023-08-15 23:18:51: EarlyStopping counter: 1 out of 10
+2023-08-15 23:18:52: EarlyStopping counter: 2 out of 10
+2023-08-15 23:18:53: EarlyStopping counter: 3 out of 10
+2023-08-15 23:18:54: EarlyStopping counter: 1 out of 10
+2023-08-15 23:18:54: EarlyStopping counter: 2 out of 10
+2023-08-15 23:18:55: EarlyStopping counter: 3 out of 10
+2023-08-15 23:18:56: EarlyStopping counter: 4 out of 10
+2023-08-15 23:18:56: EarlyStopping counter: 5 out of 10
+2023-08-15 23:18:57: EarlyStopping counter: 6 out of 10
+2023-08-15 23:18:57: EarlyStopping counter: 7 out of 10
+2023-08-15 23:18:59: EarlyStopping counter: 1 out of 10
+2023-08-15 23:18:59: EarlyStopping counter: 2 out of 10
+2023-08-15 23:19:00: EarlyStopping counter: 1 out of 10
+2023-08-15 23:19:01: EarlyStopping counter: 2 out of 10
+2023-08-15 23:19:01: EarlyStopping counter: 3 out of 10
+2023-08-15 23:19:02: EarlyStopping counter: 4 out of 10
+2023-08-15 23:19:03: EarlyStopping counter: 5 out of 10
+2023-08-15 23:19:03: EarlyStopping counter: 6 out of 10
+2023-08-15 23:19:04: EarlyStopping counter: 7 out of 10
+2023-08-15 23:19:04: EarlyStopping counter: 8 out of 10
+2023-08-15 23:19:05: EarlyStopping counter: 1 out of 10
+2023-08-15 23:19:06: EarlyStopping counter: 2 out of 10
+2023-08-15 23:19:07: EarlyStopping counter: 3 out of 10
+2023-08-15 23:19:07: EarlyStopping counter: 4 out of 10
+2023-08-15 23:19:08: EarlyStopping counter: 5 out of 10
+2023-08-15 23:19:08: EarlyStopping counter: 6 out of 10
+2023-08-15 23:19:09: EarlyStopping counter: 1 out of 10
+2023-08-15 23:19:10: EarlyStopping counter: 2 out of 10
+2023-08-15 23:19:10: EarlyStopping counter: 3 out of 10
+2023-08-15 23:19:11: EarlyStopping counter: 1 out of 10
+2023-08-15 23:19:12: EarlyStopping counter: 2 out of 10
+2023-08-15 23:19:13: EarlyStopping counter: 3 out of 10
+2023-08-15 23:19:13: EarlyStopping counter: 4 out of 10
+2023-08-15 23:19:14: EarlyStopping counter: 5 out of 10
+2023-08-15 23:19:14: EarlyStopping counter: 6 out of 10
+2023-08-15 23:19:15: EarlyStopping counter: 7 out of 10
+2023-08-15 23:19:15: EarlyStopping counter: 8 out of 10
+2023-08-15 23:19:16: EarlyStopping counter: 9 out of 10
+2023-08-15 23:19:16: EarlyStopping counter: 10 out of 10
+2023-08-15 23:19:17: ACC: 0.8858	PR: 0.8551	RC: 0.8063	F1: 0.8215	MCC: 0.8695
+2023-08-15 23:19:17: Test performance, classification task, non-linear classifier, modality 2
+2023-08-15 23:19:17: defining model with 20 classes
+2023-08-15 23:19:18: EarlyStopping counter: 1 out of 10
+2023-08-18 21:49:34: Selected device: cuda
+2023-08-18 21:49:34: Likelihood for omic1: nb
+2023-08-18 21:49:34: Likelihood for omic2: nbm
+2023-08-18 21:54:42: Selected device: cuda
+2023-08-18 21:54:42: Likelihood for omic1: nb
+2023-08-18 21:54:42: Likelihood for omic2: nbm
+2023-08-18 22:01:20: EarlyStopping counter: 1 out of 10
+2023-08-18 22:05:59: EarlyStopping counter: 1 out of 10
+2023-08-18 22:06:28: EarlyStopping counter: 1 out of 10
+2023-08-18 22:06:43: EarlyStopping counter: 2 out of 10
+2023-08-18 22:06:57: EarlyStopping counter: 3 out of 10
+2023-08-18 22:07:12: EarlyStopping counter: 4 out of 10
+2023-08-18 22:07:26: EarlyStopping counter: 5 out of 10
+2023-08-18 22:07:41: EarlyStopping counter: 6 out of 10
+2023-08-18 22:07:55: EarlyStopping counter: 7 out of 10
+2023-08-18 22:08:10: EarlyStopping counter: 8 out of 10
+2023-08-18 22:08:25: EarlyStopping counter: 9 out of 10
+2023-08-18 22:08:39: EarlyStopping counter: 10 out of 10
+2023-08-18 22:08:39: Early stopping training since loss did not improve for 10 epochs.
+2023-08-18 22:08:39: Using model from epoch 23
+2023-08-18 22:09:05: Validation performance, imputation error modality 2 from 1
+2023-08-18 22:09:05: loss	647.3034
+2023-08-18 22:09:05: Test performance, imputation error modality 2 from 1
+2023-08-18 22:09:05: loss	645.5793
+2023-08-18 22:11:15: EarlyStopping counter: 1 out of 10
+2023-08-18 22:25:29: EarlyStopping counter: 1 out of 10
+2023-08-18 22:27:04: EarlyStopping counter: 1 out of 10
+2023-08-18 22:28:40: EarlyStopping counter: 1 out of 10
+2023-08-18 22:29:29: EarlyStopping counter: 2 out of 10
+2023-08-18 22:30:18: EarlyStopping counter: 3 out of 10
+2023-08-18 22:31:07: EarlyStopping counter: 4 out of 10
+2023-08-18 22:31:56: EarlyStopping counter: 5 out of 10
+2023-08-18 22:33:35: EarlyStopping counter: 1 out of 10
+2023-08-18 22:34:25: EarlyStopping counter: 2 out of 10
+2023-08-18 22:35:15: EarlyStopping counter: 3 out of 10
+2023-08-18 22:36:05: EarlyStopping counter: 4 out of 10
+2023-08-18 22:36:55: EarlyStopping counter: 5 out of 10
+2023-08-18 22:37:45: EarlyStopping counter: 6 out of 10
+2023-08-18 22:38:35: EarlyStopping counter: 7 out of 10
+2023-08-18 22:39:25: EarlyStopping counter: 8 out of 10
+2023-08-18 22:40:15: EarlyStopping counter: 9 out of 10
+2023-08-18 22:41:05: EarlyStopping counter: 10 out of 10
+2023-08-18 22:41:05: Early stopping training since loss did not improve for 10 epochs.
+2023-08-18 22:41:05: Using model from epoch 32
+2023-08-18 22:41:09: Validation performance, imputation error modality 1 from 2
+2023-08-18 22:41:09: loss	1243.2332
+2023-08-18 22:41:09: Test performance, imputation error modality 1 from 2
+2023-08-18 22:41:09: loss	1352.0728
+2023-08-18 22:51:26: 
+
+
+2023-08-18 22:51:27: Coherence: 0.6460
+2023-08-18 22:52:30: 
+
+
+2023-08-18 22:52:30: Coherence: 0.6215
+2023-08-18 22:56:48: Test performance, classification task, linear classifier, modality 1
+2023-08-18 22:59:01: ACC: 0.7972	PR: 0.6667	RC: 0.4631	F1: 0.4919	MCC: 0.7746
+2023-08-18 22:59:01: Test performance, classification task, linear classifier, modality 2
+2023-08-18 23:01:08: ACC: 0.7678	PR: 0.5746	RC: 0.4155	F1: 0.4362	MCC: 0.7417
+2023-08-18 23:01:08: Test performance, classification task, linear classifier, both modalities
+2023-08-18 23:03:22: ACC: 0.8090	PR: 0.6937	RC: 0.4890	F1: 0.5125	MCC: 0.7883
+2023-08-18 23:03:22: Test performance, classification task, non-linear classifier, modality 1
+2023-08-18 23:03:22: defining model with 57 classes
+2023-08-18 23:03:30: EarlyStopping counter: 1 out of 10
+2023-08-18 23:05:07: EarlyStopping counter: 1 out of 10
+2023-08-18 23:05:14: EarlyStopping counter: 2 out of 10
+2023-08-18 23:05:29: EarlyStopping counter: 1 out of 10
+2023-08-18 23:05:36: EarlyStopping counter: 2 out of 10
+2023-08-18 23:05:44: EarlyStopping counter: 3 out of 10
+2023-08-18 23:05:52: EarlyStopping counter: 4 out of 10
+2023-08-18 23:05:59: EarlyStopping counter: 5 out of 10
+2023-08-18 23:06:21: EarlyStopping counter: 1 out of 10
+2023-08-18 23:06:29: EarlyStopping counter: 2 out of 10
+2023-08-18 23:06:44: EarlyStopping counter: 1 out of 10
+2023-08-18 23:06:51: EarlyStopping counter: 2 out of 10
+2023-08-18 23:06:58: EarlyStopping counter: 3 out of 10
+2023-08-18 23:07:06: EarlyStopping counter: 4 out of 10
+2023-08-18 23:07:13: EarlyStopping counter: 5 out of 10
+2023-08-18 23:07:20: EarlyStopping counter: 6 out of 10
+2023-08-18 23:07:35: EarlyStopping counter: 1 out of 10
+2023-08-18 23:07:42: EarlyStopping counter: 2 out of 10
+2023-08-18 23:07:50: EarlyStopping counter: 3 out of 10
+2023-08-18 23:07:57: EarlyStopping counter: 4 out of 10
+2023-08-18 23:08:04: EarlyStopping counter: 5 out of 10
+2023-08-18 23:08:12: EarlyStopping counter: 6 out of 10
+2023-08-18 23:08:19: EarlyStopping counter: 7 out of 10
+2023-08-18 23:08:35: EarlyStopping counter: 1 out of 10
+2023-08-18 23:08:50: EarlyStopping counter: 1 out of 10
+2023-08-18 23:08:57: EarlyStopping counter: 2 out of 10
+2023-08-18 23:09:05: EarlyStopping counter: 3 out of 10
+2023-08-18 23:09:12: EarlyStopping counter: 4 out of 10
+2023-08-18 23:09:19: EarlyStopping counter: 5 out of 10
+2023-08-18 23:09:29: EarlyStopping counter: 6 out of 10
+2023-08-18 23:09:38: EarlyStopping counter: 7 out of 10
+2023-08-18 23:09:48: EarlyStopping counter: 8 out of 10
+2023-08-18 23:09:57: EarlyStopping counter: 9 out of 10
+2023-08-18 23:10:06: EarlyStopping counter: 10 out of 10
+2023-08-18 23:10:11: ACC: 0.8714	PR: 0.7428	RC: 0.7250	F1: 0.7148	MCC: 0.8577
+2023-08-18 23:10:11: Test performance, classification task, non-linear classifier, modality 2
+2023-08-18 23:10:11: defining model with 57 classes
+2023-08-18 23:10:20: EarlyStopping counter: 1 out of 10
+2023-08-18 23:11:48: EarlyStopping counter: 1 out of 10
+2023-08-18 23:12:17: EarlyStopping counter: 1 out of 10
+2023-08-18 23:12:40: EarlyStopping counter: 1 out of 10
+2023-08-18 23:12:47: EarlyStopping counter: 2 out of 10
+2023-08-18 23:12:55: EarlyStopping counter: 3 out of 10
+2023-08-18 23:13:02: EarlyStopping counter: 4 out of 10
+2023-08-18 23:13:10: EarlyStopping counter: 5 out of 10
+2023-08-18 23:13:17: EarlyStopping counter: 6 out of 10
+2023-08-18 23:13:32: EarlyStopping counter: 1 out of 10
+2023-08-18 23:13:40: EarlyStopping counter: 2 out of 10
+2023-08-18 23:13:55: EarlyStopping counter: 1 out of 10
+2023-08-18 23:14:03: EarlyStopping counter: 2 out of 10
+2023-08-18 23:14:10: EarlyStopping counter: 3 out of 10
+2023-08-18 23:14:18: EarlyStopping counter: 4 out of 10
+2023-08-18 23:14:25: EarlyStopping counter: 5 out of 10
+2023-08-18 23:14:40: EarlyStopping counter: 1 out of 10
+2023-08-18 23:14:47: EarlyStopping counter: 2 out of 10
+2023-08-18 23:14:55: EarlyStopping counter: 3 out of 10
+2023-08-18 23:15:02: EarlyStopping counter: 4 out of 10
+2023-08-18 23:15:18: EarlyStopping counter: 1 out of 10
+2023-08-18 23:15:26: EarlyStopping counter: 2 out of 10
+2023-08-18 23:15:33: EarlyStopping counter: 3 out of 10
+2023-08-18 23:15:41: EarlyStopping counter: 4 out of 10
+2023-08-18 23:15:48: EarlyStopping counter: 5 out of 10
+2023-08-18 23:15:56: EarlyStopping counter: 6 out of 10
+2023-08-18 23:16:03: EarlyStopping counter: 7 out of 10
+2023-08-18 23:16:11: EarlyStopping counter: 8 out of 10
+2023-08-18 23:16:19: EarlyStopping counter: 9 out of 10
+2023-08-18 23:16:26: EarlyStopping counter: 10 out of 10
+2023-08-18 23:16:31: ACC: 0.8494	PR: 0.6813	RC: 0.6764	F1: 0.6671	MCC: 0.8334
+2023-08-18 23:16:31: Test performance, classification task, non-linear classifier, both modalities
+2023-08-18 23:16:31: defining model with 57 classes
+2023-08-18 23:16:39: EarlyStopping counter: 1 out of 10
+2023-08-18 23:18:05: EarlyStopping counter: 1 out of 10
+2023-08-18 23:18:20: EarlyStopping counter: 1 out of 10
+2023-08-18 23:18:35: EarlyStopping counter: 1 out of 10
+2023-08-18 23:18:51: EarlyStopping counter: 1 out of 10
+2023-08-18 23:18:59: EarlyStopping counter: 2 out of 10
+2023-08-18 23:19:15: EarlyStopping counter: 1 out of 10
+2023-08-18 23:19:23: EarlyStopping counter: 2 out of 10
+2023-08-18 23:19:31: EarlyStopping counter: 3 out of 10
+2023-08-18 23:19:39: EarlyStopping counter: 4 out of 10
+2023-08-18 23:19:46: EarlyStopping counter: 5 out of 10
+2023-08-18 23:20:02: EarlyStopping counter: 1 out of 10
+2023-08-18 23:20:10: EarlyStopping counter: 2 out of 10
+2023-08-18 23:20:18: EarlyStopping counter: 3 out of 10
+2023-08-18 23:20:35: EarlyStopping counter: 1 out of 10
+2023-08-18 23:20:42: EarlyStopping counter: 2 out of 10
+2023-08-18 23:20:49: EarlyStopping counter: 3 out of 10
+2023-08-18 23:20:57: EarlyStopping counter: 4 out of 10
+2023-08-18 23:21:05: EarlyStopping counter: 5 out of 10
+2023-08-18 23:21:13: EarlyStopping counter: 6 out of 10
+2023-08-18 23:21:21: EarlyStopping counter: 7 out of 10
+2023-08-18 23:21:29: EarlyStopping counter: 8 out of 10
+2023-08-18 23:21:37: EarlyStopping counter: 9 out of 10
+2023-08-18 23:21:45: EarlyStopping counter: 10 out of 10
+2023-08-18 23:21:50: ACC: 0.8868	PR: 0.7813	RC: 0.7560	F1: 0.7490	MCC: 0.8748
+2023-08-18 23:21:50: Saving results

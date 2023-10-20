@@ -186,11 +186,20 @@ def run(args) -> None:
     else:
         categories = None
 
+    if 'log_inputs' in args and args['log_inputs']:
+        if args['data2'] == 'ATAC':
+            log_inputs = [True, False]
+        else:
+            log_inputs = True
+    else:
+        log_inputs = False
+
+
 
     model = MixtureOfExperts(input_dims, encoder_layers, decoder_layers,
      likelihoods, args['use_batch_norm'],
      args['dropout_probability'], args['optimizer'], args['lr'], args['lr'],
-     args['enc_distribution'], args['beta_start_value'], args['K'], llikScales, categories)
+     args['enc_distribution'], args['beta_start_value'], args['K'], llikScales, categories, log_inputs)
 
     model.double()
     if device == torch.device('cuda'):
@@ -211,13 +220,13 @@ def run(args) -> None:
     else:
 
         # Log Data shape, input arguments and model
-        model_file = open("{}/MoE_Model.txt".format(save_dir), "a")
-        model_file.write("Running at {}\n".format(datetime.now().strftime("%d-%m-%Y %H:%M:%S")))
-        model_file.write("Input shape 1 : {}, {}\n".format(len(train_loader.dataset), args['num_features1']))
-        model_file.write("Input shape 2 : {}, {}\n".format(len(train_loader.dataset), args['num_features2']))
-        model_file.write("Input args : {}\n".format(args))
-        model_file.write("MoE Model : {}".format(model))
-        model_file.close()
+        # model_file = open("{}/MoE_Model.txt".format(save_dir), "a")
+        # model_file.write("Running at {}\n".format(datetime.now().strftime("%d-%m-%Y %H:%M:%S")))
+        # model_file.write("Input shape 1 : {}, {}\n".format(len(train_loader.dataset), args['num_features1']))
+        # model_file.write("Input shape 2 : {}, {}\n".format(len(train_loader.dataset), args['num_features2']))
+        # model_file.write("Input args : {}\n".format(args))
+        # model_file.write("MoE Model : {}".format(model))
+        # model_file.close()
 
         ckpt_dir = save_dir + '/checkpoint'
         if not os.path.exists(ckpt_dir):

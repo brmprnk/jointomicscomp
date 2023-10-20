@@ -51,16 +51,24 @@ def run(args: dict) -> None:
     decoder_layers = encoder_layers[::-1][1:]
 
     # Initialize network model
+    if 'log_inputs' in args and args['log_inputs']:
+        if args['data2'] == 'ATAC':
+            log_inputs = [True, False]
+        else:
+            log_inputs = True
+    else:
+        log_inputs = False
+
 
     if 'categorical' not in likelihoods:
         net = CrossGeneratingVariationalAutoencoder(input_dims, encoder_layers, decoder_layers, likelihoods,
                        args['use_batch_norm'], args['dropout_probability'], args['optimizer'], args['lr'],  args['lr'],
-                       args['enc_distribution'], args['beta_start_value'], args['zconstraintCoef'], args['crossPenaltyCoef'])
+                       args['enc_distribution'], args['beta_start_value'], args['zconstraintCoef'], args['crossPenaltyCoef'], log_input=log_inputs)
     else:
         categories = [args['n_categories%d' % (i + 1)] for i in range(n_modalities)]
         net = CrossGeneratingVariationalAutoencoder(input_dims, encoder_layers, decoder_layers, likelihoods,
                args['use_batch_norm'], args['dropout_probability'], args['optimizer'], args['lr'],  args['lr'],
-               args['enc_distribution'], args['beta_start_value'], args['zconstraintCoef'], args['crossPenaltyCoef'], n_categories=categories)
+               args['enc_distribution'], args['beta_start_value'], args['zconstraintCoef'], args['crossPenaltyCoef'], n_categories=categories, log_input=log_inputs)
 
 
     net = net.double()

@@ -5,7 +5,8 @@ from torch.distributions import Normal, Independent, Beta
 import torch.optim as optimizer_module
 import math
 from tensorboardX import SummaryWriter
-
+import src.util.mydistributions as mydistributions
+import pyro.distributions.zero_inflated as pyroZI
 # several utils
 
 # utility function to initialize an optimizer from its name
@@ -86,18 +87,20 @@ class FullyConnectedModule(nn.Module):
 
 
 class ProbabilisticFullyConnectedModule(FullyConnectedModule):
-	def __init__(self, input_dim, hidden_dim=[100], distribution='normal', use_batch_norm=False, dropoutP=0.0, lastActivation='none', n_categories=None):
+	def __init__(self, input_dim, hidden_dim=[100], distribution='normal', use_batch_norm=False, dropoutP=0.0, lastActivation='none', n_categories=None, log_input=False):
 
 		self.input_dim = input_dim
 		self.n_categories = n_categories
 		self.distribution = distribution
+		self.log_input = log_input
+
 		if self.distribution == 'categorical':
 			assert n_categories is not None
 			newlist = [h for h in hidden_dim]
 			newlist[-1] *= n_categories
 			hidden_dim = newlist
 
-		elif self.distribution != 'cbernoulli' and self.distribution != 'poisson':
+		elif self.distribution != 'cbernoulli' and self.distribution != 'bernoulli' and self.distribution != 'poisson':
 			newlist = [h for h in hidden_dim]
 			newlist[-1] = newlist[-1] * 2
 			hidden_dim = newlist
@@ -122,6 +125,9 @@ class ProbabilisticFullyConnectedModule(FullyConnectedModule):
 			self.D = torch.distributions.Categorical
 		elif self.distribution == 'cbernoulli':
 			self.D = torch.distributions.ContinuousBernoulli
+		elif self.distribution == 'bernoulli':
+			self.D = torch.distributions.Bernoulli
+			self.p1Transform = identity
 		elif self.distribution == 'poisson':
 			self.p1Transform = torch.exp
 			self.D = torch.distributions.Poisson
@@ -129,6 +135,10 @@ class ProbabilisticFullyConnectedModule(FullyConnectedModule):
 			self.p1Transform = identity
 			self.p2Transform = torch.exp
 			self.D = torch.distributions.Laplace
+		elif self.distribution == 'zip':
+			self.p1Transform = torch.exp
+			self.p2Transform = torch.nn.Sigmoid()
+			self.D = pyroZI.ZeroInflatedPoisson
 		elif self.distribution == 'nb':
 			self.p1Transform = torch.exp
 			self.p2Transform = torch.nn.Sigmoid()
@@ -136,16 +146,20 @@ class ProbabilisticFullyConnectedModule(FullyConnectedModule):
 		else:
 			raise NotImplementedError('%s not supported. Use: \'normal\' or \'beta\'' % self.distribution)
 
-		if self.distribution != 'cbernoulli':
+		if self.distribution != 'cbernoulli' and self.distribution != 'bernoulli' and self.distribution != 'poisson':
 			if self.distribution != 'categorical':
 				self.z_dim = self.z_dim // 2
 			else:
 				self.z_dim = self.z_dim // self.n_categories
 
 	def forward(self, x):
+		if self.log_input:
+			x = torch.log(x+1)
+
 		z = super().forward(x)
 
-		if self.distribution != 'cbernoulli' and self.distribution != 'categorical'and self.distribution != 'poisson':
+		#if self.distribution != 'cbernoulli' and self.distribution != 'categorical'and self.distribution != 'poisson' and self.distribution != 'poisson':
+		if self.distribution not in {'cbernoulli', 'bernoulli', 'categorical', 'poisson', 'zip'}:
 			p1 = self.p1Transform(z[:, :self.z_dim])
 			p2 = self.p2Transform(z[:, self.z_dim:])
 
@@ -155,6 +169,11 @@ class ProbabilisticFullyConnectedModule(FullyConnectedModule):
 				p1 = self.p1Transform(z)
 				return Independent(self.D(p1), 0)
 
+			if self.distribution == 'zip':
+				p1 = self.p1Transform(z[:, :self.z_dim])
+				p2 = self.p2Transform(z[:, self.z_dim:])
+
+				return Independent(self.D(p1, gate=p2), 0)
 
 			if self.distribution == 'categorical':
 				z = torch.reshape(z, (-1, self.z_dim, self.n_categories))
@@ -169,6 +188,78 @@ class ProbabilisticFullyConnectedModule(FullyConnectedModule):
 			else:
 				raise NotImplementedError('Wrong activation for lamda parameter of ContinuousBernoulli')
 
+
+class SCVIdecoder(FullyConnectedModule):
+	def __init__(self, input_dim, hidden_dim=[100], distribution='nb', use_batch_norm=False, dropoutP=0.0):
+
+		self.input_dim = input_dim
+		self.distribution = distribution
+		self.Ngenes = hidden_dim[-1]
+		# if self.distribution == 'nb':
+		# 	newlist = [h for h in hidden_dim]
+		# 	newlist[-1] *= n_categories
+		# 	hidden_dim = newlist
+
+		if self.distribution == 'zinb' or self.distribution == 'nbm':
+			newlist = [h for h in hidden_dim]
+			newlist[-1] = newlist[-1] * 2
+			hidden_dim = newlist
+		elif self.distribution != 'nb':
+			raise NotImplementedError
+
+		super(SCVIdecoder, self).__init__(input_dim, hidden_dim, use_batch_norm, dropoutP, 'none')
+
+		if self.distribution == 'nb':
+			self.p1Transform = torch.exp
+			self.p2Transform = None
+			self.D = mydistributions.NegativeBinomial
+		elif self.distribution == 'nbm':
+			self.p1Transform = torch.exp
+			self.p2Transform = None
+			self.D = mydistributions.NegativeBinomialMixture
+		elif self.distribution == 'zinb':
+			self.p1Transform = torch.exp
+			self.p2Transform = None
+			self.D = mydistributions.ZeroInflatedNegativeBinomial
+
+		else:
+			raise NotImplementedError('%s not supported. Use: \'nb\', \'nbm\' or \'zinb\'' % self.distribution)
+
+		if self.distribution != 'nb':
+			self.z_dim = self.z_dim // 2
+
+		# initialization log(phi) ~ N(-2, 0.2) --> phi in range ~[0.05, 0.30]
+		self.phi = torch.nn.Parameter(torch.normal(-2*torch.ones(self.z_dim), 0.2*torch.ones(self.z_dim)), requires_grad=True)
+
+		if self.distribution == 'nbm':
+			self.protein_background_beta = torch.nn.Parameter(torch.normal(torch.zeros(self.z_dim), torch.ones(self.z_dim)))
+
+
+	def forward(self, x):
+		z = super().forward(x)
+
+		if self.distribution == 'nb':
+			mean = self.p1Transform(z)
+			return Independent(self.D(mean, torch.exp(self.phi)), 0)
+
+		elif self.distribution == 'zinb':
+			mean = self.p1Transform(z[:, :self.z_dim])
+			logitP = z[:, self.z_dim:]
+			return Independent(self.D(mean, torch.exp(self.phi), logitP), 0)
+
+		elif self.distribution == 'nbm':
+			mean1 = torch.exp(self.protein_background_beta)
+
+			alpha = 1 + torch.exp(z[:, :self.z_dim])
+			mean2 = mean1 * alpha
+			logitP = z[:, self.z_dim:]
+
+			return Independent(self.D(mean1, mean2, torch.exp(self.phi), logitP), 0)
+
+
+
+		else:
+			raise NotImplementedError
 
 
 # base class
@@ -265,7 +356,7 @@ class RepresentationLearner(nn.Module):
 
 
 class MultiOmicRepresentationLearner(nn.Module):
-	def __init__(self, input_dims, enc_hidden_dim=[100], use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', probabilistic_encoder=True, encoder_lr=1e-4, enc_distribution='normal', cpu=False):
+	def __init__(self, input_dims, enc_hidden_dim=[100], use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', probabilistic_encoder=True, encoder_lr=1e-4, enc_distribution='normal', cpu=False, log_input=False):
 		# check input arguments
 		super(MultiOmicRepresentationLearner, self).__init__()
 
@@ -279,6 +370,11 @@ class MultiOmicRepresentationLearner(nn.Module):
 		if type(encoder_lr) == float:
 			encoder_lr = [encoder_lr] * self.n_modalities
 
+		if type(log_input) is bool:
+			log_inputs = [log_input] * self.n_modalities
+		else:
+			assert type(log_input) is list
+			log_inputs = log_input
 
 		self._epoch = 0
 		self.loss_items = {}
@@ -291,7 +387,7 @@ class MultiOmicRepresentationLearner(nn.Module):
 
 		# Intialization of the encoder
 		if probabilistic_encoder:
-			self.encoders = [ProbabilisticFullyConnectedModule(input_dim, enc_hidden_dim, enc_distribution, use_batch_norm, dropoutP, 'none').double().to(self.device) for input_dim in input_dims]
+			self.encoders = [ProbabilisticFullyConnectedModule(input_dim, enc_hidden_dim, enc_distribution, use_batch_norm, dropoutP, 'none', n_categories=None, log_input=log_input).double().to(self.device) for input_dim, log_input in zip(input_dims, log_inputs)]
 		else:
 			self.encoders = [FullyConnectedModule(input_dim, enc_hidden_dim, use_batch_norm, dropoutP, 'none').double().to(self.device) for input_dim in input_dims]
 
@@ -377,8 +473,8 @@ class VariationalAutoEncoder(RepresentationLearner):
 
 
 class CrossGeneratingVariationalAutoencoder(MultiOmicRepresentationLearner):
-	def __init__(self, input_dims, enc_hidden_dim=[100], dec_hidden_dim=[], likelihoods='normal', use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder_lr=1e-4, decoder_lr=1e-4, enc_distribution='normal', beta=1.0, zconstraintCoef=1.0, crossPenaltyCoef=1.0, n_categories=None):
-		super(CrossGeneratingVariationalAutoencoder, self).__init__(input_dims, enc_hidden_dim, use_batch_norm, dropoutP, optimizer_name, True, encoder_lr, enc_distribution)
+	def __init__(self, input_dims, enc_hidden_dim=[100], dec_hidden_dim=[], likelihoods='normal', use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder_lr=1e-4, decoder_lr=1e-4, enc_distribution='normal', beta=1.0, zconstraintCoef=1.0, crossPenaltyCoef=1.0, n_categories=None, log_input=False):
+		super(CrossGeneratingVariationalAutoencoder, self).__init__(input_dims, enc_hidden_dim, use_batch_norm, dropoutP, optimizer_name, True, encoder_lr, enc_distribution, log_input=log_input)
 
 		if type(likelihoods) == str:
 			likelihoods = [likelihoods] * self.n_modalities
@@ -389,7 +485,15 @@ class CrossGeneratingVariationalAutoencoder(MultiOmicRepresentationLearner):
 		else:
 			n_categories = [None for _ in range(self.n_modalities)]
 
-		self.decoders = [ProbabilisticFullyConnectedModule(self.z_dim, dec_hidden_dim + [input_dim1], distribution=ll, use_batch_norm=self._use_batch_norm, dropoutP=self._dropoutP, lastActivation='none', n_categories=n_categories1).double().to(self.device) for input_dim1, ll, n_categories1 in zip(input_dims, likelihoods, n_categories)]
+		#self.decoders = [ProbabilisticFullyConnectedModule(self.z_dim, dec_hidden_dim + [input_dim1], distribution=ll, use_batch_norm=self._use_batch_norm, dropoutP=self._dropoutP, lastActivation='none', n_categories=n_categories1).double().to(self.device) for input_dim1, ll, n_categories1 in zip(input_dims, likelihoods, n_categories)]
+		self.decoders = []
+		for input_dim1, ll, n_categories1 in zip(input_dims, likelihoods, n_categories):
+			if ll not in {'nb', 'zinb', 'nbm'}:
+				self.decoders.append(ProbabilisticFullyConnectedModule(self.z_dim, dec_hidden_dim + [input_dim1], distribution=ll, use_batch_norm=self._use_batch_norm, dropoutP=self._dropoutP, lastActivation='none', n_categories=n_categories1).double().to(self.device))
+			else:
+				#input_dim, hidden_dim=[100], distribution='nb', use_batch_norm=False, dropoutP=0.0
+				self.decoders.append(SCVIdecoder(self.z_dim, dec_hidden_dim + [input_dim1], distribution=ll, use_batch_norm=self._use_batch_norm, dropoutP=self._dropoutP).double().to(self.device))
+
 		if type(decoder_lr) == float:
 			decoder_lr = [decoder_lr] * self.n_modalities
 
@@ -542,8 +646,8 @@ class CrossGeneratingVariationalAutoencoder(MultiOmicRepresentationLearner):
 			return z, x_hat
 
 class ConcatenatedVariationalAutoencoder(MultiOmicRepresentationLearner):
-	def __init__(self, input_dims, enc_hidden_dim=[100], dec_hidden_dim=[], likelihoods='normal', use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder_lr=1e-4, decoder_lr=1e-4, enc_distribution='normal', beta=1.0, n_categories=None):
-		super(ConcatenatedVariationalAutoencoder, self).__init__([sum(input_dims)], enc_hidden_dim, use_batch_norm, dropoutP, optimizer_name, True, encoder_lr, enc_distribution)
+	def __init__(self, input_dims, enc_hidden_dim=[100], dec_hidden_dim=[], likelihoods='normal', use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder_lr=1e-4, decoder_lr=1e-4, enc_distribution='normal', beta=1.0, n_categories=None, log_input=False):
+		super(ConcatenatedVariationalAutoencoder, self).__init__([sum(input_dims)], enc_hidden_dim, use_batch_norm, dropoutP, optimizer_name, True, encoder_lr, enc_distribution, log_input=log_input)
 
 		self.n_modalities = len(input_dims)
 		if type(likelihoods) == str:
@@ -554,7 +658,15 @@ class ConcatenatedVariationalAutoencoder(MultiOmicRepresentationLearner):
 		else:
 			n_categories = [None for _ in range(self.n_modalities)]
 
-		self.decoders = [ProbabilisticFullyConnectedModule(self.z_dim, dec_hidden_dim + [input_dim1], distribution=ll, use_batch_norm=self._use_batch_norm, dropoutP=self._dropoutP, lastActivation='none', n_categories=n_categories1).double().to(self.device) for input_dim1, ll, n_categories1 in zip(input_dims, likelihoods, n_categories)]
+		#self.decoders = [ProbabilisticFullyConnectedModule(self.z_dim, dec_hidden_dim + [input_dim1], distribution=ll, use_batch_norm=self._use_batch_norm, dropoutP=self._dropoutP, lastActivation='none', n_categories=n_categories1).double().to(self.device) for input_dim1, ll, n_categories1 in zip(input_dims, likelihoods, n_categories)]
+		self.decoders = []
+		for input_dim1, ll, n_categories1 in zip(input_dims, likelihoods, n_categories):
+			if ll not in {'nb', 'zinb', 'nbm'}:
+				self.decoders.append(ProbabilisticFullyConnectedModule(self.z_dim, dec_hidden_dim + [input_dim1], distribution=ll, use_batch_norm=self._use_batch_norm, dropoutP=self._dropoutP, lastActivation='none', n_categories=n_categories1).double().to(self.device))
+			else:
+				#input_dim, hidden_dim=[100], distribution='nb', use_batch_norm=False, dropoutP=0.0
+				self.decoders.append(SCVIdecoder(self.z_dim, dec_hidden_dim + [input_dim1], distribution=ll, use_batch_norm=self._use_batch_norm, dropoutP=self._dropoutP).double().to(self.device))
+
 
 		if type(decoder_lr) == float:
 			decoder_lr = [decoder_lr] * self.n_modalities
@@ -928,31 +1040,69 @@ class OmicRegressor(ProbabilisticFullyConnectedModule):
 			ll = yhat.log_prob(y0)
 
 			metrics['loss'] = - torch.mean(torch.sum(ll, 1))
-			metrics['MSE'] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(getPointEstimate(yhat), y0), 1)).item()
+			#metrics['MSE'] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(getPointEstimate(yhat), y0), 1)).item()
 
 		return metrics
 
 
+class OmicRegressorSCVI(SCVIdecoder):
+	def __init__(self, input_dim, output_dim, distribution='nb', optimizer_name='Adam', lr=0.0001, use_batch_norm=False, log_input=False):
+		#print(use_batch_norm)
+		super(OmicRegressorSCVI, self).__init__(input_dim, [output_dim], distribution=distribution, use_batch_norm=use_batch_norm, dropoutP=0.0)
+
+		self.opt = init_optimizer(optimizer_name, [
+			{'params': self.parameters(), 'lr': lr},
+		])
+		self.log_input = log_input
+
+	def compute_loss(self, x):
+
+		x0, y0 = x
+
+		yhat = self.forward(x0)
+		ll = yhat.log_prob(y0)
+
+		loss = - torch.sum(torch.mean(ll, 1))
 
 
+		return loss
 
+	def evaluate(self, x):
+		metrics = dict()
+		with torch.no_grad():
+			x0, y0 = x
 
+			yhat = self.forward(x0)
+			ll = yhat.log_prob(y0)
 
+			metrics['loss'] = - torch.mean(torch.sum(ll, 1))
+			#metrics['MSE'] = torch.mean(torch.sum(torch.nn.MSELoss(reduction='none')(getPointEstimate(yhat), y0), 1)).item()
 
+		return metrics
 
+	def forward(self, x):
+		if self.log_input:
+			x = torch.log(x+1)
+		return super(OmicRegressorSCVI, self).forward(x)
 
 
 if __name__ == '__main__':
 
 	device = torch.device('cuda:0')
 
-	#model = ConcatenatedVariationalAutoencoder([5, 3, 4], enc_hidden_dim=[2, 2], dec_hidden_dim=[2], likelihoods=['normal', 'beta', 'categorical'], use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder_lr=1e-4, decoder_lr=1e-4, enc_distribution='normal', beta=1.0, n_categories=[None, None, 5])
-	model = CrossGeneratingVariationalAutoencoder([5, 3, 4], enc_hidden_dim=[2, 2], dec_hidden_dim=[2], likelihoods=['normal', 'beta', 'categorical'], use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder_lr=1e-4, decoder_lr=1e-4, enc_distribution='normal', beta=1.0, n_categories=[None, None, 5])
-	#model = model.double().to(device)
+	model = ConcatenatedVariationalAutoencoder([5, 3], enc_hidden_dim=[2, 2], dec_hidden_dim=[2], likelihoods=['nb', 'bernoulli'], use_batch_norm=False, dropoutP=0.1, optimizer_name='Adam', encoder_lr=1e-4, decoder_lr=1e-4, enc_distribution='normal', beta=1.0, n_categories=[None, None], log_input=[True, False])
+	#model = ConcatenatedVariationalAutoencoder([5, 3, 4], enc_hidden_dim=[2, 2], dec_hidden_dim=[2], likelihoods=['normal', 'nb', 'categorical'], use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder_lr=1e-4, decoder_lr=1e-4, enc_distribution='normal', beta=1.0, n_categories=[None, None, 5])
+	#model = CrossGeneratingVariationalAutoencoder([5, 3, 4], enc_hidden_dim=[2, 2], dec_hidden_dim=[2], likelihoods=['normal', 'nb', 'categorical'], use_batch_norm=False, dropoutP=0.0, optimizer_name='Adam', encoder_lr=1e-4, decoder_lr=1e-4, enc_distribution='normal', beta=1.0, n_categories=[None, None, 5])
+	model = model.double().to(device)
+	# model = SCVIdecoder(32, hidden_dim=[128,5000], distribution='nb', use_batch_norm=True, dropoutP=0.1).to(device)
+	# model2 = SCVIdecoder(32, hidden_dim=[128,5000], distribution='zinb', use_batch_norm=True, dropoutP=0.1).to(device)
 
+	sys.exit(0)
 	x1 = torch.rand(20, 5).to(device)
 	x2 = torch.rand(20, 3).to(device)
 	x3 = torch.randint(0, 5, (20, 4)).to(device)
+
+	# dec = model2(x1)
 
 	x = [x1.double(), x2.double(), x3.double()]
 	#x = [x1.double(), x2.double()]

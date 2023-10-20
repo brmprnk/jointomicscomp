@@ -3,7 +3,7 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 import os
 from src.baseline.baseline import trainRegressor, classification, classificationMLP
-from src.nets import OmicRegressor
+from src.nets import OmicRegressor, OmicRegressorSCVI
 import torch
 from src.util import logger
 from src.util.evaluate import evaluate_generation
@@ -22,12 +22,13 @@ try:
     omic2 = sys.argv[3]
 
 
-    trainFactorsFile = 'src/MOFA2/mofa_tcga_factors_%s%s_training.tsv' % (omic1, omic2)
-
-    data_path1 = '/tudelft.net/staff-bulk/ewi/insy/DBL/smakrod/lb/tcga-download/data/datasets/ge-me-cn-2022-04-16/%s.npy' % omic1
-    data_path2 = '/tudelft.net/staff-bulk/ewi/insy/DBL/smakrod/lb/tcga-download/data/datasets/ge-me-cn-2022-04-16/%s.npy' % omic2
 
     if omic1 != 'RNA':
+        trainFactorsFile = 'src/MOFA2/mofa_tcga_factors_%s%s_training.tsv' % (omic1, omic2)
+
+        data_path1 = '/tudelft.net/staff-bulk/ewi/insy/DBL/smakrod/lb/tcga-download/data/datasets/ge-me-cn-2022-04-16/%s.npy' % omic1
+        data_path2 = '/tudelft.net/staff-bulk/ewi/insy/DBL/smakrod/lb/tcga-download/data/datasets/ge-me-cn-2022-04-16/%s.npy' % omic2
+
         train_ind_file = '/tudelft.net/staff-bulk/ewi/insy/DBL/smakrod/lb/tcga-download/data/datasets/ge-me-cn-2022-04-16/trainInd.npy'
         val_ind_file = '/tudelft.net/staff-bulk/ewi/insy/DBL/smakrod/lb/tcga-download/data/datasets/ge-me-cn-2022-04-16/validInd.npy'
         test_ind_file = '/tudelft.net/staff-bulk/ewi/insy/DBL/smakrod/lb/tcga-download/data/datasets/ge-me-cn-2022-04-16/testInd.npy'
@@ -36,6 +37,24 @@ try:
 
         weightsFile1 = 'src/MOFA2/mofa_tcga_weights_%s%s_%s.tsv' % (omic1, omic2, omic1)
         weightsFile2 = 'src/MOFA2/mofa_tcga_weights_%s%s_%s.tsv' % (omic1, omic2, omic2)
+
+    elif omic1 == 'RNA' and omic2 == 'ATAC':
+        trainFactorsFile = 'src/MOFA2/mofa_atac_factors_%s%s_training.tsv' % (omic1, omic2)
+
+        data_path1 = '/tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scatac/%s.npy' % omic1.lower()
+        data_path2 = '/tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scatac/%s.npy' % omic2.lower()
+
+
+        train_ind_file = '/tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scatac/trainInd.npy'
+        val_ind_file = '/tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scatac/validInd.npy'
+        test_ind_file = '/tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scatac/testInd.npy'
+
+        sample_namesFile = '/tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scatac/sampleNames.npy'
+
+        weightsFile1 = 'src/MOFA2/mofa_atac_weights_%s%s_%s.tsv' % (omic1, omic2, omic1)
+        weightsFile2 = 'src/MOFA2/mofa_atac_weights_%s%s_%s.tsv' % (omic1, omic2, omic2)
+
+
 
     else:
         train_ind_file = '/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/task1/trainInd.npy'
@@ -125,7 +144,6 @@ embDict['ztest'] = [mapper1.predict(X1test), mapper2.predict(X2test), mapperJoin
 # save embeddings
 with open(dirName + 'embeddings.pkl', 'wb') as f:
     pickle.dump(embDict, f)
-sys.exit(0)
 
 # train imputation model from ztrain to X1 and to X2
 
@@ -151,10 +169,20 @@ logger.info('Likelihood for omic2: %s' % likelihoods[1])
 
 
 # Initialize GLMs
-net2from1 = OmicRegressor(ztrain.shape[1], X2train.shape[1], distribution=likelihoods[1], optimizer_name='Adam', lr=0.0001, n_categories=n_categories[1])
+
+if likelihoods[1] not in set(['nb', 'nbm', 'zinb']):
+    net2from1 = OmicRegressor(ztrain.shape[1], X2train.shape[1], distribution=likelihoods[1], optimizer_name='Adam', lr=0.0001, n_categories=n_categories[1])
+else:
+    net2from1 = OmicRegressorSCVI(ztrain.shape[1], X2train.shape[1], distribution=likelihoods[1], optimizer_name='Adam', lr=0.0001, use_batch_norm=False, log_input=False)
+
 net2from1 = net2from1.to(device).double()
 
-net1from2 = OmicRegressor(ztrain.shape[1], X1train.shape[1], distribution=likelihoods[0], optimizer_name='Adam', lr=0.0001, n_categories=n_categories[0])
+if likelihoods[0] not in set(['nb', 'nbm', 'zinb']):
+    net1from2 = OmicRegressor(ztrain.shape[1], X1train.shape[1], distribution=likelihoods[0], optimizer_name='Adam', lr=0.0001, n_categories=n_categories[0])
+else:
+    net1from2 = OmicRegressorSCVI(ztrain.shape[1], X1train.shape[1], distribution=likelihoods[0], optimizer_name='Adam', lr=0.0001, use_batch_norm=False, log_input=False)
+
+
 net1from2 = net1from2.to(device).double()
 
 
@@ -321,8 +349,12 @@ with open(individualPerfomanceSave, 'wb') as f:
 
 if task > 1:
 
-    classLabels = np.load('/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/pbmc_multimodal_ADT_5000MAD_cellType_l3.npy')
-    labelNames = np.load('/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/pbmc_multimodal_ADT_5000MAD_cellTypes_l3.npy', allow_pickle=True)
+    if 'omic2' in locals() and omic2 == 'ATAC':
+        classLabels = np.load('/tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scatac/celltype_l2.npy')
+        labelNames = np.load('/tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scatac/celltypes_l2.npy', allow_pickle=True)
+    else:
+        classLabels = np.load('/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/pbmc_multimodal_ADT_5000MAD_cellType_l3.npy')
+        labelNames = np.load('/tudelft.net/staff-bulk/ewi/insy/DBL/bpronk/jointomicscomp/data/CELL/pbmc_multimodal_ADT_5000MAD_cellTypes_l3.npy', allow_pickle=True)
 
     ytrain = classLabels[trainInd]
     yvalid = classLabels[validInd]
@@ -350,11 +382,16 @@ if task > 1:
 
     pr12 = {'acc': performance12[0], 'pr': performance12[1], 'rc': performance12[2], 'f1': performance12[3], 'mcc': performance12[4], 'confmat': performance12[5], 'CIs': CIs}
 
-    level = 'l3'
+    if 'omic2' in locals() and omic2 == 'ATAC':
+        level = 'l2'
+    else:
+        level = 'l3'
+        omic1 = 'RNA'
+        omic2 = 'ADT'
 
     # -----------------------------------------------------------------
     logger.info('Test performance, classification task, non-linear classifier, modality 1')
-    _, acc, pr, rc, f1, mcc, confMat, CIs = classificationMLP(embDict['ztrain'][0], ytrain, embDict['zvalidation'][0], yvalid, embDict['ztest'][0], ytest, 'type-classifier/eval/' + level + '/mofa_RNA/')
+    _, acc, pr, rc, f1, mcc, confMat, CIs = classificationMLP(embDict['ztrain'][0], ytrain, embDict['zvalidation'][0], yvalid, embDict['ztest'][0], ytest, 'type-classifier/eval/' + level + '/mofa_' + omic1 + '/')
     performance1 = [acc, pr, rc, f1, mcc, confMat]
     logger.info('ACC: %.4f\tPR: %.4f\tRC: %.4f\tF1: %.4f\tMCC: %.4f' % (performance1[0], np.mean(performance1[1]), np.mean(performance1[2]), np.mean(performance1[3]), performance1[4]))
 
@@ -362,20 +399,27 @@ if task > 1:
     mlp_pr1 = {'acc': performance1[0], 'pr': performance1[1], 'rc': performance1[2], 'f1': performance1[3], 'mcc': performance1[4], 'confmat': performance1[5], 'CIs': CIs}
 
     logger.info('Test performance, classification task, non-linear classifier, modality 2')
-    _, acc, pr, rc, f1, mcc, confMat, CIs = classificationMLP(embDict['ztrain'][1], ytrain, embDict['zvalidation'][1], yvalid, embDict['ztest'][1], ytest, 'type-classifier/eval/' + level + '/mofa_ADT/')
+    _, acc, pr, rc, f1, mcc, confMat, CIs = classificationMLP(embDict['ztrain'][1], ytrain, embDict['zvalidation'][1], yvalid, embDict['ztest'][1], ytest, 'type-classifier/eval/' + level + '/mofa_' + omic2 + '/')
     performance2 = [acc, pr, rc, f1, mcc, confMat]
     logger.info('ACC: %.4f\tPR: %.4f\tRC: %.4f\tF1: %.4f\tMCC: %.4f' % (performance2[0], np.mean(performance2[1]), np.mean(performance2[2]), np.mean(performance2[3]), performance2[4]))
 
     mlp_pr2 = {'acc': performance2[0], 'pr': performance2[1], 'rc': performance2[2], 'f1': performance2[3], 'mcc': performance2[4], 'confmat': performance2[5], 'CIs': CIs}
 
     logger.info('Test performance, classification task, non-linear classifier, both modalities')
-    _, acc, pr, rc, f1, mcc, confMat, CIs = classificationMLP(embDict['ztrain'][2], ytrain, embDict['zvalidation'][2], yvalid, embDict['ztest'][2], ytest, 'type-classifier/eval/' + level + '/mofa_RNA_ADT/')
+    _, acc, pr, rc, f1, mcc, confMat, CIs = classificationMLP(embDict['ztrain'][2], ytrain, embDict['zvalidation'][2], yvalid, embDict['ztest'][2], ytest, 'type-classifier/eval/' + level + '/mofa_' + omic1 + '_' + omic2 + '/')
     performance12 = [acc, pr, rc, f1, mcc, confMat]
     logger.info('ACC: %.4f\tPR: %.4f\tRC: %.4f\tF1: %.4f\tMCC: %.4f' % (performance12[0], np.mean(performance12[1]), np.mean(performance12[2]), np.mean(performance12[3]), performance12[4]))
 
     mlp_pr12 = {'acc': performance12[0], 'pr': performance12[1], 'rc': performance12[2], 'f1': performance12[3], 'mcc': performance12[4], 'confmat': performance12[5], 'CIs': CIs}
 
     save_dir = 'src/MOFA2/'
+    if 'omic2' in locals() and omic2 == 'ATAC':
+        ext = 'atac_'
+    else:
+        ext = ''
+
     logger.info("Saving results")
-    with open(save_dir + "/MOFA_task2_results.pkl", 'wb') as f:
+
+
+    with open(save_dir + "/" + ext + "MOFA_task2_results.pkl", 'wb') as f:
         pickle.dump({'omic1': pr1, 'omic2': pr2, 'omic1+2': pr12, 'omic1-mlp': mlp_pr1, 'omic2-mlp': mlp_pr2, 'omic1+2-mlp': mlp_pr12}, f)

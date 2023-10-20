@@ -30,6 +30,8 @@ gstd = data.mad(axis=1).sort_values(ascending=False)[:5000].index
 
 data5000 = data.loc[gstd]
 
+np.save('data/scaled-unscaled/unscaled.npy', np.array(data5000))
+
 m = data5000.mean(axis=1)
 s = data5000.std(axis=1)
 
@@ -41,7 +43,9 @@ sampleNamesGE = np.array(data5000CS.columns)
 GE = np.array(data5000CS).T
 GE[np.isnan(GE)] = 0.
 
+np.save('data/scaled-unscaled/scaled.npy', GE)
 
+sys.exit(0)
 ll = np.zeros(GE.shape[1])
 
 for j in range(GE.shape[1]):

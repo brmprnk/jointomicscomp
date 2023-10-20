@@ -11,6 +11,7 @@ from sklearn.metrics import mean_squared_error
 from src.util import logger
 from src.util.evaluate import evaluate_imputation, save_factorizations_to_csv
 from src.MoE.model import MixtureOfExperts
+import time
 
 class MultiOmicsDataset():
     def __init__(self, data):
@@ -119,6 +120,7 @@ def train(device, net, num_epochs, train_loader, train_loader_eval, valid_loader
 
     # Evaluate validation set before start training
     print("[*] Evaluating epoch %d..." % start_epoch)
+    net.eval()
     if not isinstance(net, MixtureOfExperts):
         # this takes too long on MoE, so we skip it
         metrics = evaluateUsingBatches(net, device, train_loader_eval, multimodal)
@@ -126,7 +128,6 @@ def train(device, net, num_epochs, train_loader, train_loader_eval, valid_loader
         assert 'loss' in metrics
         print("--- Training loss:\t%.4f" % metrics['loss'])
 
-    net.eval()
     metrics = evaluateUsingBatches(net, device, valid_loader, multimodal)
     bestValLoss = metrics['loss']
     bestValEpoch  = 0
@@ -158,6 +159,10 @@ def train(device, net, num_epochs, train_loader, train_loader_eval, valid_loader
                 else:
                     current_loss = net.compute_loss([data[0][0].to(device).double(), data[1][0].to(device).double()])
 
+                if not torch.isfinite(current_loss):
+                    print('[*] Divergence occured, stopping training...')
+                    return [bestValLoss, bestValEpoch]
+
                 # Backward pass and optimize
                 current_loss.backward()
                 net.opt.step()
@@ -178,6 +183,16 @@ def train(device, net, num_epochs, train_loader, train_loader_eval, valid_loader
 
         metricsValidation = evaluateUsingBatches(net, device, valid_loader, multimodal)
         print("--- Validation loss:\t%.4f" % metricsValidation['loss'])
+
+
+        if type(metricsValidation['loss']) is torch.Tensor:
+            if not np.isfinite(metricsValidation['loss'].cpu().detach().numpy()):
+                print('[*] Divergence occured. Stopping...')
+                return [bestValLoss, bestValEpoch]
+
+        elif not np.isfinite(metricsValidation['loss']):
+            print('[*] Divergence occured. Stopping...')
+            return [bestValLoss, bestValEpoch]
 
         if metricsValidation['loss'] < bestValLoss:
             bestValLoss = metricsValidation['loss']
@@ -209,6 +224,47 @@ def train(device, net, num_epochs, train_loader, train_loader_eval, valid_loader
 
     print("[*] Finish training.")
     return bestValLoss, bestValEpoch
+
+
+def timeTraining(net, num_epochs, train_loader, device, multimodal=True):
+
+    # Start training phase
+    print("[*] Start training...")
+    # Training epochs
+    net.train()
+
+    times = np.zeros(num_epochs)
+
+    for epoch in range(num_epochs):
+        print('[*] Epoch %d' % epoch, flush=True)
+        #torch.cuda.synchronize()
+        epoch_start = time.perf_counter()
+
+        for data in train_loader:
+            # Get current batch and transfer to device
+            # data = data.to(device)
+
+            with torch.set_grad_enabled(True):  # no need to specify 'requires_grad' in tensors
+                # Set the parameter gradients to zero
+                net.opt.zero_grad()
+
+                if not multimodal:
+                    current_loss = net.compute_loss(data[0].to(device).double())
+                else:
+                    current_loss = net.compute_loss([data[0][0].to(device).double(), data[1][0].to(device).double()])
+
+                # print(current_loss.cpu().detach().numpy())
+                # Backward pass and optimize
+                current_loss.backward()
+                net.opt.step()
+
+        torch.cuda.synchronize()
+        epoch_end = time.perf_counter()
+        times[epoch] = epoch_end - epoch_start
+        print(times[epoch], flush=True)
+
+    print("[*] Finish training.")
+    return times
 
 
 def impute(net, model_file, loader, device, save_dir, sample_names, num_features1, num_features2, multimodal=False):

@@ -1,9 +1,9 @@
 #! /bin/sh
-#SBATCH --partition=general --qos=long
+#SBATCH --partition=general --qos=short
 #SBATCH --cpus-per-task=1
 #SBATCH --gres=gpu:1
-#SBATCH --mem=10000
-#SBATCH --time=1-23:59:59
+#SBATCH --mem=20000
+#SBATCH --time=01:30:00
 #SBATCH --job-name=trainJoint
 #SBATCH --mail-user=stavrosmakrodi
 #SBATCH --mail-type=FAIL
@@ -33,5 +33,6 @@ then
   python run.py --experiment='experiment' --config=${CONFIG_FILE} >> ${TRAIN_LOG};
 else
 
-  python run.py --experiment='experiment' --config=${CONFIG_FILE} -$2 >> ${TRAIN_LOG};
+  #python run.py --experiment='experiment' --config=${CONFIG_FILE} -$2 >> ${TRAIN_LOG};
+  python run.py --experiment='experiment' --config=${CONFIG_FILE} -$2 --results-path=$3 >> ${TRAIN_LOG};
 fi;

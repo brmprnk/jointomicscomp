@@ -156,6 +156,7 @@ configs/tcga/MECNV/*.yaml
 configs/tcga/GECNV/*.yaml
 configs/tcga/GEME/*.yaml
 configs/sc/*.yaml
+configs/atac/*.yaml
 
 !configs/tcga/GEME/*_default.yaml
 !configs/tcga/GEME/*.py
@@ -164,6 +165,7 @@ configs/sc/*.yaml
 !configs/tcga/MECNV/*_default.yaml
 !configs/tcga/MECNV/*.py
 !configs/sc/*_default.yaml
+!configs/atac/*_default.yaml
 
 type-classifier/*
 !type-classifier/*/checkpoint/model_best.pth.tar

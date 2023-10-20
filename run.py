@@ -64,7 +64,13 @@ PARSER.add_argument('-cgae',
                     help="Running CGAE Model")
 PARSER.add_argument('-cvae',
                     action='store_true',
-                    help="Running CGAE Model")
+                    help="Running ccVAE Model")
+PARSER.add_argument('-totalvi',
+                    action='store_true',
+                    help="Running totalVI Model")
+PARSER.add_argument('-uniport',
+                    action='store_true',
+                    help="Running uniPort Model")
 
 
 
@@ -118,7 +124,7 @@ def main() -> None:
 
     # If no specific model set, run all models and end program
     if not args.baseline and not args.mofa and not args.moe and not args.poe and not args.mvib and not args.cgae \
-            and not args.mvae_impute and not args.cvae:
+            and not args.mvae_impute and not args.cvae and not args.totalvi and not args.uniport:
         run_baseline(config)
         run_mofa(config)
         run_poe(config)
@@ -126,6 +132,8 @@ def main() -> None:
         run_mvib(config)
         run_cgae(config)
         run_cvae(config)
+        run_totalvi(config)
+        run_uniport(config)
         return
 
     # Run models individually / combined
@@ -151,6 +159,12 @@ def main() -> None:
 
     if args.cvae:
         run_cvae(config)
+
+    if args.totalvi:
+        run_totalvi(config)
+
+    if args.uniport:
+        run_uniport(config)
 
     # Run special function
     if args.mvae_impute:
@@ -275,6 +289,38 @@ def run_cvae(config: dict) -> None:
     logger.info("\n##########")
 
     cvae_model({**config['GLOBAL_PARAMS'], **config['CVAE']})
+
+    logger.info("##########\n")
+
+
+def run_totalvi(config: dict) -> None:
+    """
+    Setup and run totalVI.
+
+    @param config: Dictionary containing input parameters
+    @return: None
+    """
+    from src.totalVI.main import run as totalvi_model
+
+    logger.info("\n##########")
+
+    totalvi_model({**config['GLOBAL_PARAMS'], **config['totalVI']})
+
+    logger.info("##########\n")
+
+
+def run_uniport(config: dict) -> None:
+    """
+    Setup and run uniPort.
+
+    @param config: Dictionary containing input parameters
+    @return: None
+    """
+    from src.uniport.main import run as uniport_model
+
+    logger.info("\n##########")
+
+    uniport_model({**config['GLOBAL_PARAMS'], **config['UNIPORT']})
 
     logger.info("##########\n")
 

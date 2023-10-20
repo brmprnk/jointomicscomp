@@ -50,18 +50,27 @@ def run(args: dict) -> None:
     encoder_layers = [int(kk) for kk in args['latent_dim'].split('-')]
     decoder_layers = encoder_layers[::-1][1:]
 
+    if 'log_inputs' in args and args['log_inputs']:
+        if args['data2'] == 'ATAC':
+            log_inputs = [True, False]
+        else:
+            log_inputs = True
+    else:
+        log_inputs = False
+
+
     # Initialize network model
     if 'categorical' not in likelihoods:
 
         net = ConcatenatedVariationalAutoencoder(input_dims, encoder_layers, decoder_layers, likelihoods,
                            args['use_batch_norm'], args['dropout_probability'], args['optimizer'], args['lr'],  args['lr'],
-                           args['enc_distribution'], args['beta_start_value'])
+                           args['enc_distribution'], args['beta_start_value'], log_input=log_inputs)
 
     else:
         categories = [args['n_categories%d' % (i + 1)] for i in range(n_modalities)]
         net = ConcatenatedVariationalAutoencoder(input_dims, encoder_layers, decoder_layers, likelihoods,
                            args['use_batch_norm'], args['dropout_probability'], args['optimizer'], args['lr'],  args['lr'],
-                           args['enc_distribution'], args['beta_start_value'], n_categories=categories)
+                           args['enc_distribution'], args['beta_start_value'], n_categories=categories, log_input=log_inputs)
 
 
 

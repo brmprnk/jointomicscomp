@@ -84,8 +84,13 @@ def calculate_classification_metrics(y_true, y_pred):
 
 
 def evaluate_generation(reconstructed1, reconstructed2, datatype1, datatype2):
-    if datatype1 == 'RNA' or datatype1 == 'ADT':
-        nclass = 31
+    if datatype2 == 'ATAC':
+        assert datatype1 == 'RNA'
+        datatype1 = 'RNA2'
+        nclass = 7
+
+    elif datatype1 == 'RNA' or datatype1 == 'ADT':
+        nclass = 30
     else:
         nclass = 33
 

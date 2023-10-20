@@ -1,6 +1,5 @@
 import yaml
 
-models = ['cgae', 'mvib', 'poe', 'moe']
 models = ['cgae', 'cvae', 'moe', 'poe']
 
 lrs = [1e-4, 1e-3]
@@ -137,3 +136,30 @@ for model in models:
 
                             with open(model + '_' + str(counter) + '.yaml', 'w') as writeFile:
                                 yaml.safe_dump(config, writeFile)
+
+
+model = 'uniport'
+
+with open(model + '_default.yaml') as file:
+    config = yaml.safe_load(file)
+
+counter = -1
+
+baseName = config['GLOBAL_PARAMS']['name']
+enc_archs = ['128-32', '128-64', '256-32', '256-64', '256-256-32', '256-256-64', '256-128-32', '256-128-64']
+
+
+for learning_rate in lrs:
+    config['UNIPORT']['lr'] = learning_rate
+
+    for arch in enc_archs:
+        config['UNIPORT']['latent_dim'] = arch
+        counter += 1
+
+        config['GLOBAL_PARAMS']['name'] = baseName + '-' + str(counter)
+
+        with open(model + '_' + str(counter) + '.yaml', 'w') as writeFile:
+            yaml.safe_dump(config, writeFile)
+
+
+

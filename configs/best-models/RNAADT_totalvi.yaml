@@ -1,0 +1,32 @@
+GLOBAL_PARAMS:
+  cuda: true
+  data1: RNA
+  data2: ADT
+  labelnames: /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/celltypes_l3.npy
+  labels: /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/celltype_l3.npy
+  log_save_interval: 10
+  mudata_path: /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/
+  name: test_RNA_ADT_totalvi
+  nomics: 2
+  num_features1: 5000
+  num_features2: 217
+  random_seed: 1
+  task: 2
+  test_ind: /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/testInd.npy
+  train_ind: /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/trainInd.npy
+  val_ind: /tudelft.net/staff-umbrella/liquidbiopsy/neural-nets/jointomicscomp/data/scvi-cite/validInd.npy
+totalVI:
+  batch_size: 64
+  beta_start_value: 1
+  clf_criterion: mcc
+  dropout_probability: 0.1
+  enc_distribution: normal
+  epochs: 500
+  lr: 0.001
+  n_layers: 2
+  n_neurons_per_layer: 256
+  optimizer: Adam
+  pre_trained: results/tmpnbcite/results/likelihood-cite-totalvi-test-63_RNA_ADT/totalVI/checkpoint/
+  train_loader_eval_batch_size: 64
+  use_batch_norm: true
+  zdim: 32

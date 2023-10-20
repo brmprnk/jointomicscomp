@@ -9,7 +9,7 @@ from src.util.early_stopping import EarlyStopping
 from src.util.umapplotter import UMAPPlotter
 import matplotlib.pyplot as plt
 import seaborn as sns
-from src.nets import OmicRegressor, MLP
+from src.nets import OmicRegressor, OmicRegressorSCVI, MLP
 from tensorboardX import SummaryWriter
 from src.CGAE.model import evaluateUsingBatches, MultiOmicsDataset, evaluatePerDatapoint
 from torch.utils.data import DataLoader
@@ -284,10 +284,27 @@ def run_baseline(args: dict) -> None:
 
     # Initialize network model
     if 'categorical' not in likelihoods:
-        net2from1 = OmicRegressor(input_dims[0], input_dims[1], distribution=likelihoods[1], optimizer_name=args['optimizer'], lr=args['lr'])
+        if likelihoods[1] not in {'nb', 'zinb', 'nbm'}:
+            net2from1 = OmicRegressor(input_dims[0], input_dims[1], distribution=likelihoods[1], optimizer_name=args['optimizer'], lr=args['lr'])
+        else:
+            if args['data1'] == 'ADT' and args['use_batch_norm']:
+                ubn = True
+            else:
+                ubn = False
+            net2from1 = OmicRegressorSCVI(input_dims[0], input_dims[1], distribution=likelihoods[1], optimizer_name=args['optimizer'], lr=args['lr'], use_batch_norm=ubn, log_input=args['log_transform1'])
+
         net2from1 = net2from1.to(device).double()
 
-        net1from2 = OmicRegressor(input_dims[1], input_dims[0], distribution=likelihoods[0], optimizer_name=args['optimizer'], lr=args['lr'])
+        if likelihoods[0] not in {'nb', 'zinb', 'nbm'}:
+            net1from2 = OmicRegressor(input_dims[1], input_dims[0], distribution=likelihoods[0], optimizer_name=args['optimizer'], lr=args['lr'])
+        else:
+            if args['data2'] == 'ADT' and args['use_batch_norm']:
+                ubn = True
+            else:
+                ubn = False
+
+            net1from2 = OmicRegressorSCVI(input_dims[1], input_dims[0], distribution=likelihoods[0], optimizer_name=args['optimizer'], lr=args['lr'], use_batch_norm=ubn, log_input=args['log_transform2'])
+
         net1from2 = net1from2.to(device).double()
 
 
@@ -353,7 +370,7 @@ def run_baseline(args: dict) -> None:
         checkpoint = torch.load(ckpt_dir + '/model_best.pth.tar')
 
         net2from1.load_state_dict(checkpoint['state_dict'])
-
+        net2from1.eval()
 
         metricsValidation = evaluateUsingBatches(net2from1, device, valid_loader, True)
         metricsTest = evaluateUsingBatches(net2from1, device, test_loader, True)
@@ -414,7 +431,7 @@ def run_baseline(args: dict) -> None:
         checkpoint = torch.load(ckpt_dir + '/model_best.pth.tar')
 
         net1from2.load_state_dict(checkpoint['state_dict'])
-
+        net1from2.eval()
 
         metricsValidation = evaluateUsingBatches(net1from2, device, valid_loader, True)
         metricsTest = evaluateUsingBatches(net1from2, device, test_loader, True)
@@ -442,6 +459,17 @@ def run_baseline(args: dict) -> None:
         alphas = np.array([1e-4, 1e-3, 1e-2, 0.1, 0.5, 1.0, 2.0, 5.0, 10., 20.])
         Nclasses = np.unique(ytrain).shape[0]
         print(Nclasses)
+
+        if 'log_transform1' in args and args['log_transform1']:
+            omics_train[0] = np.log(omics_train[0] + 1)
+            omics_val[0] = np.log(omics_val[0] + 1)
+            omics_test[0] = np.log(omics_test[0] + 1)
+
+        if 'log_transform2' in args and args['log_transform2']:
+            omics_train[1] = np.log(omics_train[1] + 1)
+            omics_val[1] = np.log(omics_val[1] + 1)
+            omics_test[1] = np.log(omics_test[1] + 1)
+
 
 
         pca1 = PCA(n_components=32, whiten=False, svd_solver='full')
@@ -578,5 +606,5 @@ def run_baseline(args: dict) -> None:
 
 
 
-    # with open(os.path.join(save_dir, args['name'] + 'results_pickle'), 'wb') as f:
-    #     pickle.dump(performance, f)
+    with open(os.path.join(save_dir, args['name'] + 'results_pickle'), 'wb') as f:
+        pickle.dump(performance, f)
